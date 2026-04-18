@@ -224,6 +224,7 @@ NEXT_PUBLIC_PLATFORM_HOST=admin.aralabs.com.br
 | `professional_availability` | `tenantId, professionalId, weekday, startTime, endTime, isAvailable` |
 | `availability_blocks` | `tenantId, professionalId, startAt, endAt, reason?` |
 | `appointments` | `id, tenantId, customerId, professionalId, serviceId, appointmentDate, startAt, endAt, status, paymentStatus, depositRequired, depositAmountCents?, totalAmountCents, notes?, bookedBySource, createdByUserId?, checkedInAt?, startedAt?, completedAt?, cancelledAt?, cancellationReason?` |
+| `billing_events` | `id, tenantId, eventType, fromStateJson, toStateJson, actorUserId?, reason?, createdAt` (histórico estruturado de mudanças de billing — ver seção 8) |
 | `audit_log` | `id, tenantId?, userId?, action, entityType, entityId, beforeJson, afterJson, createdAt` |
 
 ### 6.3 Campos de branding em `tenants`
@@ -248,6 +249,10 @@ TenantStatus:        ACTIVE | SUSPENDED | ARCHIVED
 BillingStatus:       TRIALING | ACTIVE | PAST_DUE | SUSPENDED | CANCELED
 BillingModel:        TRIAL | SUBSCRIPTION_WITH_TRANSACTION_FEE
 TransactionFeeType:  PERCENTAGE | FIXED | NONE
+BillingEventType:    TRIAL_STARTED | TRIAL_EXTENDED | TRIAL_CUSTOMIZED | TRIAL_EXPIRED
+                   | PLAN_CHANGED | PRICING_OVERRIDDEN
+                   | BILLING_ACTIVATED | GRACE_PERIOD_ENDED
+                   | SUSPENDED | REACTIVATED | CANCELED
 AppointmentStatus:   PENDING_PAYMENT | CONFIRMED | CHECKED_IN | IN_SERVICE | COMPLETED | CANCELLED | NO_SHOW | EXPIRED
 PaymentStatus:       UNPAID | PENDING | PAID_PARTIAL | PAID_FULL | REFUNDED | CHARGEBACK | FAILED | EXPIRED
 DepositType:         FIXED | PERCENTAGE
@@ -277,7 +282,9 @@ auth.users (1) ──< user_profiles (0-1 staff) + customers (0-N, um por tenant
 
 ### 6.8 Entidades explicitamente ausentes na Fase 1
 
-`payments`, `commission_entries`, `notifications`, `device_loans`, `subscription_history`. Estrutura no schema **não é criada** — se aparecer no código, entra em outra fase.
+`payments`, `commission_entries`, `notifications`, `device_loans`. Estrutura no schema **não é criada** — se aparecer no código, entra em outra fase.
+
+> Observação: **`billing_events` é criada na Fase 1** e cobre a necessidade de "histórico básico de mudanças de billing" pedida na decisão comercial. Não há tabela `subscription_history` separada.
 
 ---
 
@@ -379,81 +386,288 @@ Service role **nunca** no cliente. Usar apenas em:
 
 ---
 
-## 8. Modelo de billing
+## 8. Billing, Trials e Planos
 
-### 8.1 Ciclo de vida do tenant
+### 8.1 Princípios do modelo comercial
+
+O modelo de monetização da plataforma Aralabs é **trial grátis → mensalidade fixa + taxa por transação**, com todos os parâmetros (dias de trial, preço de mensalidade, tipo e valor da taxa) **parametrizáveis** — nunca hardcoded.
+
+- Todo tenant começa em **trial gratuito** (30 dias por padrão).
+- Durante o trial, o tenant tem acesso completo ao produto — nenhuma feature bloqueada.
+- Ao final do trial, o tenant transita para **plano pago**.
+- Plano pago tem duas fontes de receita:
+  - **Mensalidade fixa** (recorrente — efetiva na Fase 2+).
+  - **Taxa por transação** (percentual ou fixo, aplicada sobre transações elegíveis — efetiva na Fase 2+).
+- Platform admin pode customizar qualquer parâmetro por tenant (trial estendido, plano custom, override de preço).
+- Todo parâmetro é persistido em banco de dados; nenhum está em código.
+
+### 8.2 Entidades de billing
+
+#### 8.2.1 `plans` (catálogo global)
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | uuid | PK |
+| `code` | text | identificador curto (ex: `STARTER`, `PRO`, `PREMIUM`) |
+| `name` | text | nome de exibição |
+| `description` | text? | descrição opcional |
+| `monthlyPriceCents` | int | preço da mensalidade em centavos |
+| `transactionFeeType` | enum | `PERCENTAGE | FIXED | NONE` |
+| `transactionFeeValue` | int | em basis points (se %) ou centavos (se FIXED) |
+| `transactionFeeFixedCents` | int? | componente fixo para modelo híbrido futuro |
+| `trialDaysDefault` | int | trial default quando esse plano é atribuído (normalmente 30) |
+| `isActive` | bool | plano disponível para novos tenants |
+| `isDefault` | bool | plano atribuído automaticamente a novos tenants se nenhum for informado |
+| `createdAt` / `updatedAt` | timestamptz | |
+
+#### 8.2.2 `tenants` (campos de billing — snapshot do estado atual)
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `currentPlanId` | uuid (FK → `plans`) | plano atualmente atribuído |
+| `billingStatus` | enum | `TRIALING | ACTIVE | PAST_DUE | SUSPENDED | CANCELED` |
+| `billingModel` | enum | `TRIAL | SUBSCRIPTION_WITH_TRANSACTION_FEE` |
+| `monthlyPriceCents` | int | **snapshot** do preço na ativação (permite override por tenant) |
+| `transactionFeeType` | enum | **snapshot** do tipo de taxa |
+| `transactionFeeValue` | int | **snapshot** do valor da taxa |
+| `transactionFeeFixedCents` | int? | **snapshot** do componente fixo |
+| `trialStartsAt` | timestamptz | |
+| `trialEndsAt` | timestamptz | |
+| `trialDaysGranted` | int | quantos dias foram concedidos (default 30, override permitido) |
+| `isCustomTrial` | bool | trial customizado manualmente pelo platform admin |
+| `subscriptionStartsAt` | timestamptz? | quando assinatura paga foi ativada |
+| `subscriptionEndsAt` | timestamptz? | fim do ciclo atual (Fase 2+) |
+| `gracePeriodEndsAt` | timestamptz? | fim do grace period após PAST_DUE |
+| `notesInternal` | text? | anotações administrativas do platform admin |
+
+> **Por que snapshot e não só referência?** Mudar preço global de um plano **não afeta** tenants já ativos. Tenant congela seu preço/taxa no momento da ativação. Se o admin quiser atualizar, faz explicitamente via override e gera `billing_events`.
+
+#### 8.2.3 `billing_events` (histórico estruturado de mudanças)
+
+Toda transição ou mudança relacionada a billing gera um registro:
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | uuid | PK |
+| `tenantId` | uuid (FK → `tenants`) | |
+| `eventType` | enum `BillingEventType` | tipo do evento |
+| `fromStateJson` | jsonb | snapshot dos campos de billing **antes** da mudança |
+| `toStateJson` | jsonb | snapshot **depois** |
+| `actorUserId` | uuid? | quem disparou; `null` quando foi `pg_cron` |
+| `reason` | text? | motivo textual (ex: "trial estendido por cortesia ao cliente") |
+| `createdAt` | timestamptz | |
+
+### 8.3 Tipos de evento de billing
+
+```ts
+BillingEventType:
+  TRIAL_STARTED          // tenant criado em TRIALING
+  TRIAL_EXTENDED         // admin estendeu o trialEndsAt
+  TRIAL_CUSTOMIZED       // admin alterou a duração do trial (pós-criação)
+  TRIAL_EXPIRED          // transição automática para PAST_DUE (pg_cron)
+  PLAN_CHANGED           // currentPlanId mudou
+  PRICING_OVERRIDDEN     // preço ou taxa customizados pelo admin
+  BILLING_ACTIVATED      // transição para ACTIVE
+  GRACE_PERIOD_ENDED     // transição PAST_DUE → SUSPENDED (pg_cron)
+  SUSPENDED              // suspensão manual
+  REACTIVATED            // reativação pelo platform admin
+  CANCELED               // cancelamento definitivo
+```
+
+### 8.4 Ciclo de vida do billing
 
 ```
-Criação do tenant
-       │
+┌──────────────┐
+│  (criação)   │
+└──────┬───────┘
+       │ onboarding
        ▼
-  TRIALING (default 30 dias, customizável pelo platform admin)
-       │
-       ├── trial expira → PAST_DUE (grace period 7 dias)
-       │                      │
-       │                      ├── sem ação → SUSPENDED
-       │                      └── com ação → ACTIVE (quando pagamento for possível; Fase 2+)
-       │
-       └── cancelamento manual → CANCELED
+┌──────────────┐
+│  TRIALING    │ ◄───────────┐
+└──────┬───────┘             │ reativação
+       │                     │ (platform admin escolhe)
+       │ trial_ends_at < now │
+       │ (pg_cron diário)    │
+       ▼                     │
+┌──────────────┐             │
+│  PAST_DUE    │             │
+└──┬────────┬──┘             │
+   │        │                │
+   │        │ pagamento      │
+   │        │ efetivado      │
+   │        │ (Fase 2+)      │
+   │        │ ou ativação    │
+   │        │ manual (Fase 1)│
+   │        ▼                │
+   │   ┌──────────────┐      │
+   │   │   ACTIVE     │ ◄────┤
+   │   └──────┬───────┘      │
+   │          │ inadimplência│
+   │          │ (Fase 2+)    │
+   │          ▼              │
+   │     (volta PAST_DUE)    │
+   │                         │
+   │ grace_period_ends_at    │
+   │ < now (pg_cron)         │
+   ▼                         │
+┌──────────────┐             │
+│  SUSPENDED   │ ────────────┘
+└──────┬───────┘
+       │ platform admin cancela
+       ▼
+┌──────────────┐
+│  CANCELED    │  (estado terminal)
+└──────────────┘
 ```
 
-### 8.2 Regras de negócio (Fase 1)
+### 8.5 Regras do trial
 
-- Todo tenant começa em `TRIALING` (salvo exceções manuais do platform admin).
-- Trial padrão: 30 dias. Platform admin pode customizar caso a caso (campo `isCustomTrial`).
-- Ao expirar trial, tenant passa para `PAST_DUE` (com `gracePeriodEndsAt = trialEndsAt + 7 dias`).
-- Após grace period, tenant passa para `SUSPENDED`.
-- Tenant `SUSPENDED`: staff não consegue logar; página pública mostra "salão temporariamente indisponível".
-- Platform admin pode estender trial, reativar, cancelar a qualquer momento.
-- **Cobrança real (mensalidade + taxa) não existe na Fase 1.** A transição `PAST_DUE → ACTIVE` é manual ou fica estacionada até Fase 2.
+1. **Trial padrão:** 30 dias. Valor vem de `plans.trialDaysDefault` do plano atribuído no onboarding.
+2. **Customização na criação:** platform admin pode criar tenant com `trialDaysGranted` diferente (ex: 60 dias pro amigo; 7 dias pro cliente urgente). Marca `isCustomTrial = true` e registra `TRIAL_CUSTOMIZED` em `billing_events`.
+3. **Extensão durante trial ou PAST_DUE:** admin pode adicionar N dias ao `trialEndsAt` a qualquer momento. Gera `TRIAL_EXTENDED`.
+4. **Encurtamento:** tecnicamente possível, logado como `TRIAL_CUSTOMIZED` (atípico).
+5. **Acesso durante trial:** tenant em `TRIALING` tem acesso **completo** ao produto — nenhuma feature bloqueada.
+6. **Transição automática:** `pg_cron` diário detecta trials expirados e transita para `PAST_DUE`.
 
-### 8.3 pg_cron (expiração automática)
+### 8.6 Transições automáticas (pg_cron)
 
-Dois jobs diários às 03:00 UTC:
+Job diário às 03:00 UTC (SQL simplificado; implementação real registra `billing_events` para cada linha afetada):
 
 ```sql
--- Trial → PAST_DUE
+-- Job 1: Trial → PAST_DUE
 update tenants
 set billing_status = 'PAST_DUE',
     grace_period_ends_at = trial_ends_at + interval '7 days'
 where billing_status = 'TRIALING'
   and trial_ends_at < now();
 
--- PAST_DUE → SUSPENDED
+-- Job 2: PAST_DUE → SUSPENDED
 update tenants
 set billing_status = 'SUSPENDED'
 where billing_status = 'PAST_DUE'
   and grace_period_ends_at < now();
 ```
 
-### 8.4 Planos (`plans`)
+Cada update dispara trigger que insere `billing_events` com tipo correspondente (`TRIAL_EXPIRED`, `GRACE_PERIOD_ENDED`), `actorUserId = null` e `reason = 'transição automática via pg_cron'`.
 
-Entidade global, gerenciada pelo platform admin. Campos:
+### 8.7 Ativação de plano pago
 
-- `code` (ex: `STARTER`, `PRO`, `PREMIUM`)
-- `name` (display)
-- `monthlyPriceCents`
-- `transactionFeeType` (PERCENTAGE / FIXED / NONE)
-- `transactionFeeValue` (% ou valor em centavos dependendo do tipo)
-- `transactionFeeFixedCents` (opcional — para modelo híbrido futuro)
-- `isActive`
+#### Fluxo Fase 1 (manual pelo platform admin)
 
-### 8.5 O que **está** na Fase 1
+Cobrança real ainda não existe. Admin pode marcar um tenant como `ACTIVE` manualmente (cenário: amigo começou a pagar por fora, platform admin registra).
 
-- Schema completo de billing (todos os campos em `tenants`, tabela `plans`).
-- Platform admin CRUD de plans.
-- Criação de tenant com trial automático.
-- Override manual de trial (platform admin).
-- Jobs `pg_cron` de transição de estado.
-- Visão de billing no painel `/platform` (contagem por status, tenants em PAST_DUE para ação).
+1. Platform admin abre `/platform/tenants/[id]/billing`.
+2. Clica "Ativar assinatura".
+3. Confirma plano atual, ajusta preço (se override desejado), define `subscriptionStartsAt = now()`.
+4. Sistema atualiza `billingStatus = ACTIVE`, registra snapshot de preço/taxa.
+5. Grava `billing_events` com `BILLING_ACTIVATED`.
 
-### 8.6 O que **não está** na Fase 1
+#### Fluxo Fase 2+ (automático via gateway)
 
-- Cobrança real (Pix, cartão, boleto).
-- Emissão de fatura.
-- Webhooks de pagamento.
-- Split de taxa de transação (aplicação real do `transactionFeeValue` em sinais pagos).
-- Dunning (sequência de cobrança em PAST_DUE).
+Fora do escopo da Fase 1. Será implementado em spec separada cobrindo integração com gateway (Asaas/Mercado Pago/Stripe), webhook de confirmação, retry e dunning.
+
+### 8.8 Cobrança recorrente (Fase 2+, fora do escopo)
+
+Deixado documentado aqui para dar contexto arquitetural:
+
+- Gateway de pagamento escolhido em spec separada da Fase 2.
+- Webhook dispara renovação de `subscriptionEndsAt`.
+- Falha de cobrança → retry automático → se esgotar → `billingStatus = PAST_DUE`.
+- Dunning (e-mail/WhatsApp de cobrança) entra em Fase 3 com comunicação.
+
+### 8.9 Aplicação da taxa por transação (Fase 2+, fora do escopo)
+
+Deixado documentado para garantir coerência do schema na Fase 1:
+
+- Taxa incide sobre o **valor do sinal efetivamente pago** (não sobre o valor total do serviço).
+- Cálculo:
+  - `PERCENTAGE`: `fee = round(signalAmount * transactionFeeValue / 10000)` (em basis points).
+  - `FIXED`: `fee = transactionFeeFixedCents`.
+  - `NONE`: sem taxa.
+- Split automático pelo gateway: taxa debitada do repasse ao salão.
+- Auditada em tabela futura `transaction_fees` (criada na Fase 2); não entra no `billing_events`.
+
+### 8.10 Painel administrativo Aralabs — billing
+
+#### Lista de tenants (`/platform/tenants`)
+- Filtros por `billingStatus`.
+- Views pré-configuradas:
+  - "Em trial"
+  - "Trial expirando (próximos 7 dias)"
+  - "PAST_DUE" (precisam de ação)
+  - "SUSPENDED"
+  - "ACTIVE"
+  - "CANCELED"
+
+#### Gestão de planos (`/platform/plans`)
+- CRUD de `plans`.
+- Campos editáveis: nome, descrição, `monthlyPriceCents`, `transactionFeeType`, `transactionFeeValue`, `trialDaysDefault`, `isActive`, `isDefault`.
+- Desativar plano: não deleta, apenas marca `isActive = false`. Tenants existentes continuam com snapshot.
+
+#### Billing detalhado de tenant (`/platform/tenants/[id]/billing`)
+- Estado atual (plano, preço snapshot, taxa snapshot, status, datas).
+- Timeline de `billing_events` (histórico legível).
+- Ações disponíveis:
+  - **Estender trial** (input de +N dias)
+  - **Customizar trial** (ajustar `trialEndsAt` arbitrariamente)
+  - **Trocar plano** (atualiza snapshot de preço/taxa)
+  - **Override de preço** (ajusta `monthlyPriceCents` sem mudar plano)
+  - **Override de taxa** (ajusta `transactionFeeType` / `transactionFeeValue`)
+  - **Ativar assinatura** (manual, Fase 1)
+  - **Suspender manualmente** (motivo obrigatório)
+  - **Reativar** (volta para `TRIALING` ou `ACTIVE` à escolha do admin)
+  - **Cancelar** (terminal, confirmação explícita)
+
+Toda ação registra `billing_events` com evento apropriado, `actorUserId` do platform admin e `reason` opcional.
+
+### 8.11 Regras de negócio explícitas (billing)
+
+1. Todo tenant começa em `TRIALING` salvo override manual do platform admin.
+2. Trial default é 30 dias; valor vem de `plans.trialDaysDefault` do plano atribuído.
+3. Platform admin pode sobrescrever duração de trial a qualquer momento (estender, encurtar, reiniciar).
+4. Ao expirar trial (`trial_ends_at < now()`), tenant passa automaticamente para `PAST_DUE` com `grace_period_ends_at = trial_ends_at + 7 dias`.
+5. Ao passar do grace period, tenant é automaticamente `SUSPENDED`.
+6. Tenant `SUSPENDED`: staff não loga; página pública exibe mensagem de indisponibilidade; dados preservados.
+7. Taxa por transação é **sempre parametrizada**, nunca hardcoded.
+8. Preço da mensalidade é **snapshotado** em `tenants` no momento da ativação — mudar preço global do plano **não afeta** tenants já ativos.
+9. **Toda mudança de billing** (status, plano, preço, trial) **obrigatoriamente** gera um registro em `billing_events`.
+10. Apenas `PLATFORM_ADMIN` pode modificar campos de billing. Staff do tenant não tem acesso de leitura nem de escrita.
+11. `CANCELED` é estado terminal; tenant não volta dele sem criar novo registro.
+12. Taxa é aplicada sobre **transações elegíveis** (definidas na Fase 2). Na Fase 1 a regra de elegibilidade é documentada no schema mas não executada.
+
+### 8.12 Fase 1 vs Fase 2+
+
+| Item | Fase 1 | Fase 2+ |
+|---|---|---|
+| Schema completo (`plans`, campos em `tenants`, `billing_events`) | ✅ | — |
+| CRUD de planos pelo platform admin | ✅ | — |
+| Criação de tenant com trial automático | ✅ | — |
+| Override manual de trial (estender, encurtar, customizar) | ✅ | — |
+| Suspensão e reativação manual | ✅ | — |
+| `pg_cron`: transições automáticas (TRIALING → PAST_DUE → SUSPENDED) | ✅ | — |
+| Ativação manual de assinatura (lógica, sem dinheiro) | ✅ | — |
+| `billing_events` (histórico auditado) | ✅ | — |
+| Painel Aralabs com visões por status e billing detalhado | ✅ | — |
+| MRR projetado / trial conversion / distribuição por plano | ✅ | — |
+| **Cobrança real de mensalidade** (gateway, webhook, fatura) | ❌ | ✅ |
+| **Aplicação da taxa transacional** (split, reembolso) | ❌ | ✅ |
+| **Dunning** (cobrança em atraso automatizada) | ❌ | ✅ |
+| **Reembolso / chargeback** | ❌ | ✅ |
+| **MRR efetivo / churn / LTV** | ❌ | ✅ |
+
+### 8.13 Testes de billing (Fase 1)
+
+Casos obrigatórios em Vitest / pgTAP:
+
+- Criação de tenant com plano default → `billingStatus = TRIALING`, `trialEndsAt = now() + 30d`, evento `TRIAL_STARTED` gravado.
+- Customização de trial na criação (60 dias) → `isCustomTrial = true`, evento `TRIAL_CUSTOMIZED`.
+- `pg_cron` em tenant com `trialEndsAt` passado → `billingStatus = PAST_DUE`, `gracePeriodEndsAt = trialEndsAt + 7d`, evento `TRIAL_EXPIRED`.
+- `pg_cron` em tenant PAST_DUE com grace period vencido → `SUSPENDED`, evento `GRACE_PERIOD_ENDED`.
+- Staff de tenant SUSPENDED não consegue logar.
+- Página pública de tenant SUSPENDED exibe mensagem de indisponibilidade.
+- Mudança de plano global não altera snapshot em tenants já ativos.
+- Staff do tenant (SALON_OWNER) não consegue modificar campos de billing (RLS).
+- Platform admin consegue editar qualquer campo de billing de qualquer tenant.
 
 ---
 
@@ -607,6 +821,70 @@ Toggle no dashboard (ícone "apresentação" ou similar). Quando ativo:
 - Canal Supabase Realtime escuta `appointments` do `tenantId` atual.
 - Quando inserção/update/delete acontece, UI atualiza via revalidatePath ou estado client-side.
 - Especialmente importante quando 2+ dispositivos operam no salão (tablet balcão + celular do profissional).
+
+### 10.11 Override/extensão de trial (platform admin)
+
+**Contexto:** amigo do salão pediu mais 30 dias pra testar antes de pagar; cliente novo quer período especial; erro operacional que precisa ser corrigido.
+
+1. Platform admin abre `/platform/tenants/[id]/billing`.
+2. Clica "Estender trial" → digita número de dias a adicionar + motivo opcional.
+3. Server action valida:
+   - Ator é `PLATFORM_ADMIN`.
+   - Tenant está em `TRIALING` ou `PAST_DUE`.
+   - Número de dias é positivo.
+4. Atualiza `trialEndsAt = trialEndsAt + Ndias`; se estava em `PAST_DUE`, reverte para `TRIALING` e limpa `gracePeriodEndsAt`.
+5. Grava `billing_events` com `eventType = TRIAL_EXTENDED`, `fromStateJson`, `toStateJson`, `actorUserId`, `reason`.
+6. UI reflete novo estado.
+
+Para customizar trial (ajustar `trialEndsAt` arbitrariamente): mesmo fluxo mas evento é `TRIAL_CUSTOMIZED`.
+
+### 10.12 Ativação manual de plano pago (Fase 1)
+
+**Contexto:** na Fase 1 não há cobrança real, mas platform admin precisa registrar "esse cliente tá pagando por fora" pra que o estado do sistema reflita realidade.
+
+1. Platform admin abre `/platform/tenants/[id]/billing`.
+2. Clica "Ativar assinatura".
+3. Tela de confirmação mostra: plano atual, preço snapshot, taxa snapshot, data de início (default = now()).
+4. Admin pode fazer override de preço (ajuste manual do `monthlyPriceCents` snapshot) ou manter.
+5. Confirma → server action:
+   - Valida tenant não está em `CANCELED`.
+   - Atualiza `billingStatus = ACTIVE`, `subscriptionStartsAt = now()`.
+   - Se houve override de preço/taxa, grava evento `PRICING_OVERRIDDEN` adicional.
+   - Grava `billing_events` com `BILLING_ACTIVATED`.
+6. Tenant agora pode receber mudança de plano, overrides, etc.
+
+Na Fase 2+, esse fluxo deixa de ser manual e vira consequência do webhook do gateway.
+
+### 10.13 Suspensão e reativação manual
+
+#### Suspensão manual (platform admin)
+
+1. Admin abre billing do tenant, clica "Suspender".
+2. Motivo obrigatório (texto livre).
+3. Server action:
+   - Valida ator é `PLATFORM_ADMIN`.
+   - Atualiza `billingStatus = SUSPENDED`.
+   - Grava `billing_events` com `eventType = SUSPENDED`, `reason`.
+4. Staff do tenant é deslogado na próxima revalidação de sessão; página pública entra em modo "indisponível".
+
+#### Reativação (platform admin)
+
+1. Admin abre tenant em `SUSPENDED` ou `PAST_DUE`, clica "Reativar".
+2. Escolhe o estado de destino:
+   - **`TRIALING`:** platform admin informa novos `trialDaysGranted` (cria novo período de trial).
+   - **`ACTIVE`:** tenant vai direto para ativo; campos de subscription são repreenchidos.
+3. Server action atualiza estado + limpa `gracePeriodEndsAt`.
+4. Grava `billing_events` com `REACTIVATED` + snapshot do novo estado.
+5. Staff volta a conseguir logar; página pública volta ao ar.
+
+#### Cancelamento definitivo
+
+1. Admin abre tenant, clica "Cancelar".
+2. Confirmação explícita com digitação do slug do tenant (prevenção contra clique acidental).
+3. Server action:
+   - Atualiza `billingStatus = CANCELED`, `tenants.status = ARCHIVED`.
+   - Grava `billing_events` com `CANCELED`.
+4. Estado terminal. Dados são preservados (soft-delete) para auditoria; tenant não é mais acessível nem logável.
 
 ---
 
@@ -944,10 +1222,32 @@ Em `/dashboard/relatorios` (por tenant):
 - Taxa de comparecimento / no-show.
 - Agendamentos por profissional.
 
-Em `/platform` (Aralabs):
+Em `/platform` (Aralabs) — **operacional**:
 - Contagem por `billingStatus`.
 - Agendamentos totais por tenant.
 - Tenants criados no período.
+
+Em `/platform` (Aralabs) — **billing (Fase 1):**
+- **Tenants em TRIALING** (total + lista com dias restantes).
+- **Trials expirando nos próximos 7 dias** (lista com data exata e dias restantes; para ação proativa do admin).
+- **Tenants em PAST_DUE** (precisam de ação — cobrança, estender trial, ou suspender).
+- **Tenants SUSPENDED** (inativos).
+- **Tenants ACTIVE** (pagantes).
+- **Tenants CANCELED** (arquivados).
+- **Distribuição por plano** (quantos tenants em cada plano).
+- **MRR projetado:** soma de `monthlyPriceCents` dos tenants em `ACTIVE`.
+- **ARR projetado:** MRR × 12.
+- **Taxa de conversão de trial** (acumulada): `(ACTIVE criados por trial) / (trials terminados)` × 100.
+- **Novos tenants por período** (dia / semana / mês).
+- **Timeline de billing_events** (últimos eventos importantes: suspensões, ativações, cancelamentos).
+
+Em `/platform` (Aralabs) — **billing efetivo (Fase 2+):**
+- **MRR efetivo** (receita realmente recebida de mensalidade).
+- **Receita de taxa transacional** (acumulado recebido via split no período).
+- **Receita total** (mensalidade + taxa).
+- **Churn rate**.
+- **LTV** (receita média por tenant ao longo de sua vida).
+- **Tenants em inadimplência ativa** (falhas recentes de cobrança).
 
 ### 16.4 Erros no cliente
 - Sem Sentry na Fase 1.
