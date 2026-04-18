@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ara-barber
 
-## Getting Started
+SaaS multi-tenant para barbearias e salões — Fase 1 (Core Operável).
 
-First, run the development server:
+## Setup local
+
+### Pré-requisitos
+
+- Node.js 20+
+- pnpm 9+ (`corepack enable && corepack prepare pnpm@latest --activate`)
+- Docker Desktop rodando
+- Supabase CLI: `brew install supabase/tap/supabase`
+
+### Instalação
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.local.example .env.local
+supabase start
+# copiar publishable key e secret key para .env.local
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acessar `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Para testar subdomínios em dev, acessar `http://qualquercoisa.lvh.me:3000` (lvh.me resolve para 127.0.0.1 com qualquer subdomain).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Comandos
 
-## Learn More
+```bash
+pnpm dev              # dev server
+pnpm build            # production build
+pnpm test             # unit tests (Vitest)
+pnpm test:e2e         # E2E tests (Playwright)
+pnpm lint             # ESLint
+pnpm format           # Prettier
+pnpm typecheck        # TypeScript check
+supabase db push      # aplicar migrations
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Estrutura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [AGENTS.md](./AGENTS.md) — guia de arquitetura e convenções (para humanos e agents).
+- [docs/superpowers/specs/](./docs/superpowers/specs/) — specs de produto.
+- [docs/superpowers/plans/](./docs/superpowers/plans/) — planos de implementação por épico.
