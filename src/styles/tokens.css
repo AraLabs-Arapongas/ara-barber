@@ -1,0 +1,22 @@
+/*
+ * CSS custom properties neutras — valores default do theme Aralabs.
+ * O layout (public) e (salon) sobrescreve --color-primary/secondary/accent
+ * com os valores do tenant atual em runtime.
+ */
+:root {
+  --color-primary: #111827;
+  --color-primary-fg: #ffffff;
+  --color-secondary: #6b7280;
+  --color-accent: #2563eb;
+  --color-bg: #ffffff;
+  --color-fg: #0f172a;
+  --color-muted: #f3f4f6;
+  --color-border: #e5e7eb;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --spacing-touch: 2.75rem; /* 44px — target touch mínimo */
+}
