@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "../styles/tokens.css";
+@import 'tailwindcss';
+@import '../styles/tokens.css';
 
 @theme {
   --color-primary: var(--color-primary);
@@ -16,13 +16,16 @@
   --radius-xl: var(--radius-xl);
 }
 
-html, body {
+html,
+body {
   background: var(--color-bg);
   color: var(--color-fg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body, #__next {
+html,
+body,
+#__next {
   height: 100%;
 }
