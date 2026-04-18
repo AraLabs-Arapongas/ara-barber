@@ -1,0 +1,124 @@
+title,description,priority,label,epic
+Scaffold Next.js 16 + React 19 + Tailwind 4,Rodar create-next-app com TS/Tailwind/App Router/src-dir,high,infra,Épico 0 - Bootstrap
+Tokens CSS + globals.css com Tailwind 4,Criar src/styles/tokens.css e @theme mapping em globals.css,high,infra,Épico 0 - Bootstrap
+Variáveis de ambiente (.env.local.example),"Definir SUPABASE_URL, ANON_KEY, SERVICE_ROLE_KEY, hosts",high,infra,Épico 0 - Bootstrap
+Dependências principais,"Instalar @supabase/ssr, zod, vitest, playwright, date-fns, nanoid",high,infra,Épico 0 - Bootstrap
+ESLint 9 + Prettier + scripts,Configurar lint/format/typecheck/test/db:types em package.json,high,infra,Épico 0 - Bootstrap
+Simplificar layout raiz e home,Root layout em pt-BR + home placeholder,medium,frontend,Épico 0 - Bootstrap
+Middleware esqueleto,Inject x-ara-area / x-ara-host baseado em subdomínio,high,backend,Épico 0 - Bootstrap
+Clientes Supabase (browser/server/service-role),3 factories em src/lib/supabase,high,backend,Épico 0 - Bootstrap
+Helper requireEnv + teste,src/lib/utils/env.ts com Vitest,medium,backend,Épico 0 - Bootstrap
+Supabase local bootstrap,"supabase init + config.toml + start + .env.local preenchido",high,infra,Épico 0 - Bootstrap
+Configurar Vitest + setup,vitest.config.ts com @testing-library e happy-dom,high,test,Épico 0 - Bootstrap
+Configurar Playwright + smoke E2E,playwright.config.ts + e2e/smoke.spec.ts,high,test,Épico 0 - Bootstrap
+GitHub Actions CI,Lint/typecheck/unit/e2e em PR e main,high,infra,Épico 0 - Bootstrap
+CLAUDE.md + README.md,Guia para agents + doc do projeto,medium,docs,Épico 0 - Bootstrap
+Sanity check final do épico 0,Rodar lint+typecheck+test+build+e2e,high,test,Épico 0 - Bootstrap
+Migration 0001 — enums iniciais,"user_role, tenant_status, billing_status, billing_model, transaction_fee_type + pgtap",high,migration,Épico 1 - Auth + Banco Base
+Migration 0002 — plans,Tabela plans + unique default + RLS habilitado,high,migration,Épico 1 - Auth + Banco Base
+Migration 0003 — tenants,"Tenants com slug/branding/billing snapshot + índices",high,migration,Épico 1 - Auth + Banco Base
+Migration 0004 — user_profiles,Perfil de staff + platform admin com check role/tenant,high,migration,Épico 1 - Auth + Banco Base
+Migration 0005 — funções helper de RLS,"auth.current_tenant_id(), current_role(), is_platform_admin(), is_tenant_staff()",high,migration,Épico 1 - Auth + Banco Base
+Migration 0006 — RLS policies base,Policies em plans/tenants/user_profiles (4 por tabela),high,migration,Épico 1 - Auth + Banco Base
+Teste pgTAP de RLS base,Isolamento cross-tenant e anônimo em 6 casos,high,test,Épico 1 - Auth + Banco Base
+Seed de planos iniciais (Starter/Pro/Premium),Inserir em seed.sql com default,medium,migration,Épico 1 - Auth + Banco Base
+Gerar tipos TypeScript,Script db:types + commit do types.ts,high,backend,Épico 1 - Auth + Banco Base
+lib/auth/roles.ts + teste,"Helpers isStaffRole, canManageAgenda, canManageBilling",high,backend,Épico 1 - Auth + Banco Base
+lib/auth/session.ts,getSessionUser / requireSessionUser com perfil,high,backend,Épico 1 - Auth + Banco Base
+lib/auth/guards.ts + teste,"assertStaff / assertPlatformAdmin com AuthError",high,backend,Épico 1 - Auth + Banco Base
+Página de login do salão,"Form email/senha com Server Action e Zod",high,frontend,Épico 1 - Auth + Banco Base
+Página de login do platform admin,Form admin.aralabs.com.br/login,high,frontend,Épico 1 - Auth + Banco Base
+Rota de callback OAuth / magic link,Exchange code + redirect,high,backend,Épico 1 - Auth + Banco Base
+Rota de logout,signOut + redirect,medium,backend,Épico 1 - Auth + Banco Base
+Seed de usuários de teste,Platform admin + owner de tenant-teste para E2E,medium,test,Épico 1 - Auth + Banco Base
+E2E login flows,Playwright para platform e salon login,high,test,Épico 1 - Auth + Banco Base
+Sanity check final do épico 1,Rodar lint+typecheck+test+pgTAP+e2e+build,high,test,Épico 1 - Auth + Banco Base
+Migration 0008 — storage buckets,Bucket tenant-assets público + policies,high,migration,Épico 2 - Tenants + Branding
+lib/tenant/resolve.ts + cache + teste,"parseHostToSlug + resolveTenantIdBySlug com cache 60s",high,backend,Épico 2 - Tenants + Branding
+lib/tenant/context.ts,getCurrentTenantOrNotFound via header + service role,high,backend,Épico 2 - Tenants + Branding
+Branding helpers + ThemeInjector + TenantLogo,"sanitizeHexColor, contrastColor, brandingToCssVars + componentes",high,frontend,Épico 2 - Tenants + Branding
+Reescrever middleware com tenant resolution,Injeta x-ara-tenant-id/slug ou 404,high,backend,Épico 2 - Tenants + Branding
+Manifest PWA dinâmico,/api/manifest/[slug]/route.ts com buildManifestForSlug,high,backend,Épico 2 - Tenants + Branding
+Layout (public) + home do salão,"Metadata dinâmica, theme injector, logo e CTA Agendar",high,frontend,Épico 2 - Tenants + Branding
+Placeholder dashboard (salon),Layout com assertStaff e theme injector,medium,frontend,Épico 2 - Tenants + Branding
+Placeholder platform admin,Layout com assertPlatformAdmin,medium,frontend,Épico 2 - Tenants + Branding
+E2E tenant resolution + manifest,"Testa 404, headers, JSON do manifest",high,test,Épico 2 - Tenants + Branding
+Sanity check final do épico 2,Tudo verde,high,test,Épico 2 - Tenants + Branding
+Migration 0009 — professionals,Tabela + commission_type enum + RLS,high,migration,Épico 3 - Cadastros
+Migration 0010 — customers,"Unique (tenant, user), self-read/update, índices",high,migration,Épico 3 - Cadastros
+Migration 0011 — services,"Com depósito opcional (schema, sem enforcement)",high,migration,Épico 3 - Cadastros
+Migration 0012 — professional_services,Join com unique (tenant/prof/service),high,migration,Épico 3 - Cadastros
+Migration 0013 — business_hours,Com leitura pública quando isOpen,high,migration,Épico 3 - Cadastros
+Migration 0014 — professional_availability,Janelas de trabalho por weekday,high,migration,Épico 3 - Cadastros
+Migration 0015 — availability_blocks,Bloqueios por profissional com timerange check,high,migration,Épico 3 - Cadastros
+Zod schemas em lib/validation/schemas.ts,Schemas de todas entidades de cadastro,high,backend,Épico 3 - Cadastros
+CRUD de profissionais,Server actions + page + form mobile-first,high,frontend,Épico 3 - Cadastros
+CRUD de serviços,Server actions + page + form com duração/preço,high,frontend,Épico 3 - Cadastros
+CRUD de clientes,Criação manual offline (sem user_id),high,frontend,Épico 3 - Cadastros
+Horários de funcionamento (configurações),Editor com 7 dias + toggle aberto,high,frontend,Épico 3 - Cadastros
+Teste pgTAP RLS cadastros,"Cross-tenant em 8 casos (professionals/services/hours/anônimo)",high,test,Épico 3 - Cadastros
+Sanity check final do épico 3,Regenerar types + tudo verde,high,test,Épico 3 - Cadastros
+Migration 0016 — appointments,"Exclusion constraint via btree_gist + 4 policies RLS",high,migration,Épico 4 - Agenda Core
+lib/booking/time.ts + testes,"parseHHMM, weekdayOf, combineDateAndTime (timezone-aware)",high,backend,Épico 4 - Agenda Core
+lib/booking/availability.ts + teste,computeAvailableSlots com 5 cenários cobertos,high,backend,Épico 4 - Agenda Core
+lib/booking/status-machine.ts + teste,Transições válidas/inválidas documentadas,high,backend,Épico 4 - Agenda Core
+lib/booking/create-appointment.ts,Com detecção de conflito via código 23P01,high,backend,Épico 4 - Agenda Core
+Server action createManualAppointment,Assert staff + tenant context + zod,high,backend,Épico 4 - Agenda Core
+Agenda view lista (mobile),"Cards verticais com status e horário",high,frontend,Épico 4 - Agenda Core
+Agenda view colunas (tablet landscape),"Timeline por profissional, breakpoint lg:",high,frontend,Épico 4 - Agenda Core
+Dashboard home redireciona para /agenda,redirect server component,low,frontend,Épico 4 - Agenda Core
+pgTAP — overlap constraint,"Insert duplo bloqueado em CONFIRMED, permitido em CANCELLED",high,test,Épico 4 - Agenda Core
+Sanity check final do épico 4,Tudo verde,high,test,Épico 4 - Agenda Core
+Migration 0017 — helpers de leitura pública,Funções SQL security definer para service role,high,migration,Épico 5 - Booking Público
+lib/booking/public-data.ts,"listServices, listProfessionals, listSlotsForDay",high,backend,Épico 5 - Booking Público
+lib/booking/wizard-state.ts + testes,"parseWizardState + buildWizardHref (searchParams)",high,backend,Épico 5 - Booking Público
+Passo 1 — escolha do serviço,"Lista mobile-first com preço e duração",high,frontend,Épico 5 - Booking Público
+Passo 2 — escolha do profissional,Filtrado por professional_services,high,frontend,Épico 5 - Booking Público
+Passo 3 — escolha de data (30 dias),Grid mobile de datas próximas,high,frontend,Épico 5 - Booking Público
+Passo 4 — escolha de horário,Slots calculados em runtime via server,high,frontend,Épico 5 - Booking Público
+Callback OAuth cria customer por tenant,ensureCustomer via service role,high,backend,Épico 5 - Booking Público
+Passo 5 — login inline (Google/Apple/Magic),Escolhas de provider + magic link via server action,high,frontend,Épico 5 - Booking Público
+Passo 6 — confirmação + tela de sucesso,Valida slot + cria appointment PUBLIC_WEB,high,frontend,Épico 5 - Booking Público
+/my-bookings (lista do customer),Por customer do tenant atual,high,frontend,Épico 5 - Booking Público
+E2E wizard público,Playwright até passo de horário,medium,test,Épico 5 - Booking Público
+Sanity check final do épico 5,Tudo verde,high,test,Épico 5 - Booking Público
+Server actions — todas transitions,"checkIn, startService, completeService, noShow, cancelBySalon",high,backend,Épico 6 - Status Transitions
+Card de appointment com botões contextuais,"Componente client com formulários inline",high,frontend,Épico 6 - Status Transitions
+Página de detalhe do appointment,"Dados completos + diálogo de cancelamento",high,frontend,Épico 6 - Status Transitions
+Cancelamento pelo customer em /my-bookings,Validação de ownership + futuro + status,high,frontend,Épico 6 - Status Transitions
+Bloqueio de horário (availability_blocks),UI e server actions para criar/deletar,high,frontend,Épico 6 - Status Transitions
+pgTAP — transições via UPDATE,RLS + anônimo bloqueado,medium,test,Épico 6 - Status Transitions
+Sanity check final do épico 6,Tudo verde,high,test,Épico 6 - Status Transitions
+Migration 0018 — billing_events,Tabela + enum BillingEventType + policies,high,migration,Épico 7 - Platform Admin + Billing
+Migration 0019 — triggers billing automáticos,Captura transições de estado em tenants,high,migration,Épico 7 - Platform Admin + Billing
+Migration 0020 — pg_cron billing,"Jobs diários expire_trials e suspend_past_due",high,migration,Épico 7 - Platform Admin + Billing
+lib/billing/trial.ts + status.ts + testes,"computeTrialEnd, computeGracePeriodEnd, canReactivateFrom",high,backend,Épico 7 - Platform Admin + Billing
+Dashboard da plataforma (/platform),"Contagens + MRR projetado + trials expirando",high,frontend,Épico 7 - Platform Admin + Billing
+Lista de tenants com filtro por status,Views por billing_status,high,frontend,Épico 7 - Platform Admin + Billing
+Criar novo tenant (convite de owner),"Insert + invite via admin API + user_profiles",high,frontend,Épico 7 - Platform Admin + Billing
+Página de detalhe de tenant,Com equipe e link para billing,medium,frontend,Épico 7 - Platform Admin + Billing
+Billing detalhado + 5 ações,"Estender, ativar, suspender, reativar, cancelar + timeline",high,frontend,Épico 7 - Platform Admin + Billing
+CRUD de planos,"Com regra de is_default único",high,frontend,Épico 7 - Platform Admin + Billing
+Sanity check final do épico 7,Tudo verde,high,test,Épico 7 - Platform Admin + Billing
+Migration 0021 — realtime publications,"Adiciona appointments e availability_blocks à publication",high,migration,Épico 8 - Realtime + Op + PWA
+Helper subscribeToAgenda,Supabase Realtime por tenant em client,high,backend,Épico 8 - Realtime + Op + PWA
+LiveBoard — agenda com auto-refresh,"useEffect + router.refresh() on change",high,frontend,Épico 8 - Realtime + Op + PWA
+PIN bcrypt do Modo Operação,Helper + CRUD em configurações (owner only),medium,backend,Épico 8 - Realtime + Op + PWA
+Wake Lock helper + toggle do Modo Operação,"localStorage + requestWakeLock",medium,frontend,Épico 8 - Realtime + Op + PWA
+PinGate para sair do Modo Operação,Modal com verifyOperationPin server action,medium,frontend,Épico 8 - Realtime + Op + PWA
+CSS Modo Operação esconde menus,"body[data-operation=on] [data-hide-in-operation-mode]",low,frontend,Épico 8 - Realtime + Op + PWA
+Service Worker mínimo,public/sw.js com cache-first para estáticos,medium,frontend,Épico 8 - Realtime + Op + PWA
+Install prompt (Android beforeinstallprompt),Component client com CTA,medium,frontend,Épico 8 - Realtime + Op + PWA
+Ícones default 192/512,Placeholders em public/icons,low,frontend,Épico 8 - Realtime + Op + PWA
+Sanity check final do épico 8,Tudo verde,high,test,Épico 8 - Realtime + Op + PWA
+Migration 0022 — audit_log,Tabela com policies de leitura,high,migration,Épico 9 - Audit + Hardening
+Migration 0023 — audit triggers,"Trigger genérico em appointments/tenants/user_profiles/plans",high,migration,Épico 9 - Audit + Hardening
+Headers de segurança no Next,"CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy",high,security,Épico 9 - Audit + Hardening
+Error boundary global + ErrorCard,app/error.tsx + componente reutilizável,medium,frontend,Épico 9 - Audit + Hardening
+Rate limit básico no login,5 tentativas/min por IP+email (in-memory),medium,security,Épico 9 - Audit + Hardening
+Backup semanal via GitHub Actions,pg_dump → Cloudflare R2 com cron,medium,infra,Épico 9 - Audit + Hardening
+E2E regressão — onboarding,Platform admin cria tenant + convida owner,medium,test,Épico 9 - Audit + Hardening
+E2E regressão — booking flow,Wizard público até horário,medium,test,Épico 9 - Audit + Hardening
+E2E regressão — status transitions,Staff faz check-in via botão,medium,test,Épico 9 - Audit + Hardening
+README atualizado (observabilidade/backup/segurança),Documentar audit_log + backup + CSP,low,docs,Épico 9 - Audit + Hardening
+Sanity check final — Fase 1 completa,"lint+typecheck+test+pgTAP+e2e+build, tag v0.1.0-fase1",high,test,Épico 9 - Audit + Hardening
