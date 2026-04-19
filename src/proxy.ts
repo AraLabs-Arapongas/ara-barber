@@ -1,26 +1,40 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { parseHostToSlug, resolveTenantIdBySlug } from '@/lib/tenant/resolve'
 
-const PLATFORM_HOST = process.env.NEXT_PUBLIC_PLATFORM_HOST ?? 'admin.aralabs.com.br'
-const APP_BASE_HOST = process.env.NEXT_PUBLIC_APP_BASE_HOST ?? 'aralabs.com.br'
-const DEV_BASE_HOST = process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me'
-
-function resolveArea(host: string): 'platform' | 'tenant' | 'root' {
-  if (host === PLATFORM_HOST) return 'platform'
-  if (host.endsWith(`.${APP_BASE_HOST}`)) return 'tenant'
-  if (host.endsWith(`.${DEV_BASE_HOST}`)) return 'tenant'
-  return 'root'
-}
-
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const host = req.headers.get('host') ?? ''
-  const area = resolveArea(host.split(':')[0])
+  const parsed = parseHostToSlug(host)
 
   const res = NextResponse.next()
-  res.headers.set('x-ara-area', area)
+  res.headers.set('x-ara-area', parsed.area)
   res.headers.set('x-ara-host', host)
+
+  if (parsed.area === 'tenant' && parsed.slug) {
+    const tenantId = await resolveTenantIdBySlug(parsed.slug)
+    if (!tenantId) {
+      // Subdomínio válido em formato mas não existe tenant correspondente.
+      return new NextResponse('Salão não encontrado.', {
+        status: 404,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'x-ara-area': parsed.area,
+          'x-ara-host': host,
+        },
+      })
+    }
+    res.headers.set('x-ara-tenant-id', tenantId)
+    res.headers.set('x-ara-tenant-slug', parsed.slug)
+  }
+
   return res
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/health).*)'],
+  matcher: [
+    /*
+     * Evita rodar o proxy em assets estáticos, otimização de imagem,
+     * favicon e route handler de health (quando houver).
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
+  ],
 }
