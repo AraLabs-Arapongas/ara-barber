@@ -167,6 +167,15 @@ select:focus-visible {
   color: var(--color-fg);
 }
 
+/*
+ * Esconde o botão nativo de "revelar senha" do Edge/Chromium, que aparece
+ * sobre o input e confunde com nosso ícone de olho próprio.
+ */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 /* Motion reduzida */
 @media (prefers-reduced-motion: reduce) {
   *,

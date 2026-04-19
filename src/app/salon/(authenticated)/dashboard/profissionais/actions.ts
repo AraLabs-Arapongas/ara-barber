@@ -4,22 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff } from '@/lib/auth/guards'
 import { professionalSchema } from '@/lib/validation/schemas'
+import { parseBrlToCents, parsePercentToBasisPoints } from '@/lib/money'
 
 export type ActionState = { error?: string; success?: boolean }
 
 const INITIAL: ActionState = {}
 
-function parseForm(formData: FormData) {
-  return professionalSchema.safeParse({
-    name: formData.get('name'),
-    displayName: formData.get('displayName') || null,
-    photoUrl: formData.get('photoUrl') || null,
-    phone: formData.get('phone') || null,
-    email: formData.get('email') || null,
-    commissionType: formData.get('commissionType') ?? 'PERCENTAGE',
-    commissionValue: Number(formData.get('commissionValue') ?? 0),
-    isActive: formData.get('isActive') !== 'false',
-  })
+function parseCommissionValue(raw: unknown, type: 'PERCENTAGE' | 'FIXED'): number | null {
+  if (typeof raw !== 'string') return null
+  return type === 'PERCENTAGE' ? parsePercentToBasisPoints(raw) : parseBrlToCents(raw)
 }
 
 export async function createProfessionalAction(
@@ -27,7 +20,31 @@ export async function createProfessionalAction(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await assertStaff()
-  const parsed = parseForm(formData)
+
+  const commissionType = (formData.get('commissionType') ?? 'PERCENTAGE') as
+    | 'PERCENTAGE'
+    | 'FIXED'
+  const commissionValue = parseCommissionValue(formData.get('commissionValue'), commissionType)
+  if (commissionValue === null) {
+    return {
+      error:
+        commissionType === 'PERCENTAGE'
+          ? 'Informe a porcentagem (ex: 50 para 50%).'
+          : 'Informe o valor em reais (ex: 80,00).',
+    }
+  }
+
+  const parsed = professionalSchema.safeParse({
+    name: formData.get('name'),
+    displayName: formData.get('displayName') || null,
+    photoUrl: formData.get('photoUrl') || null,
+    phone: formData.get('phone') || null,
+    email: formData.get('email') || null,
+    commissionType,
+    commissionValue,
+    isActive: formData.get('isActive') !== 'false',
+  })
+
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
   }

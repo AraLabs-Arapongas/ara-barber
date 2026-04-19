@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff } from '@/lib/auth/guards'
 import { serviceSchema } from '@/lib/validation/schemas'
+import { parseBrlToCents } from '@/lib/money'
 
 export type ActionState = { error?: string; success?: boolean }
 
@@ -15,11 +16,16 @@ export async function createServiceAction(
 ): Promise<ActionState> {
   const user = await assertStaff()
 
+  const priceCents = parseBrlToCents(formData.get('price') as string | null)
+  if (priceCents === null) {
+    return { error: 'Informe o preço em reais (ex: 45,00).' }
+  }
+
   const parsed = serviceSchema.safeParse({
     name: formData.get('name'),
     description: formData.get('description') || null,
     durationMinutes: Number(formData.get('durationMinutes') ?? 30),
-    priceCents: Number(formData.get('priceCents') ?? 0),
+    priceCents,
     depositRequired: false,
     depositType: null,
     depositValueCents: null,
