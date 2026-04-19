@@ -1,10 +1,11 @@
 'use client'
 
-import { useActionState } from 'react'
-import { User, Phone, Mail } from 'lucide-react'
+import { useActionState, useState } from 'react'
+import { User, Phone } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
+import { formatBrPhone } from '@/lib/format'
 import {
   createProfessionalAction,
   INITIAL_PROFESSIONAL_STATE,
@@ -16,6 +17,7 @@ export function NewProfessionalForm() {
     createProfessionalAction,
     INITIAL_PROFESSIONAL_STATE,
   )
+  const [phone, setPhone] = useState('')
 
   return (
     <form action={action} className="space-y-4" key={state.success ? 'reset' : 'edit'}>
@@ -36,24 +38,18 @@ export function NewProfessionalForm() {
         hint="Exibido no booking, se preenchido."
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input
-          label="Telefone"
-          name="phone"
-          type="tel"
-          maxLength={30}
-          placeholder="(00) 00000-0000"
-          leftIcon={<Phone className="h-4 w-4" />}
-        />
-        <Input
-          label="E-mail"
-          name="email"
-          type="email"
-          maxLength={200}
-          placeholder="pro@salao.com"
-          leftIcon={<Mail className="h-4 w-4" />}
-        />
-      </div>
+      <Input
+        label="Telefone"
+        name="phone"
+        type="tel"
+        inputMode="numeric"
+        autoComplete="tel-national"
+        maxLength={16}
+        placeholder="(00) 00000-0000"
+        value={phone}
+        onChange={(e) => setPhone(formatBrPhone(e.target.value))}
+        leftIcon={<Phone className="h-4 w-4" />}
+      />
 
       <input type="hidden" name="isActive" value="true" />
 

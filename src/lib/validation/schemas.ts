@@ -21,7 +21,6 @@ export const professionalSchema = z.object({
   displayName: optionalString(100),
   photoUrl: z.string().trim().url().nullish().transform((v) => (v ? v : null)),
   phone: optionalString(30),
-  email: optionalEmail,
   isActive: z.boolean().default(true),
 })
 

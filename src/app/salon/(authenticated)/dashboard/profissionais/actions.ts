@@ -20,7 +20,6 @@ export async function createProfessionalAction(
     displayName: formData.get('displayName') || null,
     photoUrl: formData.get('photoUrl') || null,
     phone: formData.get('phone') || null,
-    email: formData.get('email') || null,
     isActive: formData.get('isActive') !== 'false',
   })
 
@@ -35,7 +34,6 @@ export async function createProfessionalAction(
     display_name: parsed.data.displayName,
     photo_url: parsed.data.photoUrl,
     phone: parsed.data.phone,
-    email: parsed.data.email,
     is_active: parsed.data.isActive,
   })
 
