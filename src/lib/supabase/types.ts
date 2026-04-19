@@ -107,9 +107,9 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
-          name: string
+          name: string | null
           notes: string | null
-          phone: string
+          phone: string | null
           tenant_id: string
           updated_at: string
           user_id: string
@@ -121,9 +121,9 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
-          name: string
+          name?: string | null
           notes?: string | null
-          phone: string
+          phone?: string | null
           tenant_id: string
           updated_at?: string
           user_id: string
@@ -135,9 +135,9 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
-          name?: string
+          name?: string | null
           notes?: string | null
-          phone?: string
+          phone?: string | null
           tenant_id?: string
           updated_at?: string
           user_id?: string
@@ -300,8 +300,6 @@ export type Database = {
       }
       professionals: {
         Row: {
-          commission_type: Database["public"]["Enums"]["commission_type"]
-          commission_value: number
           created_at: string
           display_name: string | null
           email: string | null
@@ -315,8 +313,6 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          commission_type?: Database["public"]["Enums"]["commission_type"]
-          commission_value?: number
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -330,8 +326,6 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          commission_type?: Database["public"]["Enums"]["commission_type"]
-          commission_value?: number
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -603,7 +597,6 @@ export type Database = {
         | "PAST_DUE"
         | "SUSPENDED"
         | "CANCELED"
-      commission_type: "PERCENTAGE" | "FIXED"
       deposit_type: "FIXED" | "PERCENTAGE"
       tenant_status: "ACTIVE" | "SUSPENDED" | "ARCHIVED"
       transaction_fee_type: "PERCENTAGE" | "FIXED" | "NONE"
@@ -748,7 +741,6 @@ export const Constants = {
         "SUSPENDED",
         "CANCELED",
       ],
-      commission_type: ["PERCENTAGE", "FIXED"],
       deposit_type: ["FIXED", "PERCENTAGE"],
       tenant_status: ["ACTIVE", "SUSPENDED", "ARCHIVED"],
       transaction_fee_type: ["PERCENTAGE", "FIXED", "NONE"],

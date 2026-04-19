@@ -8,14 +8,7 @@ type Row = {
   name: string
   display_name: string | null
   phone: string | null
-  commission_type: 'PERCENTAGE' | 'FIXED'
-  commission_value: number
   is_active: boolean
-}
-
-function formatCommission(type: Row['commission_type'], value: number): string {
-  if (type === 'PERCENTAGE') return `${(value / 100).toLocaleString('pt-BR')}%`
-  return (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 export default async function ProfessionalsPage() {
@@ -23,7 +16,7 @@ export default async function ProfessionalsPage() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('professionals')
-    .select('id, name, display_name, phone, commission_type, commission_value, is_active')
+    .select('id, name, display_name, phone, is_active')
     .order('name')
 
   const professionals: Row[] = error ? [] : ((data ?? []) as Row[])
@@ -53,8 +46,7 @@ export default async function ProfessionalsPage() {
                       {p.display_name || p.name}
                     </p>
                     <p className="truncate text-[0.8125rem] text-fg-muted">
-                      {p.phone ?? 'sem telefone'} ·{' '}
-                      {formatCommission(p.commission_type, p.commission_value)}
+                      {p.phone ?? 'sem telefone'}
                     </p>
                   </div>
                   <span

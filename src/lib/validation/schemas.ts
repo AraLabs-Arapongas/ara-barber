@@ -22,8 +22,6 @@ export const professionalSchema = z.object({
   photoUrl: z.string().trim().url().nullish().transform((v) => (v ? v : null)),
   phone: optionalString(30),
   email: optionalEmail,
-  commissionType: z.enum(['PERCENTAGE', 'FIXED']),
-  commissionValue: z.number().int().min(0).max(100000),
   isActive: z.boolean().default(true),
 })
 
