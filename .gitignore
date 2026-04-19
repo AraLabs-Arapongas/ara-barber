@@ -22,6 +22,9 @@ next-env.d.ts
 *.log
 .claude/
 
+# referência local de contas (nunca comitar)
+docs/accounts.md
+
 # vercel
 .vercel/
 
