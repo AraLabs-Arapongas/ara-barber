@@ -22,17 +22,12 @@ export function CustomerAccess() {
     ENTITY.customers.schema,
     ENTITY.customers.seed,
   )
-  const { data: session, setData: setSession, hydrated } = useMockStore(
+  const { data: session, setData: setSession } = useMockStore(
     tenantSlug,
     ENTITY.currentCustomer.key,
     ENTITY.currentCustomer.schema,
     ENTITY.currentCustomer.seed,
   )
-
-  // Evita flicker na SSR — só renderiza depois de ler o localStorage.
-  if (!hydrated) {
-    return <div className="mt-6 h-16" aria-hidden="true" />
-  }
 
   if (session.email) {
     return (
