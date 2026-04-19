@@ -36,6 +36,15 @@ export default function BookStepLogin() {
   const [email, setEmail] = useState(session.email ?? '')
   const [error, setError] = useState<string | null>(null)
 
+  // Se veio com params do wizard, vai pra /book/confirmar. Sem params (login
+  // standalone, por ex. vindo de /meus-agendamentos), vai pra /meus-agendamentos.
+  const hasWizardParams = Boolean(
+    current.serviceId && current.date && current.time && current.professionalId,
+  )
+  const nextHref = hasWizardParams
+    ? bookHrefWith('/book/confirmar', current)
+    : '/meus-agendamentos'
+
   function sendOtp(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const value = email.trim().toLowerCase()
@@ -71,7 +80,7 @@ export default function BookStepLogin() {
     }
     setSession({ customerId: customer.id, email })
     setError(null)
-    router.push(bookHrefWith('/book/confirmar', current))
+    router.push(nextHref)
   }
 
   function loginGoogle() {
@@ -91,33 +100,31 @@ export default function BookStepLogin() {
       customer = newCust
     }
     setSession({ customerId: customer.id, email: fakeEmail })
-    router.push(bookHrefWith('/book/confirmar', current))
-  }
-
-  if (!current.serviceId || !current.date || !current.time || !current.professionalId) {
-    return (
-      <main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-6">
-        <p className="text-fg-muted">
-          Finalize os passos anteriores.{' '}
-          <Link href="/book" className="font-medium text-brand-primary hover:underline">
-            Voltar
-          </Link>
-        </p>
-      </main>
-    )
+    router.push(nextHref)
   }
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-24 sm:px-6">
-      <Link
-        href={bookHrefWith('/book/horario', current)}
-        className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
-      >
-        <ChevronLeft className="h-3.5 w-3.5" />
-        Horário
-      </Link>
-
-      <StepIndicator current={5} total={6} labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']} />
+      {hasWizardParams ? (
+        <>
+          <Link
+            href={bookHrefWith('/book/horario', current)}
+            className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Horário
+          </Link>
+          <StepIndicator current={5} total={6} labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']} />
+        </>
+      ) : (
+        <Link
+          href="/"
+          className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Home
+        </Link>
+      )}
 
       <h1 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-fg">
         Identifique-se
