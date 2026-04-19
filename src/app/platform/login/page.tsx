@@ -1,10 +1,16 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { ShieldCheck } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { Monogram } from '@/components/brand/logo'
+import { Wordmark } from '@/components/brand/logo'
 import { getSessionUser } from '@/lib/auth/session'
 import { isPlatformAdminRole } from '@/lib/auth/roles'
 import { PlatformLoginForm } from './login-form'
+
+export const metadata: Metadata = {
+  title: 'Entrar · Admin AraLabs',
+  description: 'Login restrito à equipe AraLabs.',
+}
 
 export default async function PlatformLoginPage() {
   // Se já tem sessão de platform admin ativa, pula direto pro painel.
@@ -16,13 +22,8 @@ export default async function PlatformLoginPage() {
   return (
     <main className="noise-overlay relative flex min-h-screen flex-col bg-bg-subtle">
       <header className="relative z-10 border-b border-border/60 bg-surface/80 px-5 py-4 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Monogram className="h-8 w-8" />
-            <span className="font-display text-[1rem] font-semibold tracking-tight text-fg">
-              Ara Barber
-            </span>
-          </div>
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
+          <Wordmark className="text-fg" />
           <span className="flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             Acesso restrito
