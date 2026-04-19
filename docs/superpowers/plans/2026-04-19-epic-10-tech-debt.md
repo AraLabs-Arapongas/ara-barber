@@ -72,8 +72,10 @@
 ## Task 2: Rotação de credenciais expostas em chat
 
 **Origem:** Em 2026-04-18 foram pastadas em chat:
-- DB password do projeto `ara-barber-dev`: `qhUbvhlUgMHgtmv9`
-- Secret key: `sb_secret_iH7JbFPb-mhTOw_tWoviVA_BPLd6CXH`
+- DB password do projeto `ara-barber-dev` (ver histórico do chat / password manager até rotacionar)
+- Secret key `sb_secret_*` (ver `.env.local` até rotacionar)
+
+Os valores literais foram omitidos deste plano de propósito para não aparecerem em secret scanners e na busca de código.
 
 **Steps:**
 
