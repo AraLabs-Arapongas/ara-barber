@@ -9,6 +9,8 @@ import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
+import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
+import { CustomerAccess } from '@/components/home/customer-access'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -122,48 +124,52 @@ async function TenantPublicHome() {
           </div>
         </main>
       ) : (
-        <main className="noise-overlay relative flex min-h-screen flex-col bg-bg">
-          <header className="relative z-10 flex items-center gap-4 px-5 pt-8 sm:px-8">
-            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={56} />
-            <div className="min-w-0">
-              <h1 className="font-display text-[1.5rem] font-semibold tracking-tight text-fg leading-tight">
-                {tenant.name}
-              </h1>
-              <p className="text-[0.8125rem] text-fg-muted">Barbearia · {tenant.timezone}</p>
-            </div>
-          </header>
+        <TenantSlugProvider slug={tenant.slug}>
+          <main className="noise-overlay relative flex min-h-screen flex-col bg-bg">
+            <header className="relative z-10 flex items-center gap-4 px-5 pt-8 sm:px-8">
+              <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={56} />
+              <div className="min-w-0">
+                <h1 className="font-display text-[1.5rem] font-semibold tracking-tight text-fg leading-tight">
+                  {tenant.name}
+                </h1>
+                <p className="text-[0.8125rem] text-fg-muted">Barbearia · {tenant.timezone}</p>
+              </div>
+            </header>
 
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <p className="mb-2 text-[0.75rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
-              Agendamento online
-            </p>
-            <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
-              Pronto pra
-              <br />
-              <span
-                className="italic text-brand-primary"
-                style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
-              >
-                aquele corte
-              </span>
-              <span className="text-brand-accent">?</span>
-            </h2>
-            <p className="mt-4 max-w-xs text-[0.9375rem] text-fg-muted sm:max-w-sm">
-              Escolha seu profissional, o horário que cabe no seu dia e confirme — sem ligação, sem
-              mensagem.
-            </p>
-            <Link href="/book" className="mt-8 w-full max-w-xs">
-              <Button size="lg" fullWidth>
-                Agendar agora
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </Link>
-          </section>
+            <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
+              <p className="mb-2 text-[0.75rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
+                Agendamento online
+              </p>
+              <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
+                Pronto pra
+                <br />
+                <span
+                  className="italic text-brand-primary"
+                  style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
+                >
+                  aquele corte
+                </span>
+                <span className="text-brand-accent">?</span>
+              </h2>
+              <p className="mt-4 max-w-xs text-[0.9375rem] text-fg-muted sm:max-w-sm">
+                Escolha seu profissional, o horário que cabe no seu dia e confirme — sem ligação, sem
+                mensagem.
+              </p>
+              <Link href="/book" className="mt-8 w-full max-w-xs">
+                <Button size="lg" fullWidth>
+                  Agendar agora
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </Link>
 
-          <footer className="relative z-10 flex justify-center px-6 pb-6">
-            <AraLabsAttribution />
-          </footer>
-        </main>
+              <CustomerAccess />
+            </section>
+
+            <footer className="relative z-10 flex justify-center px-6 pb-6">
+              <AraLabsAttribution />
+            </footer>
+          </main>
+        </TenantSlugProvider>
       )}
     </>
   )
