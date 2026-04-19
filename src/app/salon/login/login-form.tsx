@@ -14,9 +14,9 @@ export function SalonLoginForm() {
   const [state, formAction, pending] = useActionState(loginStaffAction, INITIAL)
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-3">
       <Input
-        label="E-mail"
+        aria-label="E-mail"
         name="email"
         type="email"
         required
@@ -26,7 +26,7 @@ export function SalonLoginForm() {
       />
 
       <Input
-        label="Senha"
+        aria-label="Senha"
         name="password"
         type="password"
         required
@@ -42,19 +42,26 @@ export function SalonLoginForm() {
         </Alert>
       ) : null}
 
-      <Button type="submit" size="lg" fullWidth loading={pending} loadingText="Entrando...">
+      <Button
+        type="submit"
+        size="lg"
+        fullWidth
+        loading={pending}
+        loadingText="Entrando..."
+        className="mt-4"
+      >
         Entrar
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Button>
 
-      <div className="flex flex-col gap-2 pt-2 text-[0.8125rem] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col items-center gap-1 pt-2 text-[0.75rem] text-fg-subtle">
         <Link
           href="/salon/forgot-password"
           className="text-fg-muted underline-offset-4 hover:text-fg hover:underline"
         >
           Esqueci a senha
         </Link>
-        <span className="text-fg-subtle">Sem cadastro? Fale com o dono.</span>
+        <span>Sem cadastro? Fale com o dono.</span>
       </div>
     </form>
   )
