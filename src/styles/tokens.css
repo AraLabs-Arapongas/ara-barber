@@ -18,8 +18,9 @@
    * ======================================== */
   --brand-primary: oklch(0.34 0.04 215); /* petróleo profundo */
   --brand-primary-fg: oklch(0.97 0.015 75); /* creme sobre petróleo */
-  --brand-primary-hover: oklch(0.29 0.045 215);
-  --brand-primary-active: oklch(0.25 0.05 215);
+  /* hover/active derivados do primary — sutis, funcionam pra qualquer tenant */
+  --brand-primary-hover: color-mix(in oklch, var(--brand-primary) 92%, black);
+  --brand-primary-active: color-mix(in oklch, var(--brand-primary) 85%, black);
 
   --brand-secondary: oklch(0.62 0.06 215); /* petróleo dessaturado */
   --brand-secondary-fg: oklch(0.97 0.015 75);

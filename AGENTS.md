@@ -74,11 +74,12 @@ pnpm typecheck        # TSC
 
 Já seedados no projeto Supabase:
 
-| slug              | nome            | primary   | accent    |
-| ----------------- | --------------- | --------- | --------- |
-| `barbearia-teste` | Barbearia Teste | `#17343f` | `#b9945a` |
-| `casa-do-corte`   | Casa do Corte   | `#2d5447` | `#d4a574` |
-| `barba-preta`     | Barba Preta     | `#1a1a1a` | `#c8102e` |
+| slug              | nome                         | primary   | accent    |
+| ----------------- | ---------------------------- | --------- | --------- |
+| `barbearia-teste` | Barbearia Teste              | `#17343f` | `#b9945a` |
+| `casa-do-corte`   | Casa do Corte                | `#2d5447` | `#d4a574` |
+| `barba-preta`     | Barba Preta                  | `#1a1a1a` | `#c8102e` |
+| `bela-imagem`     | Bela Imagem Centro de Beleza | `#9d4d6e` | `#e6c8a0` |
 
 Acessar em dev: `http://<slug>.lvh.me:3008/`.
 

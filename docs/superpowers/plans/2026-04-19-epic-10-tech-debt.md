@@ -37,7 +37,7 @@
 | 21 | Consolidar policies permissivas múltiplas por tabela | Advisor `multiple_permissive_policies` (170 ocorrências — desenho atual mantém 2 policies `*_platform_admin_all` + `*_tenant_staff_all` por tabela) | Baixa |
 | 22 | Cobrir FKs sem índice (`availability_blocks.tenant_id`, `professionals.user_id`, `tenants.current_plan_id`) | Advisor `unindexed_foreign_keys` | Média |
 | 23 | Habilitar "Leaked Password Protection" no Supabase Auth + avaliar ListBucket do `tenant-assets` | Advisor security WARN — manual no dashboard | Baixa |
-| 24 | Adicionar campo `city` em `tenants` + exibir na home no lugar do `timezone` | Hoje a home hardcoda "Arapongas"; timezone fica só pra cálculos de data | Baixa |
+| 24 | Exibir `tenants.city` (já existe) na home no lugar do `timezone` + UI de edição no perfil | Hoje a home hardcoda "Arapongas"; coluna já existe, só falta popular + renderizar | Baixa |
 
 ---
 
@@ -625,28 +625,24 @@ Os valores literais foram omitidos deste plano de propósito para não aparecere
 
 ---
 
-## Task 24: Campo `city` em `tenants` + exibir na home
+## Task 24: Exibir `tenants.city` (já existe) na home + UI de edição
 
-**Origem:** Sessão 2026-04-19. Home do tenant exibe `Barbearia · {tenant.timezone}` no header (`src/app/page.tsx`). Usuário pediu pra mostrar a cidade em vez do timezone; na falta do campo, foi hardcoded "Arapongas".
+**Origem:** Sessão 2026-04-19. Home do tenant exibe `Barbearia · {tenant.timezone}` no header (`src/app/page.tsx`). Usuário pediu pra mostrar a cidade; foi hardcoded "Arapongas".
 
-**Problema:** `tenant.timezone` é IANA (`America/Sao_Paulo`) — necessário pra cálculos de data mas ruim como label. "Arapongas" hardcoded quebra pros outros tenants (casa-do-corte, barba-preta) e não escala.
+**Descoberta posterior (mesma sessão):** a coluna `city text` já existe em `tenants` (+ `state`, `address_line1/2`, `postal_code`). Não precisa de migration. Tenant recém-criado `bela-imagem` já foi populado com `city='Arapongas'`, `state='PR'`.
 
 **Files:**
-- Migration: `supabase/migrations/NNNN_add_city_to_tenants.sql`
-- Update: `src/lib/tenant/context.ts` — incluir `city` no select e no tipo
-- Update: `src/lib/supabase/types.ts` — regenerar via `mcp__supabase__generate_typescript_types`
-- Update: `src/app/page.tsx:132` — trocar `Arapongas` hardcoded por `{tenant.city}`
-- Update: `src/app/salon/(authenticated)/dashboard/perfil/page.tsx` — adicionar input de cidade ao editar perfil do tenant
-- Update: `src/lib/mock/seed.ts:345` — seed com `city` nos 3 tenants dev
+- Update: `src/lib/tenant/context.ts` — incluir `city` no select (`TenantContext` já pode expor)
+- Update: `src/app/page.tsx:132` — trocar `Arapongas` hardcoded por `{tenant.city}` (fallback: esconder linha se null)
+- Update: `src/app/salon/(authenticated)/dashboard/perfil/page.tsx` — input de cidade/estado
+- Backfill: popular `city` nos 3 tenants antigos (barbearia-teste, casa-do-corte, barba-preta)
 
 **Steps:**
 
-- [ ] **Step 1:** Migration via `mcp__supabase__apply_migration` adicionando `city text` em `tenants` (nullable inicialmente; default '' ou null).
-- [ ] **Step 2:** Regenerar types com `mcp__supabase__generate_typescript_types`.
-- [ ] **Step 3:** Propagar no `getCurrentTenantOrNotFound()` e no tipo `TenantContext`.
-- [ ] **Step 4:** Exibir no header da home. Fallback: se `city` vier null/'', esconder o `·` + texto (não mostrar timezone como antes — timezone é técnico).
-- [ ] **Step 5:** Formulário de edição em `/salon/dashboard/perfil` pra staff atualizar.
-- [ ] **Step 6:** Seed dos 3 tenants dev (barbearia-teste: "Arapongas", casa-do-corte: "Londrina", barba-preta: "Curitiba" — ajustar como fizer sentido).
+- [ ] **Step 1:** Incluir `city` no select de `getCurrentTenantOrNotFound()` e no tipo `TenantContext`.
+- [ ] **Step 2:** Home: `{tenant.city ?? null}`. Se null, esconder o `· <city>` — não mostrar timezone como antes.
+- [ ] **Step 3:** Form de edição em `/salon/dashboard/perfil` pra staff atualizar city/state.
+- [ ] **Step 4:** Backfill via `mcp__supabase__execute_sql` — UPDATE com city pros 3 tenants antigos.
 
 **Prioridade:** Baixa — afeta só estética do header.
 

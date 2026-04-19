@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
@@ -124,29 +123,19 @@ async function TenantPublicHome() {
         <TenantSlugProvider slug={tenant.slug}>
           <CustomerSessionSync />
           <main className="noise-overlay relative flex min-h-screen flex-col bg-bg">
-            <header className="relative z-10 flex items-center gap-4 px-5 pt-8 sm:px-8">
-              <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={56} />
-              <div className="min-w-0">
-                <h1 className="font-display text-[1.5rem] font-semibold tracking-tight text-fg leading-tight">
-                  {tenant.name}
-                </h1>
-                <p className="text-[0.8125rem] text-fg-muted">Barbearia · Arapongas</p>
-              </div>
-            </header>
-
             <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <Image
-                src="/family-barber-arapongas.png"
-                alt=""
-                width={450}
-                height={300}
-                priority
-                className="h-auto w-full max-w-xs"
+              <TenantLogo
+                logoUrl={tenant.logoUrl}
+                name={tenant.name}
+                size={400}
+                className="mb-6"
               />
               <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
-                Pronto para dar
+                {tenant.homeHeadlineTop ?? 'Pronto para dar'}
                 <br />
-                <span className="italic text-brand-primary">aquele tapa no visual?</span>
+                <span className="italic text-brand-primary">
+                  {tenant.homeHeadlineAccent ?? 'aquele tapa no visual?'}
+                </span>
               </h2>
               <Link href="/book" className="mt-8 w-full max-w-xs">
                 <Button size="lg" fullWidth>
@@ -154,8 +143,9 @@ async function TenantPublicHome() {
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </Link>
-
-              <CustomerAccess />
+              <div className="mt-6">
+                <CustomerAccess />
+              </div>
             </section>
 
             <footer className="relative z-10 flex justify-center px-6 pb-6">
@@ -176,7 +166,12 @@ async function TenantPublicHome() {
 function DevRootIndex() {
   const devBase = process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me'
   const port = '3008'
-  const tenants = ['barbearia-teste', 'casa-do-corte', 'barba-preta'] as const
+  const tenants = [
+    'barbearia-teste',
+    'casa-do-corte',
+    'barba-preta',
+    'bela-imagem',
+  ] as const
   const aralabsSite = 'https://aralabs.com.br'
 
   const links = tenants.flatMap((slug) => {

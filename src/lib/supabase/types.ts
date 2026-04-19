@@ -419,6 +419,8 @@ export type Database = {
           email: string | null
           favicon_url: string | null
           grace_period_ends_at: string | null
+          home_headline_accent: string | null
+          home_headline_top: string | null
           id: string
           is_custom_trial: boolean
           logo_url: string | null
@@ -459,6 +461,8 @@ export type Database = {
           email?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
+          home_headline_accent?: string | null
+          home_headline_top?: string | null
           id?: string
           is_custom_trial?: boolean
           logo_url?: string | null
@@ -499,6 +503,8 @@ export type Database = {
           email?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
+          home_headline_accent?: string | null
+          home_headline_top?: string | null
           id?: string
           is_custom_trial?: boolean
           logo_url?: string | null

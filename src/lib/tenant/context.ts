@@ -1,9 +1,26 @@
 import 'server-only'
 
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { createSecretClient } from '@/lib/supabase/secret'
 import type { Database } from '@/lib/supabase/types'
+
+/**
+ * Resolve um logo "por convenção" a partir do slug:
+ * se `public/logos/<slug>.<ext>` existe, devolve o path web.
+ * Permite trocar o logo de um tenant só largando o arquivo na pasta,
+ * sem precisar mexer no banco.
+ */
+function resolveConventionalLogoUrl(slug: string): string | null {
+  const publicDir = join(process.cwd(), 'public', 'logos')
+  for (const ext of ['png', 'svg', 'jpg', 'jpeg', 'webp'] as const) {
+    const file = `${slug}.${ext}`
+    if (existsSync(join(publicDir, file))) return `/logos/${file}`
+  }
+  return null
+}
 
 export type TenantContext = {
   id: string
@@ -15,6 +32,8 @@ export type TenantContext = {
   accentColor: string | null
   logoUrl: string | null
   faviconUrl: string | null
+  homeHeadlineTop: string | null
+  homeHeadlineAccent: string | null
   status: Database['public']['Enums']['tenant_status']
   billingStatus: Database['public']['Enums']['billing_status']
 }
@@ -50,7 +69,7 @@ export async function getCurrentTenantOrNotFound(): Promise<TenantContext> {
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, status, billing_status',
+      'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -65,8 +84,10 @@ export async function getCurrentTenantOrNotFound(): Promise<TenantContext> {
     primaryColor: data.primary_color,
     secondaryColor: data.secondary_color,
     accentColor: data.accent_color,
-    logoUrl: data.logo_url,
+    logoUrl: data.logo_url ?? resolveConventionalLogoUrl(data.slug),
     faviconUrl: data.favicon_url,
+    homeHeadlineTop: data.home_headline_top,
+    homeHeadlineAccent: data.home_headline_accent,
     status: data.status,
     billingStatus: data.billing_status,
   }
