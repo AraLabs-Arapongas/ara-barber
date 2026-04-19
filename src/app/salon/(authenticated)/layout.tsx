@@ -3,6 +3,7 @@ import { getSessionUser } from '@/lib/auth/session'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { PreviewBanner } from '@/components/mock/preview-banner'
 
 export default async function SalonAuthenticatedLayout({
   children,
@@ -30,7 +31,10 @@ export default async function SalonAuthenticatedLayout({
           accentColor: tenant.accentColor,
         }}
       />
-      <div className="min-h-screen bg-bg text-fg">{children}</div>
+      <div className="min-h-screen bg-bg text-fg">
+        <PreviewBanner tenantSlug={tenant.slug} />
+        {children}
+      </div>
     </>
   )
 }
