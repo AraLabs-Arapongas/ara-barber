@@ -116,7 +116,7 @@ export default function BookStepLogin() {
 
       <form onSubmit={handleEmailSubmit} className="space-y-3">
         <Input
-          label="Seu e-mail"
+          aria-label="Seu e-mail"
           type="email"
           required
           autoFocus

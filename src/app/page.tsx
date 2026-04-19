@@ -141,13 +141,13 @@ async function TenantPublicHome() {
                 Agendamento online
               </p>
               <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
-                Pronto pra
+                Pronto para dar
                 <br />
                 <span
                   className="italic text-brand-primary"
                   style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
                 >
-                  aquele corte
+                  aquele tapa no visual
                 </span>
                 <span className="text-brand-accent">?</span>
               </h2>

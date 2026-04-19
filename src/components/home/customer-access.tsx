@@ -100,7 +100,7 @@ export function CustomerAccess() {
 
       <form onSubmit={handleEmail} className="space-y-3 text-left">
         <Input
-          label="Seu e-mail"
+          aria-label="Seu e-mail"
           type="email"
           required
           value={email}
