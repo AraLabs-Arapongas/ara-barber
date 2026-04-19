@@ -1,8 +1,13 @@
 -- supabase/migrations/0010_customers.sql
--- Clientes do salão. Todo cliente TEM conta auth.users — booking público exige
--- login (OTP por e-mail na Fase 1; Google OAuth entra em fase futura). Um mesmo
+-- Clientes do salão. Todo cliente TEM conta auth.users — booking exige login
+-- (OTP por e-mail na Fase 1; Google OAuth entra em fase futura). Um mesmo
 -- auth.user pode ser cliente em múltiplos tenants, cada um com seu próprio
 -- registro em customers (phone, notes, etc são por-tenant).
+--
+-- name e phone são nullable: o registro nasce no primeiro login no tenant
+-- (auto-insert após OTP), sem dados. name vem do Google ou do popup de confirm
+-- de booking; phone só do popup. /clientes do salão lista todos os logados
+-- mesmo sem agendamento, mostrando "(sem nome)" quando vazio.
 --
 -- RLS: platform admin + staff do tenant; além disso o próprio customer pode
 -- ler/editar o próprio registro (self-service futuro).
@@ -11,8 +16,8 @@ create table public.customers (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  phone text not null,
+  name text,
+  phone text,
   whatsapp text,
   email text,
   birth_date date,
