@@ -15,7 +15,6 @@ export function ThemeInjector({ branding }: { branding: BrandingInput }) {
 
   return (
     <style
-      // eslint-disable-next-line react/no-danger -- valores sanitizados em brandingToCssVars
       dangerouslySetInnerHTML={{
         __html: `:root{${css}}`,
       }}
