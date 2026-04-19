@@ -1,21 +1,22 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, ExternalLink } from 'lucide-react'
-import {
-  getCurrentArea,
-  getCurrentTenantOrNotFound,
-  getCurrentTenantSlug,
-} from '@/lib/tenant/context'
+import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const area = await getCurrentArea()
-  if (area !== 'tenant') return {}
+  const h = await headers()
+  const area = h.get('x-ara-area')
+  const tenantMissing = h.get('x-ara-tenant-missing') === '1'
 
+  if (area !== 'tenant' || tenantMissing) return {}
+
+  // Tenant válido: lê e devolve metadata personalizada.
   const tenant = await getCurrentTenantOrNotFound()
   const slug = await getCurrentTenantSlug()
 
@@ -29,7 +30,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootPage() {
-  const area = await getCurrentArea()
+  const h = await headers()
+  const area = h.get('x-ara-area')
+  const tenantMissing = h.get('x-ara-tenant-missing') === '1'
+
+  // Subdomínio válido em formato mas sem tenant no DB → 404 tematizado.
+  if (tenantMissing) notFound()
 
   if (area === 'tenant') return <TenantPublicHome />
 
