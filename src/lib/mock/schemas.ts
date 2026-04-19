@@ -104,6 +104,11 @@ export const operationModeSchema = z.object({
   enabled: z.boolean(),
 })
 
+export const currentCustomerSchema = z.object({
+  customerId: z.string().nullable(),
+  email: z.string().nullable(),
+})
+
 // Collections
 
 export const professionalsSchema = z.array(professionalSchema)
@@ -128,3 +133,4 @@ export type Appointment = z.infer<typeof appointmentSchema>
 export type Payout = z.infer<typeof payoutSchema>
 export type TenantProfile = z.infer<typeof tenantProfileSchema>
 export type OperationMode = z.infer<typeof operationModeSchema>
+export type CurrentCustomer = z.infer<typeof currentCustomerSchema>

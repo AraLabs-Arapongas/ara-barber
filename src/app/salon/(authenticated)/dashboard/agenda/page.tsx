@@ -34,11 +34,6 @@ function toDateInput(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-function fromDateInput(value: string): Date {
-  const [y, m, d] = value.split('-').map(Number)
-  return new Date(y, (m ?? 1) - 1, d ?? 1)
-}
-
 export default function AgendaPage() {
   const tenantSlug = useTenantSlug()
   const { data: appointments, setData: setAppointments } = useMockStore(

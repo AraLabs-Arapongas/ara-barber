@@ -12,6 +12,7 @@ import {
   availabilityBlocksSchema,
   availabilitySchema,
   businessHoursSchema,
+  currentCustomerSchema,
   customersSchema,
   operationModeSchema,
   payoutsSchema,
@@ -85,6 +86,14 @@ export const ENTITY = {
     key: 'operation_mode',
     schema: operationModeSchema,
     seed: buildOperationModeSeed,
+  },
+  currentCustomer: {
+    key: 'current_customer',
+    schema: currentCustomerSchema,
+    seed: (): { customerId: string | null; email: string | null } => ({
+      customerId: null,
+      email: null,
+    }),
   },
 } as const
 

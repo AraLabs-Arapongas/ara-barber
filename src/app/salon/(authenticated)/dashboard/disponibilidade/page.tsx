@@ -59,6 +59,8 @@ export default function DisponibilidadePage() {
   const [editingProId, setEditingProId] = useState<string | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [defaultStart] = useState(() => toDateTimeInput(new Date()))
+  const [defaultEnd] = useState(() => toDateTimeInput(new Date(Date.now() + 2 * 86400000)))
 
   const byProf = useMemo(() => {
     const map = new Map<string, AvailabilityEntry[]>()
@@ -241,14 +243,16 @@ export default function DisponibilidadePage() {
             label="Início"
             name="startAt"
             type="datetime-local"
-            defaultValue={toDateTimeInput(new Date())}
+            defaultValue={defaultStart}
+            key={`start-${defaultStart}`}
             required
           />
           <Input
             label="Fim"
             name="endAt"
             type="datetime-local"
-            defaultValue={toDateTimeInput(new Date(Date.now() + 2 * 86400000))}
+            defaultValue={defaultEnd}
+            key={`end-${defaultEnd}`}
             required
           />
           <Input label="Motivo" name="reason" placeholder="Férias, médico, ..." maxLength={200} />
