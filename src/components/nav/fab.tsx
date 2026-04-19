@@ -22,7 +22,8 @@ type Props = {
 /**
  * Floating action button fixo no canto inferior direito, acima da tab bar.
  * - Com `onClick`: botão de ação única.
- * - Com `actions`: abre menu radial acima do FAB com as opções.
+ * - Com `actions`: abre speed dial com backdrop. Cada opção é uma pill
+ *   única (icon + label) com alto contraste.
  */
 export function Fab({ onClick, actions, icon, srLabel = 'Ação', children }: Props) {
   const Icon = icon ?? Plus
@@ -31,16 +32,11 @@ export function Fab({ onClick, actions, icon, srLabel = 'Ação', children }: Pr
 
   useEffect(() => {
     if (!open) return
-    function onDocClick(e: MouseEvent) {
-      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false)
-    }
     function onEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)
     }
-    window.addEventListener('mousedown', onDocClick)
     window.addEventListener('keydown', onEsc)
     return () => {
-      window.removeEventListener('mousedown', onDocClick)
       window.removeEventListener('keydown', onEsc)
     }
   }, [open])
@@ -52,48 +48,68 @@ export function Fab({ onClick, actions, icon, srLabel = 'Ação', children }: Pr
   }
 
   return (
-    <div
-      ref={wrapperRef}
-      className="fixed z-50 right-4 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] sm:right-6"
-    >
+    <>
       {hasMenu && open ? (
-        <ul className="mb-3 flex flex-col gap-2">
-          {actions!.map((a) => (
-            <li key={a.label} className="flex items-center justify-end gap-2">
-              <span className="rounded-md bg-fg/85 px-2.5 py-1 text-[0.75rem] font-medium text-bg shadow-sm">
-                {a.label}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  a.onClick()
-                  setOpen(false)
-                }}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised text-fg shadow-md transition-transform hover:scale-105 active:scale-95"
-                aria-label={a.label}
-              >
-                <a.icon className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
-        </ul>
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-fg/25 backdrop-blur-[2px] animate-in fade-in duration-150"
+        />
       ) : null}
 
-      <button
-        type="button"
-        onClick={handlePrimary}
-        aria-label={srLabel}
-        aria-expanded={hasMenu ? open : undefined}
-        className={cn(
-          'flex h-14 w-14 items-center justify-center rounded-full',
-          'bg-brand-primary text-brand-primary-fg shadow-lg',
-          'transition-[transform,background-color,box-shadow]',
-          'hover:shadow-xl hover:bg-brand-primary-hover',
-          'active:scale-95',
-        )}
+      <div
+        ref={wrapperRef}
+        className="fixed z-50 right-4 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] sm:right-6 flex flex-col items-end"
       >
-        {children ?? <Icon className={cn('h-6 w-6 transition-transform', hasMenu && open && 'rotate-45')} aria-hidden="true" />}
-      </button>
-    </div>
+        {hasMenu && open ? (
+          <ul className="mb-3 flex flex-col items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+            {actions!.map((a) => {
+              const ItemIcon = a.icon
+              return (
+                <li key={a.label}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      a.onClick()
+                      setOpen(false)
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 rounded-full px-4 py-2.5',
+                      'bg-fg text-bg shadow-lg',
+                      'transition-transform hover:scale-[1.03] active:scale-95',
+                    )}
+                  >
+                    <ItemIcon className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-[0.8125rem] font-medium">{a.label}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={handlePrimary}
+          aria-label={srLabel}
+          aria-expanded={hasMenu ? open : undefined}
+          className={cn(
+            'flex h-14 w-14 items-center justify-center rounded-full',
+            'bg-brand-primary text-brand-primary-fg shadow-lg',
+            'transition-[transform,background-color,box-shadow]',
+            'hover:shadow-xl hover:bg-brand-primary-hover',
+            'active:scale-95',
+          )}
+        >
+          {children ?? (
+            <Icon
+              className={cn('h-6 w-6 transition-transform', hasMenu && open && 'rotate-45')}
+              aria-hidden="true"
+            />
+          )}
+        </button>
+      </div>
+    </>
   )
 }

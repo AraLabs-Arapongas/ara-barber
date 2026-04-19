@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { Sheet } from 'react-modal-sheet'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -13,72 +14,57 @@ type Props = {
 }
 
 /**
- * Bottom sheet modal mobile-first. Slides up from bottom with backdrop overlay.
- * Em desktop vira centralizado (max-w-md) pra não ficar feio.
+ * Bottom sheet usando react-modal-sheet. Drag-to-dismiss, snap point
+ * automático no conteúdo, animação suave. API simplificada com título,
+ * descrição e children.
  */
 export function BottomSheet({ open, onClose, title, description, children }: Props) {
-  useEffect(() => {
-    if (!open) return
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    function onEsc(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onEsc)
-    return () => {
-      document.body.style.overflow = prevOverflow
-      window.removeEventListener('keydown', onEsc)
-    }
-  }, [open, onClose])
-
-  if (!open) return null
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center"
-    >
-      <button
-        type="button"
-        aria-label="Fechar"
-        onClick={onClose}
-        className="absolute inset-0 bg-fg/50 backdrop-blur-sm"
-      />
-
-      <div
-        className={cn(
-          'relative w-full max-h-[92vh] overflow-hidden',
-          'rounded-t-2xl bg-surface shadow-2xl',
-          'sm:max-w-md sm:rounded-2xl sm:mx-4',
-          'animate-in slide-in-from-bottom duration-200',
-        )}
+    <Sheet isOpen={open} onClose={onClose} detent="content">
+      <Sheet.Container
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          boxShadow: '0 -8px 32px rgb(0 0 0 / 0.18)',
+        }}
       >
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 sm:px-6 sm:pt-6">
-          <div className="min-w-0 flex-1">
-            {title ? (
-              <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
-                {title}
-              </h2>
-            ) : null}
-            {description ? (
-              <p className="mt-1 text-[0.875rem] text-fg-muted">{description}</p>
-            ) : null}
+        <Sheet.Header>
+          <div className="flex items-center justify-center pt-2.5 pb-1">
+            <span className="h-1 w-10 rounded-full bg-fg/20" aria-hidden="true" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar"
-            className="rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-bg-subtle hover:text-fg"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className="max-h-[calc(92vh-4rem)] overflow-y-auto px-5 pb-6 pt-5 sm:px-6 sm:pb-7">
-          {children}
-        </div>
-      </div>
-    </div>
+          <div className="flex items-start justify-between gap-3 px-5 pt-1 pb-3 sm:px-6">
+            <div className="min-w-0 flex-1">
+              {title ? (
+                <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
+                  {title}
+                </h2>
+              ) : null}
+              {description ? (
+                <p className="mt-1 text-[0.875rem] text-fg-muted">{description}</p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar"
+              className={cn(
+                'rounded-md p-1.5 text-fg-subtle transition-colors',
+                'hover:bg-bg-subtle hover:text-fg',
+              )}
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+        </Sheet.Header>
+        <Sheet.Content disableDrag>
+          <div className="max-h-[70vh] overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-1 sm:px-6">
+            {children}
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+      <Sheet.Backdrop
+        onTap={onClose}
+        style={{ backgroundColor: 'color-mix(in oklch, var(--color-fg) 45%, transparent)' }}
+      />
+    </Sheet>
   )
 }

@@ -5,6 +5,7 @@ import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
 import { PreviewBanner } from '@/components/mock/preview-banner'
+import { CustomerSessionSync } from '@/components/mock/customer-session-sync'
 
 export default async function BookLayout({ children }: { children: ReactNode }) {
   const tenant = await getCurrentTenantOrNotFound()
@@ -19,6 +20,7 @@ export default async function BookLayout({ children }: { children: ReactNode }) 
         }}
       />
       <TenantSlugProvider slug={tenant.slug}>
+        <CustomerSessionSync />
         <div className="min-h-screen bg-bg text-fg">
           <PreviewBanner tenantSlug={tenant.slug} />
           <header className="border-b border-border bg-surface/80 backdrop-blur">

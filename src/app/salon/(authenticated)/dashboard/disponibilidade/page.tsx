@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, CalendarX, Trash2 } from 'lucide-react'
 import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
 import { useMockStore, mockId } from '@/lib/mock/store'
@@ -12,7 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
-import { Fab } from '@/components/nav/fab'
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const DAYS_LONG = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -61,6 +61,17 @@ export default function DisponibilidadePage() {
   const [error, setError] = useState<string | null>(null)
   const [defaultStart] = useState(() => toDateTimeInput(new Date()))
   const [defaultEnd] = useState(() => toDateTimeInput(new Date(Date.now() + 2 * 86400000)))
+
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams?.get('new') === '1') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBlockOpen(true)
+      router.replace(pathname, { scroll: false })
+    }
+  }, [searchParams, pathname, router])
 
   const byProf = useMemo(() => {
     const map = new Map<string, AvailabilityEntry[]>()
@@ -208,8 +219,6 @@ export default function DisponibilidadePage() {
           })}
         </ul>
       </main>
-
-      <Fab srLabel="Novo bloqueio" onClick={() => setBlockOpen(true)} />
 
       <BottomSheet
         open={blockOpen}
@@ -381,15 +390,13 @@ function WeeklyEditor({
         >
           <div className="flex items-center justify-between">
             <span className="font-medium text-fg">{DAYS_LONG[d.weekday]}</span>
-            <label className="inline-flex cursor-pointer items-center gap-2 text-[0.8125rem] text-fg-muted">
-              <input
-                type="checkbox"
-                checked={d.active}
-                onChange={(e) => update(i, { active: e.target.checked })}
-                className="h-4 w-4 accent-brand-primary"
-              />
-              {d.active ? 'Atende' : 'Folga'}
-            </label>
+            <input
+              type="checkbox"
+              aria-label={`${DAYS_LONG[d.weekday]} — atende`}
+              checked={d.active}
+              onChange={(e) => update(i, { active: e.target.checked })}
+              className="h-4 w-4 cursor-pointer accent-brand-primary"
+            />
           </div>
           {d.active ? (
             <div className="mt-2 grid grid-cols-2 gap-2">

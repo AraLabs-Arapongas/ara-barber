@@ -1,7 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function createClient() {
+type CreateClientOptions = {
+  /**
+   * Quando true, remove `maxAge`/`expires` dos cookies de sessão gravados pelo
+   * Supabase, transformando em session cookies (morrem ao fechar o browser).
+   * Usado quando o usuário desmarca "lembrar-me" no login.
+   */
+  sessionOnly?: boolean
+}
+
+export async function createClient(opts?: CreateClientOptions) {
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -14,9 +23,12 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            )
+            for (const { name, value, options } of cookiesToSet) {
+              const finalOptions = opts?.sessionOnly
+                ? { ...options, maxAge: undefined, expires: undefined }
+                : options
+              cookieStore.set(name, value, finalOptions)
+            }
           } catch {
             // Ignorado em contexto de server component (read-only).
             // Necessário em server actions e route handlers.

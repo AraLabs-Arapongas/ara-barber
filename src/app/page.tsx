@@ -11,6 +11,7 @@ import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
 import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
 import { CustomerAccess } from '@/components/home/customer-access'
+import { CustomerSessionSync } from '@/components/mock/customer-session-sync'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -125,6 +126,7 @@ async function TenantPublicHome() {
         </main>
       ) : (
         <TenantSlugProvider slug={tenant.slug}>
+          <CustomerSessionSync />
           <main className="noise-overlay relative flex min-h-screen flex-col bg-bg">
             <header className="relative z-10 flex items-center gap-4 px-5 pt-8 sm:px-8">
               <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={56} />

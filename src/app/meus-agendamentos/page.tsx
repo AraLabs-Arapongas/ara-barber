@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { CalendarPlus, Clock, Scissors, User, X } from 'lucide-react'
+import { CalendarPlus, Clock, LogOut, Scissors, User, X } from 'lucide-react'
 import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
 import { useMockStore } from '@/lib/mock/store'
 import { ENTITY } from '@/lib/mock/entities'
@@ -95,6 +95,11 @@ export default function MeusAgendamentosPage() {
             <CalendarPlus className="h-4 w-4" /> Novo agendamento
           </Button>
         </Link>
+        <form action="/auth/logout" method="post">
+          <Button variant="ghost" size="md" type="submit" aria-label="Sair">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </form>
       </div>
 
       <div className="mb-4 inline-flex rounded-lg bg-bg-subtle p-1">

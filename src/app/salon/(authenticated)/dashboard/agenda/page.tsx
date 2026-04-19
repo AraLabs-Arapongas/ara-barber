@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useMemo, type FormEvent } from 'react'
+import { useEffect, useState, useMemo, type FormEvent } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
 import { useMockStore, mockId } from '@/lib/mock/store'
@@ -12,7 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
-import { Fab } from '@/components/nav/fab'
 import {
   STATUS_LABELS,
   STATUS_TONE,
@@ -64,6 +64,17 @@ export default function AgendaPage() {
   const [selectedDay, setSelectedDay] = useState<Date>(() => atMidnight(new Date()))
   const [sheetOpen, setSheetOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams?.get('new') === '1') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSheetOpen(true)
+      router.replace(pathname, { scroll: false })
+    }
+  }, [searchParams, pathname, router])
 
   const proById = useMemo(() => buildLookup(professionals), [professionals])
   const svcById = useMemo(() => buildLookup(services), [services])
@@ -240,8 +251,6 @@ export default function AgendaPage() {
           </Card>
         )}
       </main>
-
-      <Fab srLabel="Novo agendamento" onClick={() => setSheetOpen(true)} />
 
       <BottomSheet
         open={sheetOpen}

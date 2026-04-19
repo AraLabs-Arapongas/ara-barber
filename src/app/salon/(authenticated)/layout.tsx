@@ -6,6 +6,7 @@ import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { PreviewBanner } from '@/components/mock/preview-banner'
 import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
 import { BottomTabNav } from '@/components/nav/bottom-tab-nav'
+import { GlobalFab } from '@/components/nav/global-fab'
 
 export default async function SalonAuthenticatedLayout({
   children,
@@ -38,6 +39,7 @@ export default async function SalonAuthenticatedLayout({
           <PreviewBanner tenantSlug={tenant.slug} />
           {children}
         </div>
+        <GlobalFab />
         <BottomTabNav />
       </TenantSlugProvider>
     </>
