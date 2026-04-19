@@ -31,12 +31,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootPage() {
   const area = await getCurrentArea()
 
-  if (area === 'platform') redirect('/platform')
   if (area === 'tenant') return <TenantPublicHome />
 
-  // area === 'root'. Em prod, apex e www pertencem ao site institucional AraLabs
-  // (projeto separado). Se alguém chegar aqui via este app em prod, manda pra lá.
-  // Em dev (localhost), mostra um índice de atalhos pro desenvolvedor navegar entre áreas.
+  // area === 'root'. Apex pertence à storefront AraLabs (outro repo).
+  // Em prod, qualquer request que chegue aqui é redirecionada pra lá.
+  // Em dev (localhost), mostra um índice de atalhos pro desenvolvedor navegar entre tenants.
   if (process.env.NEXT_PUBLIC_ENV !== 'development') {
     redirect('https://aralabs.com.br')
   }
@@ -132,32 +131,29 @@ async function TenantPublicHome() {
 function DevRootIndex() {
   const devBase = process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me'
   const port = '3008'
-  const platformHost = `admin.${devBase}:${port}`
-  const tenantExampleHost = `barbearia-teste.${devBase}:${port}`
+  const tenants = ['barbearia-teste', 'casa-do-corte', 'barba-preta'] as const
   const aralabsSite = 'https://aralabs.com.br'
 
-  const links = [
-    {
-      label: 'Platform admin',
-      url: `http://${platformHost}/platform/login`,
-      hint: `${platformHost} · área AraLabs`,
-    },
-    {
-      label: 'Home pública do tenant de teste',
-      url: `http://${tenantExampleHost}/`,
-      hint: `${tenantExampleHost} · cliente final`,
-    },
-    {
-      label: 'Login do salão (tenant de teste)',
-      url: `http://${tenantExampleHost}/salon/login`,
-      hint: `${tenantExampleHost} · equipe do salão`,
-    },
-    {
-      label: 'Manifest PWA do tenant de teste',
-      url: `http://${tenantExampleHost}/api/manifest/barbearia-teste`,
-      hint: 'manifest.webmanifest dinâmico',
-    },
-  ] as const
+  const links = tenants.flatMap((slug) => {
+    const host = `${slug}.${devBase}:${port}`
+    return [
+      {
+        label: `Home pública · ${slug}`,
+        url: `http://${host}/`,
+        hint: `${host} · cliente final`,
+      },
+      {
+        label: `Login do salão · ${slug}`,
+        url: `http://${host}/salon/login`,
+        hint: `${host} · equipe do salão`,
+      },
+      {
+        label: `Manifest PWA · ${slug}`,
+        url: `http://${host}/api/manifest/${slug}`,
+        hint: 'manifest.webmanifest dinâmico',
+      },
+    ]
+  })
 
   return (
     <main className="relative flex min-h-screen flex-col bg-bg-subtle px-6 py-12 sm:px-10">

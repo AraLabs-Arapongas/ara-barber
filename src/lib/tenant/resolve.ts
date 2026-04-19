@@ -2,31 +2,30 @@ import 'server-only'
 
 import { createSecretClient } from '@/lib/supabase/secret'
 
-const PLATFORM_HOST = (
-  process.env.NEXT_PUBLIC_PLATFORM_HOST ?? 'admin.aralabs.com.br'
-).toLowerCase()
 const APP_BASE_HOST = (process.env.NEXT_PUBLIC_APP_BASE_HOST ?? 'aralabs.com.br').toLowerCase()
 const DEV_BASE_HOST = (process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me').toLowerCase()
 
+/**
+ * Subdomínios reservados — não podem virar tenant slug.
+ * `admin` pertence ao storefront AraLabs (outro repo). Se chegar aqui, tratamos
+ * como `root` (área não gerida por este app).
+ */
+const RESERVED_SUBDOMAINS = new Set(['admin', 'www', 'api', 'app'])
+
 // Slug: 1-50 chars, lowercase alfanumérico, hífen interno permitido.
-// Mesma regex do constraint em 0003_tenants.sql, mas aceita tamanho 1 aqui
-// (o DB permite 3+, mas o parsing é neutro e deixa o resolver retornar null se não encontrar).
 const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/
 
-export type ParsedHost =
-  | { area: 'platform'; slug: null }
-  | { area: 'tenant'; slug: string }
-  | { area: 'root'; slug: null }
+export type ParsedHost = { area: 'tenant'; slug: string } | { area: 'root'; slug: null }
 
 export function parseHostToSlug(host: string): ParsedHost {
   const clean = host.split(':')[0].toLowerCase()
-  if (clean === PLATFORM_HOST) return { area: 'platform', slug: null }
 
   for (const base of [APP_BASE_HOST, DEV_BASE_HOST]) {
     const suffix = `.${base}`
     if (clean.endsWith(suffix)) {
       const slug = clean.slice(0, -suffix.length)
       if (!SLUG_REGEX.test(slug)) return { area: 'root', slug: null }
+      if (RESERVED_SUBDOMAINS.has(slug)) return { area: 'root', slug: null }
       return { area: 'tenant', slug }
     }
   }

@@ -11,6 +11,5 @@ export const env = {
   supabasePublishableKey: () => requireEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'),
   supabaseSecretKey: () => requireEnv('SUPABASE_SECRET_KEY'),
   appBaseHost: () => requireEnv('NEXT_PUBLIC_APP_BASE_HOST'),
-  platformHost: () => requireEnv('NEXT_PUBLIC_PLATFORM_HOST'),
   devBaseHost: () => requireEnv('NEXT_PUBLIC_DEV_BASE_HOST'),
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { assertStaff, assertPlatformAdmin, AuthError } from '@/lib/auth/guards'
+import { assertStaff, AuthError } from '@/lib/auth/guards'
 import * as session from '@/lib/auth/session'
 
 vi.mock('@/lib/auth/session')
@@ -36,6 +36,16 @@ describe('assertStaff', () => {
     await expect(assertStaff()).rejects.toThrow(AuthError)
   })
 
+  it('lança quando role = PLATFORM_ADMIN (não é staff de tenant)', async () => {
+    vi.mocked(session.getSessionUser).mockResolvedValue({
+      id: 'u1',
+      email: 'admin@aralabs.com.br',
+      profile: { id: 'p1', name: 'Admin', role: 'PLATFORM_ADMIN', tenantId: null },
+    })
+
+    await expect(assertStaff()).rejects.toThrow(AuthError)
+  })
+
   it('lança quando tenantId do host difere do tenantId do perfil', async () => {
     vi.mocked(session.getSessionUser).mockResolvedValue({
       id: 'u1',
@@ -44,28 +54,5 @@ describe('assertStaff', () => {
     })
 
     await expect(assertStaff({ expectedTenantId: 't2' })).rejects.toThrow(AuthError)
-  })
-})
-
-describe('assertPlatformAdmin', () => {
-  it('retorna usuário quando PLATFORM_ADMIN', async () => {
-    vi.mocked(session.getSessionUser).mockResolvedValue({
-      id: 'u1',
-      email: 'a@b.com',
-      profile: { id: 'p1', name: 'Admin', role: 'PLATFORM_ADMIN', tenantId: null },
-    })
-
-    const result = await assertPlatformAdmin()
-    expect(result.profile.role).toBe('PLATFORM_ADMIN')
-  })
-
-  it('lança quando role != PLATFORM_ADMIN', async () => {
-    vi.mocked(session.getSessionUser).mockResolvedValue({
-      id: 'u1',
-      email: 'a@b.com',
-      profile: { id: 'p1', name: 'Alice', role: 'SALON_OWNER', tenantId: 't1' },
-    })
-
-    await expect(assertPlatformAdmin()).rejects.toThrow(AuthError)
   })
 })

@@ -16,11 +16,21 @@ describe('parseHostToSlug', () => {
     })
   })
 
-  it('identifica platform admin por host exato', () => {
+  it('reserva admin como root (pertence ao storefront AraLabs)', () => {
     expect(parseHostToSlug('admin.aralabs.com.br')).toEqual({
-      area: 'platform',
+      area: 'root',
       slug: null,
     })
+    expect(parseHostToSlug('admin.lvh.me')).toEqual({
+      area: 'root',
+      slug: null,
+    })
+  })
+
+  it('reserva outros subdomínios de infra (www, api, app)', () => {
+    expect(parseHostToSlug('www.aralabs.com.br').area).toBe('root')
+    expect(parseHostToSlug('api.aralabs.com.br').area).toBe('root')
+    expect(parseHostToSlug('app.aralabs.com.br').area).toBe('root')
   })
 
   it('ignora porta', () => {
@@ -47,7 +57,7 @@ describe('parseHostToSlug', () => {
     expect(parseHostToSlug('foo_bar.aralabs.com.br')).toEqual({ area: 'root', slug: null })
   })
 
-  it('aceita slug de 1 caractere', () => {
+  it('aceita slug de 1 caractere (não-reservado)', () => {
     expect(parseHostToSlug('a.lvh.me')).toEqual({ area: 'tenant', slug: 'a' })
   })
 })

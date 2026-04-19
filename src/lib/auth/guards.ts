@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { getSessionUser, type SessionUser } from '@/lib/auth/session'
-import { isStaffRole, isPlatformAdminRole } from '@/lib/auth/roles'
+import { isStaffRole } from '@/lib/auth/roles'
 
 export type AuthErrorCode = 'UNAUTHORIZED' | 'FORBIDDEN' | 'TENANT_MISMATCH'
 
@@ -26,15 +26,6 @@ export async function assertStaff(opts?: {
   if (opts?.expectedTenantId !== undefined && user.profile.tenantId !== opts.expectedTenantId) {
     throw new AuthError('TENANT_MISMATCH')
   }
-
-  return user as AuthenticatedUser
-}
-
-export async function assertPlatformAdmin(): Promise<AuthenticatedUser> {
-  const user = await getSessionUser()
-  if (!user) throw new AuthError('UNAUTHORIZED')
-  if (!user.profile) throw new AuthError('UNAUTHORIZED')
-  if (!isPlatformAdminRole(user.profile.role)) throw new AuthError('FORBIDDEN')
 
   return user as AuthenticatedUser
 }
