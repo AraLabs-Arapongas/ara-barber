@@ -57,8 +57,7 @@ export function contrastColor(hex: string): string {
  */
 export function brandingToCssVars(input: BrandingInput): Record<string, string> {
   const primary = sanitizeHexColor(input.primaryColor) ?? TENANT_BRANDING_DEFAULTS.primary
-  const secondary =
-    sanitizeHexColor(input.secondaryColor) ?? TENANT_BRANDING_DEFAULTS.secondary
+  const secondary = sanitizeHexColor(input.secondaryColor) ?? TENANT_BRANDING_DEFAULTS.secondary
   const accent = sanitizeHexColor(input.accentColor) ?? TENANT_BRANDING_DEFAULTS.accent
 
   return {

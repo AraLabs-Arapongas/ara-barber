@@ -45,11 +45,7 @@ export async function resolveTenantIdBySlug(slug: string): Promise<string | null
   if (cached && cached.expires > now) return cached.id
 
   const supabase = createSecretClient()
-  const { data, error } = await supabase
-    .from('tenants')
-    .select('id')
-    .eq('slug', slug)
-    .maybeSingle()
+  const { data, error } = await supabase.from('tenants').select('id').eq('slug', slug).maybeSingle()
 
   if (error) {
     console.error('resolveTenantIdBySlug error', error)
