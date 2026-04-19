@@ -1,31 +1,180 @@
 @import 'tailwindcss';
 @import '../styles/tokens.css';
 
+/*
+ * Mapeia tokens CSS → tema Tailwind 4 para que utilitários como
+ * bg-brand-primary, text-fg, rounded-xl, shadow-md funcionem.
+ */
 @theme {
-  --color-primary: var(--color-primary);
-  --color-primary-fg: var(--color-primary-fg);
-  --color-secondary: var(--color-secondary);
-  --color-accent: var(--color-accent);
+  /* brand + neutral */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-fg: var(--brand-primary-fg);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-primary-active: var(--brand-primary-active);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-fg: var(--brand-secondary-fg);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-fg: var(--brand-accent-fg);
+
   --color-bg: var(--color-bg);
+  --color-bg-subtle: var(--color-bg-subtle);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+
   --color-fg: var(--color-fg);
-  --color-muted: var(--color-muted);
+  --color-fg-muted: var(--color-fg-muted);
+  --color-fg-subtle: var(--color-fg-subtle);
+
   --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+
+  --color-ring: var(--color-ring);
+
+  /* semânticos */
+  --color-success: var(--color-success);
+  --color-success-fg: var(--color-success-fg);
+  --color-success-bg: var(--color-success-bg);
+  --color-success-border: var(--color-success-border);
+  --color-warning: var(--color-warning);
+  --color-warning-fg: var(--color-warning-fg);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-warning-border: var(--color-warning-border);
+  --color-error: var(--color-error);
+  --color-error-fg: var(--color-error-fg);
+  --color-error-bg: var(--color-error-bg);
+  --color-error-border: var(--color-error-border);
+  --color-info: var(--color-info);
+  --color-info-fg: var(--color-info-fg);
+  --color-info-bg: var(--color-info-bg);
+  --color-info-border: var(--color-info-border);
+
+  /* radius */
+  --radius-xs: var(--radius-xs);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  /* shadows */
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  /* fonts */
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
+/*
+ * Base — leveza, serif display tende a ter mais espaço,
+ * sans UI tem -0.005em tracking para peso natural.
+ */
 html,
 body {
   background: var(--color-bg);
   color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'ss02', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 html,
-body,
-#__next {
+body {
   height: 100%;
+}
+
+body {
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  letter-spacing: -0.005em;
+}
+
+/* Display serif tem tracking levemente negativo em tamanhos grandes */
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  /* Fraunces axes: SOFT alto (100) para warmth, opsz automático */
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 0;
+}
+
+h1 {
+  font-size: var(--text-h1);
+  line-height: var(--text-h1-lh);
+  font-weight: 600;
+}
+
+h2 {
+  font-size: var(--text-h2);
+  line-height: var(--text-h2-lh);
+  font-weight: 600;
+}
+
+h3 {
+  font-size: var(--text-h3);
+  line-height: var(--text-h3-lh);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+/* Noise texture sutil reutilizável via classe */
+.noise-overlay {
+  position: relative;
+  isolation: isolate;
+}
+
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.13 0 0 0 0 0.1 0 0 0 0 0.07 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Focus-visible global: ring dourado suave */
+*:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Remove focus-visible em elementos que desenham próprio ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Seleção warm */
+::selection {
+  background: color-mix(in oklch, var(--brand-accent) 40%, transparent);
+  color: var(--color-fg);
+}
+
+/* Motion reduzida */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
