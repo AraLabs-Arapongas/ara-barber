@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
@@ -34,8 +34,11 @@ export default async function RootPage() {
   const area = h.get('x-ara-area')
   const tenantMissing = h.get('x-ara-tenant-missing') === '1'
 
-  // Subdomínio válido em formato mas sem tenant no DB → 404 tematizado.
-  if (tenantMissing) notFound()
+  // Subdomínio válido em formato mas sem tenant no DB → renderiza o 404 tematizado
+  // inline (ao invés de chamar notFound(), que em Next 16 dev dispara o error shell
+  // em vez do not-found.tsx). Status HTTP segue 200; quando necessário, ajustar
+  // via rewrite do proxy. TODO Épico 10.
+  if (tenantMissing) return <TenantNotFound />
 
   if (area === 'tenant') return <TenantPublicHome />
 
@@ -47,6 +50,48 @@ export default async function RootPage() {
   }
 
   return <DevRootIndex />
+}
+
+/**
+ * Tela exibida quando o subdomínio não corresponde a um tenant cadastrado.
+ * Renderizada pelo próprio page.tsx (não via notFound()) para evitar o error
+ * shell do Next 16 dev mode.
+ */
+function TenantNotFound() {
+  return (
+    <main className="noise-overlay relative flex min-h-screen flex-col bg-bg px-6 py-10">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center">
+        <AraLabsMark className="mb-8 h-14 w-auto text-brand-primary" />
+        <p className="mb-3 font-display text-[5rem] font-semibold leading-none tracking-tight text-fg sm:text-[6rem]">
+          404
+        </p>
+        <h1 className="mb-3 font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg sm:text-[2.25rem]">
+          Esse endereço não está{' '}
+          <span
+            className="italic text-brand-primary"
+            style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
+          >
+            ativo
+          </span>
+          <span className="text-brand-accent">.</span>
+        </h1>
+        <p className="max-w-sm text-[0.9375rem] leading-relaxed text-fg-muted">
+          A página que você procurou não existe ou o endereço mudou. Confira o link ou volte pra
+          raiz.
+        </p>
+        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+          <Link href="https://aralabs.com.br">
+            <Button size="lg" variant="primary">
+              Conhecer a AraLabs
+            </Button>
+          </Link>
+        </div>
+      </div>
+      <footer className="relative z-10 text-center text-[0.75rem] text-fg-subtle">
+        Ara Barber · AraLabs
+      </footer>
+    </main>
+  )
 }
 
 /**
