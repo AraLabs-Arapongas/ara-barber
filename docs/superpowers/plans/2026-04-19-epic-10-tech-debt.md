@@ -38,6 +38,7 @@
 | 22 | Cobrir FKs sem índice (`availability_blocks.tenant_id`, `professionals.user_id`, `tenants.current_plan_id`) | Advisor `unindexed_foreign_keys` | Média |
 | 23 | Habilitar "Leaked Password Protection" no Supabase Auth + avaliar ListBucket do `tenant-assets` | Advisor security WARN — manual no dashboard | Baixa |
 | 24 | Exibir `tenants.city` (já existe) na home no lugar do `timezone` + UI de edição no perfil | Hoje a home hardcoda "Arapongas"; coluna já existe, só falta popular + renderizar | Baixa |
+| 25 | Home do tenant quando cliente está logado: repensar UX | Hoje mostra "Bem-vindo X" + "Meus agendamentos" acima do CTA, mas bottom nav já tem tab "Meus" — duplicado. Sugestão: mostrar próximo agendamento, ou quick re-booking | Média |
 
 ---
 

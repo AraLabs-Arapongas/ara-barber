@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
 import { CustomerAccess } from '@/components/home/customer-access'
 import { CustomerSessionSync } from '@/components/mock/customer-session-sync'
+import { CustomerShell } from '@/components/customer/customer-shell'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -122,36 +123,38 @@ async function TenantPublicHome() {
       ) : (
         <TenantSlugProvider slug={tenant.slug}>
           <CustomerSessionSync />
-          <main className="noise-overlay relative flex min-h-screen flex-col bg-bg">
-            <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <TenantLogo
-                logoUrl={tenant.logoUrl}
-                name={tenant.name}
-                size={400}
-                className="mb-6"
-              />
-              <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
-                {tenant.homeHeadlineTop ?? 'Pronto para dar'}
-                <br />
-                <span className="italic text-brand-primary">
-                  {tenant.homeHeadlineAccent ?? 'aquele tapa no visual?'}
-                </span>
-              </h2>
-              <Link href="/book" className="mt-8 w-full max-w-xs">
-                <Button size="lg" fullWidth>
-                  Agendar agora
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </Link>
-              <div className="mt-6">
-                <CustomerAccess />
-              </div>
-            </section>
+          <CustomerShell>
+            <main className="noise-overlay relative flex min-h-[calc(100dvh-4.5rem-env(safe-area-inset-bottom))] flex-col bg-bg">
+              <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
+                <TenantLogo
+                  logoUrl={tenant.logoUrl}
+                  name={tenant.name}
+                  size={400}
+                  className="mb-6"
+                />
+                <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
+                  {tenant.homeHeadlineTop ?? 'Pronto para dar'}
+                  <br />
+                  <span className="italic text-brand-primary">
+                    {tenant.homeHeadlineAccent ?? 'aquele tapa no visual?'}
+                  </span>
+                </h2>
+                <Link href="/book" className="mt-8 w-full max-w-xs">
+                  <Button size="lg" fullWidth>
+                    Agendar agora
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </Link>
+                <div className="mt-6">
+                  <CustomerAccess />
+                </div>
+              </section>
 
-            <footer className="relative z-10 flex justify-center px-6 pb-6">
-              <AraLabsAttribution />
-            </footer>
-          </main>
+              <footer className="relative z-10 flex justify-center px-6 pb-4">
+                <AraLabsAttribution />
+              </footer>
+            </main>
+          </CustomerShell>
         </TenantSlugProvider>
       )}
     </>

@@ -8,9 +8,8 @@ import { PreviewBanner } from '@/components/mock/preview-banner'
 import { CustomerSessionSync } from '@/components/mock/customer-session-sync'
 import { CustomerShell } from '@/components/customer/customer-shell'
 
-export default async function BookLayout({ children }: { children: ReactNode }) {
+export default async function PerfilLayout({ children }: { children: ReactNode }) {
   const tenant = await getCurrentTenantOrNotFound()
-
   return (
     <>
       <ThemeInjector
@@ -29,7 +28,7 @@ export default async function BookLayout({ children }: { children: ReactNode }) 
               <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-3 sm:px-6">
                 <Link
                   href="/"
-                  aria-label="Voltar à home do salão"
+                  aria-label="Home do salão"
                   className="flex min-w-0 items-center gap-3"
                 >
                   <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={40} />
@@ -38,7 +37,7 @@ export default async function BookLayout({ children }: { children: ReactNode }) 
                       {tenant.name}
                     </p>
                     <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-fg-subtle">
-                      Agendar
+                      Perfil
                     </p>
                   </div>
                 </Link>

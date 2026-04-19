@@ -6,6 +6,7 @@ import { TenantLogo } from '@/components/branding/tenant-logo'
 import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
 import { PreviewBanner } from '@/components/mock/preview-banner'
 import { CustomerSessionSync } from '@/components/mock/customer-session-sync'
+import { CustomerShell } from '@/components/customer/customer-shell'
 
 export default async function MeusAgendamentosLayout({ children }: { children: ReactNode }) {
   const tenant = await getCurrentTenantOrNotFound()
@@ -22,26 +23,28 @@ export default async function MeusAgendamentosLayout({ children }: { children: R
         <CustomerSessionSync />
         <div className="min-h-screen bg-bg text-fg">
           <PreviewBanner tenantSlug={tenant.slug} />
-          <header className="border-b border-border bg-surface/80 backdrop-blur">
-            <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-3 sm:px-6">
-              <Link
-                href="/"
-                aria-label="Home do salão"
-                className="flex min-w-0 items-center gap-3"
-              >
-                <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={40} />
-                <div className="min-w-0">
-                  <p className="truncate font-display text-[1rem] font-semibold leading-tight tracking-tight text-fg">
-                    {tenant.name}
-                  </p>
-                  <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-fg-subtle">
-                    Meus agendamentos
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </header>
-          {children}
+          <CustomerShell>
+            <header className="border-b border-border bg-surface/80 backdrop-blur">
+              <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-3 sm:px-6">
+                <Link
+                  href="/"
+                  aria-label="Home do salão"
+                  className="flex min-w-0 items-center gap-3"
+                >
+                  <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={40} />
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-[1rem] font-semibold leading-tight tracking-tight text-fg">
+                      {tenant.name}
+                    </p>
+                    <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-fg-subtle">
+                      Meus agendamentos
+                    </p>
+                  </div>
+                </Link>
+              </div>
+            </header>
+            {children}
+          </CustomerShell>
         </div>
       </TenantSlugProvider>
     </>
