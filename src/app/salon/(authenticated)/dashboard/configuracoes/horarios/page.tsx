@@ -1,52 +1,148 @@
-import { createClient } from '@/lib/supabase/server'
-import { assertStaff } from '@/lib/auth/guards'
-import { HoursEditor } from './_hours-editor'
+'use client'
 
-type Row = {
-  weekday: number
-  start_time: string
-  end_time: string
-  is_open: boolean
-}
+import { useState } from 'react'
+import Link from 'next/link'
+import { ChevronLeft } from 'lucide-react'
+import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
+import { useMockStore } from '@/lib/mock/store'
+import { ENTITY } from '@/lib/mock/entities'
+import type { BusinessHoursRow } from '@/lib/mock/schemas'
+import { Button } from '@/components/ui/button'
+import { Alert } from '@/components/ui/alert'
 
-function defaultRow(weekday: number): Row {
-  return { weekday, start_time: '09:00', end_time: '18:00', is_open: false }
-}
+const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
-export default async function HoursPage() {
-  await assertStaff()
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('business_hours')
-    .select('weekday, start_time, end_time, is_open')
-    .order('weekday')
+export default function HoursPage() {
+  const tenantSlug = useTenantSlug()
+  const { data: saved, setData } = useMockStore(
+    tenantSlug,
+    ENTITY.businessHours.key,
+    ENTITY.businessHours.schema,
+    ENTITY.businessHours.seed,
+  )
+  const [draft, setDraft] = useState<BusinessHoursRow[] | null>(null)
+  const [ok, setOk] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const byWeekday = new Map<number, Row>((data ?? []).map((r) => [r.weekday, r as Row]))
-  const initial = Array.from({ length: 7 }, (_, i) => {
-    const row = byWeekday.get(i) ?? defaultRow(i)
-    return {
-      weekday: i,
-      startTime: row.start_time.slice(0, 5),
-      endTime: row.end_time.slice(0, 5),
-      isOpen: row.is_open,
+  const rows = draft ?? saved
+
+  function update(i: number, patch: Partial<BusinessHoursRow>) {
+    setOk(false)
+    setError(null)
+    const next = rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r))
+    setDraft(next)
+  }
+
+  function save() {
+    if (!draft) return
+    for (const r of draft) {
+      if (r.isOpen && r.startTime >= r.endTime) {
+        setError(`${DAYS[r.weekday]}: abertura deve ser menor que fechamento.`)
+        return
+      }
     }
-  })
+    setData(draft)
+    setDraft(null)
+    setOk(true)
+    setError(null)
+  }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8">
-      <header className="mb-8">
+    <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
+      <Link
+        href="/salon/dashboard/mais"
+        className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
+      >
+        <ChevronLeft className="h-3.5 w-3.5" />
+        Voltar
+      </Link>
+
+      <header className="mb-6">
         <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
           Configurações
         </p>
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Horários de funcionamento
         </h1>
-        <p className="mt-2 text-[0.9375rem] text-fg-muted">
+        <p className="mt-1 text-[0.875rem] text-fg-muted">
           Quando seu salão abre e fecha em cada dia da semana.
         </p>
       </header>
 
-      <HoursEditor initial={initial} />
+      <ul className="space-y-2">
+        {rows.map((r, i) => (
+          <li
+            key={r.weekday}
+            className="rounded-xl border border-border bg-surface px-4 py-3 shadow-xs"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-medium text-fg">{DAYS[r.weekday]}</span>
+              <label className="inline-flex cursor-pointer items-center gap-2 text-[0.8125rem] text-fg-muted">
+                <input
+                  type="checkbox"
+                  checked={r.isOpen}
+                  onChange={(e) => update(i, { isOpen: e.target.checked })}
+                  className="h-4 w-4 accent-brand-primary"
+                />
+                {r.isOpen ? 'Aberto' : 'Fechado'}
+              </label>
+            </div>
+
+            {r.isOpen ? (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
+                    Abre
+                  </span>
+                  <input
+                    type="time"
+                    value={r.startTime}
+                    onChange={(e) => update(i, { startTime: e.target.value })}
+                    className="h-11 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
+                    Fecha
+                  </span>
+                  <input
+                    type="time"
+                    value={r.endTime}
+                    onChange={(e) => update(i, { endTime: e.target.value })}
+                    className="h-11 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+                  />
+                </label>
+              </div>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      {error ? (
+        <Alert variant="error" title="Não foi possível salvar" className="mt-4">
+          {error}
+        </Alert>
+      ) : null}
+      {ok ? <Alert variant="success" className="mt-4">Horários atualizados.</Alert> : null}
+
+      {draft ? (
+        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] mt-6 flex gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              setDraft(null)
+              setError(null)
+            }}
+          >
+            Descartar
+          </Button>
+          <Button type="button" fullWidth onClick={save}>
+            Salvar horários
+          </Button>
+        </div>
+      ) : null}
     </main>
   )
 }

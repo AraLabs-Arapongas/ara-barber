@@ -1,15 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
-import { assertStaff } from '@/lib/auth/guards'
-import { Card, CardContent } from '@/components/ui/card'
+'use client'
 
-type Row = {
-  id: string
-  name: string | null
-  phone: string | null
-  email: string | null
-  is_active: boolean
-  created_at: string
-}
+import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
+import { useMockStore } from '@/lib/mock/store'
+import { ENTITY } from '@/lib/mock/entities'
+import { Card, CardContent } from '@/components/ui/card'
 
 function displayName(name: string | null, email: string | null): string {
   if (name && name.trim().length > 0) return name
@@ -29,33 +23,36 @@ function formatDate(iso: string): string {
   }
 }
 
-export default async function CustomersPage() {
-  await assertStaff()
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('customers')
-    .select('id, name, phone, email, is_active, created_at')
-    .order('created_at', { ascending: false })
+export default function CustomersPage() {
+  const tenantSlug = useTenantSlug()
+  const { data: customers } = useMockStore(
+    tenantSlug,
+    ENTITY.customers.key,
+    ENTITY.customers.schema,
+    ENTITY.customers.seed,
+  )
 
-  const customers: Row[] = error ? [] : ((data ?? []) as Row[])
+  const sorted = [...customers].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8">
-      <header className="mb-8">
+    <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
+      <header className="mb-6">
         <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-          Agenda
+          Base
         </p>
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Clientes
         </h1>
-        <p className="mt-2 text-[0.9375rem] text-fg-muted">
-          Todos que já logaram no seu salão. O cadastro é feito pelo próprio cliente via booking.
+        <p className="mt-1 text-[0.875rem] text-fg-muted">
+          Quem já logou no seu salão. Cadastro é feito pelo próprio cliente no booking.
         </p>
       </header>
 
-      {customers.length > 0 ? (
+      {sorted.length > 0 ? (
         <ul className="space-y-2">
-          {customers.map((c) => (
+          {sorted.map((c) => (
             <li key={c.id}>
               <Card className="shadow-xs">
                 <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
@@ -64,10 +61,10 @@ export default async function CustomersPage() {
                       {displayName(c.name, c.email)}
                     </p>
                     <p className="truncate text-[0.8125rem] text-fg-muted">
-                      {c.phone ?? 'sem telefone'} · desde {formatDate(c.created_at)}
+                      {c.phone ?? 'sem telefone'} · desde {formatDate(c.createdAt)}
                     </p>
                   </div>
-                  {!c.is_active ? (
+                  {!c.isActive ? (
                     <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
                       Inativo
                     </span>

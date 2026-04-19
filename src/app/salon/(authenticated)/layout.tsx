@@ -4,6 +4,8 @@ import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { PreviewBanner } from '@/components/mock/preview-banner'
+import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
+import { BottomTabNav } from '@/components/nav/bottom-tab-nav'
 
 export default async function SalonAuthenticatedLayout({
   children,
@@ -31,10 +33,13 @@ export default async function SalonAuthenticatedLayout({
           accentColor: tenant.accentColor,
         }}
       />
-      <div className="min-h-screen bg-bg text-fg">
-        <PreviewBanner tenantSlug={tenant.slug} />
-        {children}
-      </div>
+      <TenantSlugProvider slug={tenant.slug}>
+        <div className="min-h-screen bg-bg text-fg pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+          <PreviewBanner tenantSlug={tenant.slug} />
+          {children}
+        </div>
+        <BottomTabNav />
+      </TenantSlugProvider>
     </>
   )
 }
