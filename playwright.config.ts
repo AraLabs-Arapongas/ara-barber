@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = process.env.PORT ?? '3100'
+const PORT = process.env.PORT ?? '3008'
 const BASE_URL = `http://localhost:${PORT}`
 
 export default defineConfig({
@@ -25,7 +25,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm build && PORT=${PORT} pnpm start`,
+    command: `pnpm build && pnpm start`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

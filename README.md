@@ -21,9 +21,9 @@ supabase start
 pnpm dev
 ```
 
-Acessar `http://localhost:3000`.
+Acessar `http://localhost:3008`.
 
-Para testar subdomínios em dev, acessar `http://qualquercoisa.lvh.me:3000` (lvh.me resolve para 127.0.0.1 com qualquer subdomain).
+Para testar subdomínios em dev, acessar `http://qualquercoisa.lvh.me:3008` (lvh.me resolve para 127.0.0.1 com qualquer subdomain).
 
 ### Comandos
 
