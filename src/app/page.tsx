@@ -7,6 +7,7 @@ import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/c
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
+import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -87,8 +88,8 @@ function TenantNotFound() {
           </Link>
         </div>
       </div>
-      <footer className="relative z-10 text-center text-[0.75rem] text-fg-subtle">
-        Ara Barber · AraLabs
+      <footer className="relative z-10 flex justify-center">
+        <AraLabsAttribution />
       </footer>
     </main>
   )
@@ -159,14 +160,8 @@ async function TenantPublicHome() {
             </Link>
           </section>
 
-          <footer className="relative z-10 flex items-center justify-center gap-2 px-6 pb-6 text-[0.75rem] text-fg-subtle">
-            <span>Feito com</span>
-            <Link
-              href="https://aralabs.com.br"
-              className="underline-offset-4 hover:text-fg hover:underline"
-            >
-              Ara Barber
-            </Link>
+          <footer className="relative z-10 flex justify-center px-6 pb-6">
+            <AraLabsAttribution />
           </footer>
         </main>
       )}
@@ -257,6 +252,10 @@ function DevRootIndex() {
             </li>
           ))}
         </ul>
+
+        <div className="mt-12 flex justify-center border-t border-border pt-6">
+          <AraLabsAttribution />
+        </div>
       </div>
     </main>
   )
