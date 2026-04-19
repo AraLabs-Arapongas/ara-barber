@@ -32,12 +32,9 @@ export default function BookStepLogin() {
     ENTITY.currentCustomer.seed,
   )
 
-  const [stage, setStage] = useState<'email' | 'otp'>(session.email ? 'otp' : 'email')
   const [email, setEmail] = useState(session.email ?? '')
   const [error, setError] = useState<string | null>(null)
 
-  // Se veio com params do wizard, vai pra /book/confirmar. Sem params (login
-  // standalone, por ex. vindo de /meus-agendamentos), vai pra /meus-agendamentos.
   const hasWizardParams = Boolean(
     current.serviceId && current.date && current.time && current.professionalId,
   )
@@ -45,62 +42,42 @@ export default function BookStepLogin() {
     ? bookHrefWith('/book/confirmar', current)
     : '/meus-agendamentos'
 
-  function sendOtp(e: FormEvent<HTMLFormElement>) {
+  function loginAs(targetEmail: string, nameFromProvider?: string) {
+    const normalized = targetEmail.trim().toLowerCase()
+    let customer = customers.find((c) => c.email?.toLowerCase() === normalized)
+    if (!customer) {
+      const newCust = {
+        id: mockId('c'),
+        name: nameFromProvider ?? null,
+        email: normalized,
+        phone: null,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      }
+      setCustomers((prev) => [...prev, newCust])
+      customer = newCust
+    } else if (nameFromProvider && !customer.name) {
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === customer!.id ? { ...c, name: nameFromProvider } : c)),
+      )
+    }
+    setSession({ customerId: customer.id, email: normalized })
+    router.push(nextHref)
+  }
+
+  function handleEmailSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const value = email.trim().toLowerCase()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setError('Informe um e-mail válido.')
       return
     }
-    setEmail(value)
     setError(null)
-    setStage('otp')
-  }
-
-  function confirmOtp(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const code = String(new FormData(e.currentTarget).get('code') ?? '').trim()
-    if (code.length < 4) {
-      setError('Código tem 6 dígitos.')
-      return
-    }
-    // Auto-link ou cria customer
-    let customer = customers.find((c) => c.email?.toLowerCase() === email.toLowerCase())
-    if (!customer) {
-      const newCust = {
-        id: mockId('c'),
-        name: null,
-        email,
-        phone: null,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      }
-      setCustomers((prev) => [...prev, newCust])
-      customer = newCust
-    }
-    setSession({ customerId: customer.id, email })
-    setError(null)
-    router.push(nextHref)
+    loginAs(value)
   }
 
   function loginGoogle() {
-    // Mock: usa um email fixo e pula OTP.
-    const fakeEmail = 'voce@gmail.com'
-    let customer = customers.find((c) => c.email === fakeEmail)
-    if (!customer) {
-      const newCust = {
-        id: mockId('c'),
-        name: 'Você (Google)',
-        email: fakeEmail,
-        phone: null,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      }
-      setCustomers((prev) => [...prev, newCust])
-      customer = newCust
-    }
-    setSession({ customerId: customer.id, email: fakeEmail })
-    router.push(nextHref)
+    loginAs('voce@gmail.com', 'Você (Google)')
   }
 
   return (
@@ -114,7 +91,11 @@ export default function BookStepLogin() {
             <ChevronLeft className="h-3.5 w-3.5" />
             Horário
           </Link>
-          <StepIndicator current={5} total={6} labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']} />
+          <StepIndicator
+            current={5}
+            total={6}
+            labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']}
+          />
         </>
       ) : (
         <Link
@@ -133,65 +114,36 @@ export default function BookStepLogin() {
         Pra confirmar a reserva e avisar se algo mudar.
       </p>
 
-      {stage === 'email' ? (
-        <>
-          <form onSubmit={sendOtp} className="space-y-3">
-            <Input
-              label="Seu e-mail"
-              type="email"
-              required
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="voce@exemplo.com"
-              leftIcon={<Mail className="h-4 w-4" />}
-            />
-            {error ? <Alert variant="error">{error}</Alert> : null}
-            <Button type="submit" size="lg" fullWidth>
-              Receber código
-            </Button>
-          </form>
-          <div className="my-4 flex items-center gap-3 text-[0.75rem] text-fg-subtle">
-            <span className="h-px flex-1 bg-border" />
-            ou
-            <span className="h-px flex-1 bg-border" />
-          </div>
-          <Button type="button" variant="secondary" size="lg" fullWidth onClick={loginGoogle}>
-            Continuar com Google
-          </Button>
-          <p className="mt-5 text-center text-[0.75rem] text-fg-subtle">
-            Preview: qualquer código de 4+ dígitos é aceito.
-          </p>
-        </>
-      ) : (
-        <form onSubmit={confirmOtp} className="space-y-3">
-          <div className="rounded-lg bg-bg-subtle px-4 py-3 text-[0.8125rem] text-fg-muted">
-            Enviamos um código pra <strong className="text-fg">{email}</strong>.{' '}
-            <button
-              type="button"
-              onClick={() => setStage('email')}
-              className="font-medium text-brand-primary hover:underline"
-            >
-              Trocar e-mail
-            </button>
-          </div>
-          <Input
-            label="Código"
-            name="code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={8}
-            required
-            autoFocus
-            placeholder="123456"
-          />
-          {error ? <Alert variant="error">{error}</Alert> : null}
-          <Button type="submit" size="lg" fullWidth>
-            Confirmar
-          </Button>
-        </form>
-      )}
+      <form onSubmit={handleEmailSubmit} className="space-y-3">
+        <Input
+          label="Seu e-mail"
+          type="email"
+          required
+          autoFocus
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="voce@exemplo.com"
+          leftIcon={<Mail className="h-4 w-4" />}
+        />
+        {error ? <Alert variant="error">{error}</Alert> : null}
+        <Button type="submit" size="lg" fullWidth>
+          Entrar
+        </Button>
+      </form>
+
+      <div className="my-4 flex items-center gap-3 text-[0.75rem] text-fg-subtle">
+        <span className="h-px flex-1 bg-border" />
+        ou
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <Button type="button" variant="secondary" size="lg" fullWidth onClick={loginGoogle}>
+        Continuar com Google
+      </Button>
+
+      <p className="mt-5 text-center text-[0.75rem] text-fg-subtle">
+        Preview: login sem OTP, qualquer e-mail válido é aceito.
+      </p>
     </main>
   )
 }
