@@ -43,7 +43,6 @@ export function TenantLogo({ logoUrl, name, size = 48, className }: Props) {
         width: size,
         height: size,
         fontSize: Math.round(size * 0.42),
-        fontVariationSettings: "'SOFT' 100, 'WONK' 1",
       }}
       aria-label={name}
     >

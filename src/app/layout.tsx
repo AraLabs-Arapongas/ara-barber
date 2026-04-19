@@ -1,14 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Fraunces, Figtree } from 'next/font/google'
+import { Figtree } from 'next/font/google'
 import './globals.css'
-
-const fraunces = Fraunces({
-  variable: '--font-fraunces',
-  subsets: ['latin'],
-  axes: ['SOFT', 'opsz'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-})
 
 const figtree = Figtree({
   variable: '--font-figtree',
@@ -30,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${fraunces.variable} ${figtree.variable}`}>
+    <html lang="pt-BR" className={figtree.variable}>
       <body>{children}</body>
     </html>
   )

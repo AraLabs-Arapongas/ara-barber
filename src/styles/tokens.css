@@ -90,9 +90,9 @@
   --shadow-inset: inset 0 1px 2px 0 oklch(0.2 0.01 60 / 0.06);
 
   /* ========================================
-   * TYPOGRAPHY — Fraunces (display) + Figtree (UI)
+   * TYPOGRAPHY — Figtree (UI + display)
    * ======================================== */
-  --font-display: var(--font-fraunces), ui-serif, Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 

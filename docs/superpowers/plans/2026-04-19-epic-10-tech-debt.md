@@ -37,6 +37,7 @@
 | 21 | Consolidar policies permissivas múltiplas por tabela | Advisor `multiple_permissive_policies` (170 ocorrências — desenho atual mantém 2 policies `*_platform_admin_all` + `*_tenant_staff_all` por tabela) | Baixa |
 | 22 | Cobrir FKs sem índice (`availability_blocks.tenant_id`, `professionals.user_id`, `tenants.current_plan_id`) | Advisor `unindexed_foreign_keys` | Média |
 | 23 | Habilitar "Leaked Password Protection" no Supabase Auth + avaliar ListBucket do `tenant-assets` | Advisor security WARN — manual no dashboard | Baixa |
+| 24 | Adicionar campo `city` em `tenants` + exibir na home no lugar do `timezone` | Hoje a home hardcoda "Arapongas"; timezone fica só pra cálculos de data | Baixa |
 
 ---
 
@@ -621,6 +622,33 @@ Os valores literais foram omitidos deste plano de propósito para não aparecere
 - [ ] **Step 2 (avaliar):** bucket `tenant-assets` é público com policy `tenant_assets_public_read` que permite **listar** todos os arquivos. Usuários só precisam de URL direta pra carregar logo/favicon. Decidir: (a) deixar como está, (b) trocar policy por `authenticated only` (quebra `<img src>` externos?), (c) renomear arquivos com slug hash pra URLs não-advinháveis.
 
 **Manual-action flag:** depende do dashboard Supabase.
+
+---
+
+## Task 24: Campo `city` em `tenants` + exibir na home
+
+**Origem:** Sessão 2026-04-19. Home do tenant exibe `Barbearia · {tenant.timezone}` no header (`src/app/page.tsx`). Usuário pediu pra mostrar a cidade em vez do timezone; na falta do campo, foi hardcoded "Arapongas".
+
+**Problema:** `tenant.timezone` é IANA (`America/Sao_Paulo`) — necessário pra cálculos de data mas ruim como label. "Arapongas" hardcoded quebra pros outros tenants (casa-do-corte, barba-preta) e não escala.
+
+**Files:**
+- Migration: `supabase/migrations/NNNN_add_city_to_tenants.sql`
+- Update: `src/lib/tenant/context.ts` — incluir `city` no select e no tipo
+- Update: `src/lib/supabase/types.ts` — regenerar via `mcp__supabase__generate_typescript_types`
+- Update: `src/app/page.tsx:132` — trocar `Arapongas` hardcoded por `{tenant.city}`
+- Update: `src/app/salon/(authenticated)/dashboard/perfil/page.tsx` — adicionar input de cidade ao editar perfil do tenant
+- Update: `src/lib/mock/seed.ts:345` — seed com `city` nos 3 tenants dev
+
+**Steps:**
+
+- [ ] **Step 1:** Migration via `mcp__supabase__apply_migration` adicionando `city text` em `tenants` (nullable inicialmente; default '' ou null).
+- [ ] **Step 2:** Regenerar types com `mcp__supabase__generate_typescript_types`.
+- [ ] **Step 3:** Propagar no `getCurrentTenantOrNotFound()` e no tipo `TenantContext`.
+- [ ] **Step 4:** Exibir no header da home. Fallback: se `city` vier null/'', esconder o `·` + texto (não mostrar timezone como antes — timezone é técnico).
+- [ ] **Step 5:** Formulário de edição em `/salon/dashboard/perfil` pra staff atualizar.
+- [ ] **Step 6:** Seed dos 3 tenants dev (barbearia-teste: "Arapongas", casa-do-corte: "Londrina", barba-preta: "Curitiba" — ajustar como fizer sentido).
+
+**Prioridade:** Baixa — afeta só estética do header.
 
 ---
 

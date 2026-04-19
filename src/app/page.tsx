@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
@@ -71,12 +72,7 @@ function TenantNotFound() {
         </p>
         <h1 className="mb-3 font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg sm:text-[2.25rem]">
           Esse endereço não está{' '}
-          <span
-            className="italic text-brand-primary"
-            style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
-          >
-            ativo
-          </span>
+          <span className="italic text-brand-primary">ativo</span>
           <span className="text-brand-accent">.</span>
         </h1>
         <p className="max-w-sm text-[0.9375rem] leading-relaxed text-fg-muted">
@@ -134,29 +130,24 @@ async function TenantPublicHome() {
                 <h1 className="font-display text-[1.5rem] font-semibold tracking-tight text-fg leading-tight">
                   {tenant.name}
                 </h1>
-                <p className="text-[0.8125rem] text-fg-muted">Barbearia · {tenant.timezone}</p>
+                <p className="text-[0.8125rem] text-fg-muted">Barbearia · Arapongas</p>
               </div>
             </header>
 
             <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <p className="mb-2 text-[0.75rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
-                Agendamento online
-              </p>
+              <Image
+                src="/family-barber-arapongas.png"
+                alt=""
+                width={450}
+                height={300}
+                priority
+                className="h-auto w-full max-w-xs"
+              />
               <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
                 Pronto para dar
                 <br />
-                <span
-                  className="italic text-brand-primary"
-                  style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
-                >
-                  aquele tapa no visual
-                </span>
-                <span className="text-brand-accent">?</span>
+                <span className="italic text-brand-primary">aquele tapa no visual?</span>
               </h2>
-              <p className="mt-4 max-w-xs text-[0.9375rem] text-fg-muted sm:max-w-sm">
-                Escolha seu profissional, o horário que cabe no seu dia e confirme — sem ligação, sem
-                mensagem.
-              </p>
               <Link href="/book" className="mt-8 w-full max-w-xs">
                 <Button size="lg" fullWidth>
                   Agendar agora

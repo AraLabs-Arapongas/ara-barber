@@ -67,6 +67,20 @@
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+
+  /* caret blink (estilo terminal — on/off, sem fade) */
+  --animate-caret-blink: caret-blink 1s steps(2, start) infinite;
+
+  @keyframes caret-blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
 }
 
 /*
@@ -95,16 +109,12 @@ body {
   letter-spacing: -0.005em;
 }
 
-/* Display serif tem tracking levemente negativo em tamanhos grandes */
+/* Display tem tracking levemente negativo em tamanhos grandes */
 h1,
 h2,
 .font-display {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
-  /* Fraunces axes: SOFT alto (100) para warmth, opsz automático */
-  font-variation-settings:
-    'SOFT' 100,
-    'WONK' 0;
 }
 
 h1 {

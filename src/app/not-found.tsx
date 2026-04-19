@@ -20,12 +20,7 @@ export default function NotFoundPage() {
 
         <h1 className="mb-3 font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg sm:text-[2.25rem]">
           Esse endereço não está{' '}
-          <span
-            className="italic text-brand-primary"
-            style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
-          >
-            ativo
-          </span>
+          <span className="italic text-brand-primary">ativo</span>
           <span className="text-brand-accent">.</span>
         </h1>
 
