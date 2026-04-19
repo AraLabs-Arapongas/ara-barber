@@ -10,10 +10,149 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.5'
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      availability_blocks: {
+        Row: {
+          created_at: string
+          end_at: string
+          id: string
+          professional_id: string
+          reason: string | null
+          start_at: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_at: string
+          id?: string
+          professional_id: string
+          reason?: string | null
+          start_at: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          end_at?: string
+          id?: string
+          professional_id?: string
+          reason?: string | null
+          start_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_blocks_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_blocks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_hours: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_open: boolean
+          start_time: string
+          tenant_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_open?: boolean
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_open?: boolean
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_hours_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string
+          tenant_id: string
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone: string
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           code: string
@@ -25,7 +164,7 @@ export type Database = {
           monthly_price_cents: number
           name: string
           transaction_fee_fixed_cents: number | null
-          transaction_fee_type: Database['public']['Enums']['transaction_fee_type']
+          transaction_fee_type: Database["public"]["Enums"]["transaction_fee_type"]
           transaction_fee_value: number
           trial_days_default: number
           updated_at: string
@@ -40,7 +179,7 @@ export type Database = {
           monthly_price_cents: number
           name: string
           transaction_fee_fixed_cents?: number | null
-          transaction_fee_type?: Database['public']['Enums']['transaction_fee_type']
+          transaction_fee_type?: Database["public"]["Enums"]["transaction_fee_type"]
           transaction_fee_value?: number
           trial_days_default?: number
           updated_at?: string
@@ -55,20 +194,229 @@ export type Database = {
           monthly_price_cents?: number
           name?: string
           transaction_fee_fixed_cents?: number | null
-          transaction_fee_type?: Database['public']['Enums']['transaction_fee_type']
+          transaction_fee_type?: Database["public"]["Enums"]["transaction_fee_type"]
           transaction_fee_value?: number
           trial_days_default?: number
           updated_at?: string
         }
         Relationships: []
       }
+      professional_availability: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_available: boolean
+          professional_id: string
+          start_time: string
+          tenant_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          professional_id: string
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          professional_id?: string
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_availability_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_availability_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_services: {
+        Row: {
+          created_at: string
+          id: string
+          professional_id: string
+          service_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          professional_id: string
+          service_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          professional_id?: string
+          service_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_services_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professionals: {
+        Row: {
+          commission_type: Database["public"]["Enums"]["commission_type"]
+          commission_value: number
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          photo_url: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          commission_type?: Database["public"]["Enums"]["commission_type"]
+          commission_value?: number
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          commission_type?: Database["public"]["Enums"]["commission_type"]
+          commission_value?: number
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professionals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string
+          deposit_percentage: number | null
+          deposit_required: boolean
+          deposit_type: Database["public"]["Enums"]["deposit_type"] | null
+          deposit_value_cents: number | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_percentage?: number | null
+          deposit_required?: boolean
+          deposit_type?: Database["public"]["Enums"]["deposit_type"] | null
+          deposit_value_cents?: number | null
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_cents: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_percentage?: number | null
+          deposit_required?: boolean
+          deposit_type?: Database["public"]["Enums"]["deposit_type"] | null
+          deposit_value_cents?: number | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           accent_color: string | null
           address_line1: string | null
           address_line2: string | null
-          billing_model: Database['public']['Enums']['billing_model']
-          billing_status: Database['public']['Enums']['billing_status']
+          billing_model: Database["public"]["Enums"]["billing_model"]
+          billing_status: Database["public"]["Enums"]["billing_status"]
           city: string | null
           contact_phone: string | null
           created_at: string
@@ -89,13 +437,13 @@ export type Database = {
           secondary_color: string | null
           slug: string
           state: string | null
-          status: Database['public']['Enums']['tenant_status']
+          status: Database["public"]["Enums"]["tenant_status"]
           subdomain: string
           subscription_ends_at: string | null
           subscription_starts_at: string | null
           timezone: string
           transaction_fee_fixed_cents: number | null
-          transaction_fee_type: Database['public']['Enums']['transaction_fee_type']
+          transaction_fee_type: Database["public"]["Enums"]["transaction_fee_type"]
           transaction_fee_value: number
           trial_days_granted: number | null
           trial_ends_at: string | null
@@ -107,8 +455,8 @@ export type Database = {
           accent_color?: string | null
           address_line1?: string | null
           address_line2?: string | null
-          billing_model?: Database['public']['Enums']['billing_model']
-          billing_status?: Database['public']['Enums']['billing_status']
+          billing_model?: Database["public"]["Enums"]["billing_model"]
+          billing_status?: Database["public"]["Enums"]["billing_status"]
           city?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -129,13 +477,13 @@ export type Database = {
           secondary_color?: string | null
           slug: string
           state?: string | null
-          status?: Database['public']['Enums']['tenant_status']
+          status?: Database["public"]["Enums"]["tenant_status"]
           subdomain: string
           subscription_ends_at?: string | null
           subscription_starts_at?: string | null
           timezone?: string
           transaction_fee_fixed_cents?: number | null
-          transaction_fee_type?: Database['public']['Enums']['transaction_fee_type']
+          transaction_fee_type?: Database["public"]["Enums"]["transaction_fee_type"]
           transaction_fee_value?: number
           trial_days_granted?: number | null
           trial_ends_at?: string | null
@@ -147,8 +495,8 @@ export type Database = {
           accent_color?: string | null
           address_line1?: string | null
           address_line2?: string | null
-          billing_model?: Database['public']['Enums']['billing_model']
-          billing_status?: Database['public']['Enums']['billing_status']
+          billing_model?: Database["public"]["Enums"]["billing_model"]
+          billing_status?: Database["public"]["Enums"]["billing_status"]
           city?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -169,13 +517,13 @@ export type Database = {
           secondary_color?: string | null
           slug?: string
           state?: string | null
-          status?: Database['public']['Enums']['tenant_status']
+          status?: Database["public"]["Enums"]["tenant_status"]
           subdomain?: string
           subscription_ends_at?: string | null
           subscription_starts_at?: string | null
           timezone?: string
           transaction_fee_fixed_cents?: number | null
-          transaction_fee_type?: Database['public']['Enums']['transaction_fee_type']
+          transaction_fee_type?: Database["public"]["Enums"]["transaction_fee_type"]
           transaction_fee_value?: number
           trial_days_granted?: number | null
           trial_ends_at?: string | null
@@ -185,11 +533,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'tenants_current_plan_id_fkey'
-            columns: ['current_plan_id']
+            foreignKeyName: "tenants_current_plan_id_fkey"
+            columns: ["current_plan_id"]
             isOneToOne: false
-            referencedRelation: 'plans'
-            referencedColumns: ['id']
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -199,7 +547,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
-          role: Database['public']['Enums']['user_role']
+          role: Database["public"]["Enums"]["user_role"]
           tenant_id: string | null
           updated_at: string
           user_id: string
@@ -209,7 +557,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
-          role: Database['public']['Enums']['user_role']
+          role: Database["public"]["Enums"]["user_role"]
           tenant_id?: string | null
           updated_at?: string
           user_id: string
@@ -219,18 +567,18 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
-          role?: Database['public']['Enums']['user_role']
+          role?: Database["public"]["Enums"]["user_role"]
           tenant_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: 'user_profiles_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "user_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -242,17 +590,29 @@ export type Database = {
       current_tenant_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
-        Returns: Database['public']['Enums']['user_role']
+        Returns: Database["public"]["Enums"]["user_role"]
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_tenant_staff: { Args: { target_tenant: string }; Returns: boolean }
     }
     Enums: {
-      billing_model: 'TRIAL' | 'SUBSCRIPTION_WITH_TRANSACTION_FEE'
-      billing_status: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED' | 'CANCELED'
-      tenant_status: 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED'
-      transaction_fee_type: 'PERCENTAGE' | 'FIXED' | 'NONE'
-      user_role: 'PLATFORM_ADMIN' | 'SALON_OWNER' | 'RECEPTIONIST' | 'PROFESSIONAL' | 'CUSTOMER'
+      billing_model: "TRIAL" | "SUBSCRIPTION_WITH_TRANSACTION_FEE"
+      billing_status:
+        | "TRIALING"
+        | "ACTIVE"
+        | "PAST_DUE"
+        | "SUSPENDED"
+        | "CANCELED"
+      commission_type: "PERCENTAGE" | "FIXED"
+      deposit_type: "FIXED" | "PERCENTAGE"
+      tenant_status: "ACTIVE" | "SUSPENDED" | "ARCHIVED"
+      transaction_fee_type: "PERCENTAGE" | "FIXED" | "NONE"
+      user_role:
+        | "PLATFORM_ADMIN"
+        | "SALON_OWNER"
+        | "RECEPTIONIST"
+        | "PROFESSIONAL"
+        | "CUSTOMER"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -260,31 +620,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -293,23 +655,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -318,23 +680,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -343,46 +705,60 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
     Enums: {
-      billing_model: ['TRIAL', 'SUBSCRIPTION_WITH_TRANSACTION_FEE'],
-      billing_status: ['TRIALING', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'],
-      tenant_status: ['ACTIVE', 'SUSPENDED', 'ARCHIVED'],
-      transaction_fee_type: ['PERCENTAGE', 'FIXED', 'NONE'],
-      user_role: ['PLATFORM_ADMIN', 'SALON_OWNER', 'RECEPTIONIST', 'PROFESSIONAL', 'CUSTOMER'],
+      billing_model: ["TRIAL", "SUBSCRIPTION_WITH_TRANSACTION_FEE"],
+      billing_status: [
+        "TRIALING",
+        "ACTIVE",
+        "PAST_DUE",
+        "SUSPENDED",
+        "CANCELED",
+      ],
+      commission_type: ["PERCENTAGE", "FIXED"],
+      deposit_type: ["FIXED", "PERCENTAGE"],
+      tenant_status: ["ACTIVE", "SUSPENDED", "ARCHIVED"],
+      transaction_fee_type: ["PERCENTAGE", "FIXED", "NONE"],
+      user_role: [
+        "PLATFORM_ADMIN",
+        "SALON_OWNER",
+        "RECEPTIONIST",
+        "PROFESSIONAL",
+        "CUSTOMER",
+      ],
     },
   },
 } as const
