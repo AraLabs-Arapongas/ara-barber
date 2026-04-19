@@ -28,6 +28,11 @@
 | 12 | API HTTP `/api/admin/*` para consumo do storefront | Alternativa a expor secret key no storefront; audit/rate limit | Baixa (Fase 2+) |
 | 13 | Status HTTP 404 correto no tenant-not-found | Hoje `page.tsx` renderiza inline com 200; corrigir via `NextResponse.rewrite` no proxy | Média |
 | 14 | Executar migração da UI platform admin pra aralabs-storefront | Spec escrito (§handoff 2026-04-19); implementação em outro repo | Média (blocker pra prod) |
+| 15 | pgTAP RLS tests dos cadastros (professionals, customers, services, joins, hours) | Épico 3 / Task 13 adiada | Alta |
+| 16 | Google OAuth provider no Supabase Auth (customer login) | Decisão 2026-04-19: Fase 1 = OTP email + Google OAuth juntos | Média |
+| 17 | Edição/soft-delete completo dos cadastros (edit profissional, edit serviço, deactivate) | Épico 3: hoje só cria; toggle/edit é débito UX | Baixa |
+| 18 | `professional_services` join UI (marcar quais serviços cada profissional faz) | Épico 3: tabela existe, UI não | Média (bloqueia filtros de booking no Épico 5) |
+| 19 | `professional_availability` e `availability_blocks` UIs | Épico 3: tabelas existem, UIs não. Blocker da agenda no Épico 4 | Alta |
 
 ---
 
@@ -483,6 +488,82 @@ Os valores literais foram omitidos deste plano de propósito para não aparecere
   Se storefront for autoridade de auth (§3.1 opção A do spec), deletar `thiago@aralabs.com.br` de `ara-barber.auth.users` e simplificar RLS.
 
 **Aceite:** É possível operar ara-barber em prod sem tocar no DB diretamente.
+
+---
+
+## Task 15: pgTAP RLS tests dos cadastros
+
+**Origem:** Épico 3 / Task 13 adiada. Sem tests, cross-tenant isolation dos cadastros (`professionals`, `customers`, `services`, `professional_services`, `business_hours`, `professional_availability`, `availability_blocks`) fica só documentada no SQL.
+
+**Depende de:** Task 1 (ativar extensão pgTAP) já ter sido feita.
+
+**Files:**
+- Create: `supabase/tests/rls_cadastros.test.sql`
+
+**Steps:**
+
+- [ ] **Step 1: Escrever asserts cross-tenant**
+
+  Padrão: inserir 2 tenants + 2 owners + 1 row em cada tabela em cada tenant. Como anon, afirma leitura vazia (app 100% autenticado pós-migration 0016). Como owner A, afirma só vê tenant A. Afirma insert em tenant errado viola RLS.
+
+- [ ] **Step 2: Rodar via execute_sql em loop**
+
+- [ ] **Step 3: Commit + atualizar índice**
+
+**Aceite:** ~20 asserts passando cobrindo as 7 tabelas novas.
+
+---
+
+## Task 16: Google OAuth provider no Supabase Auth
+
+**Origem:** Decisão 2026-04-19: Fase 1 tem **OTP email + Google OAuth** como métodos de login do customer. OTP nativo, Google exige config.
+
+**Passos manuais (fora do código):**
+- [ ] **Step 1**: Google Cloud Console → criar projeto "ara-barber-dev" (e outro "ara-barber-prod" depois).
+- [ ] **Step 2**: OAuth consent screen → External → preencher app name, support email, scopes `email` + `profile` + `openid`.
+- [ ] **Step 3**: Credentials → Create OAuth Client ID → Web → adicionar `https://sixgkgiirifigoiqbyow.supabase.co/auth/v1/callback` como redirect URI.
+- [ ] **Step 4**: Supabase Dashboard → Authentication → Providers → Google → colar client ID + secret → enable.
+- [ ] **Step 5**: No código, adicionar botão "Continuar com Google" no `/book` (Épico 5) — `supabase.auth.signInWithOAuth({ provider: 'google' })`.
+
+**Manual-action flag:** user precisa do acesso admin do Google Cloud + Supabase Dashboard. Prod terá credencial separada.
+
+**Aceite:** Cliente clica botão Google no booking, redireciona pra consent do Google, volta logado.
+
+---
+
+## Task 17: Edição e soft-delete de cadastros
+
+**Origem:** Épico 3 entregou só **create + list** (mobile-first MVP). Edição, desativar/reativar, e delete não existem ainda.
+
+**Scope:**
+- [ ] Profissional: editar nome/telefone/comissão, toggle is_active
+- [ ] Serviço: editar nome/descrição/duração/preço, toggle is_active
+- [ ] Rota `/profissionais/[id]` e `/servicos/[id]` (ou sheet/drawer inline)
+- [ ] Ações server `updateProfessionalAction`, `updateServiceAction`, `toggleProfessionalActiveAction`, `toggleServiceActiveAction`
+
+**Aceite:** Salão consegue editar qualquer cadastro criado anteriormente sem SQL manual.
+
+---
+
+## Task 18: UI do join `professional_services`
+
+**Origem:** Tabela `professional_services` existe (migration 0012) mas não tem UI. Necessário pro Épico 5 filtrar "quais profissionais fazem este serviço".
+
+**UI proposta:** no detalhe do profissional, checklist de serviços do salão. Toggle on/off cria/deleta linha em `professional_services`.
+
+**Aceite:** Configurável pelo staff; afeta a lista de profissionais exibida no booking público.
+
+---
+
+## Task 19: UIs de `professional_availability` e `availability_blocks`
+
+**Origem:** Tabelas existem (migrations 0014 e 0015) mas sem UI. **Blocker do Épico 4** (agenda core) — sem availability definido, não dá pra calcular slots livres.
+
+**UI proposta (availability):** por profissional, editor de 7 dias (similar a `business_hours`) com suporte a múltiplas janelas por dia (ex: manhã + tarde).
+
+**UI proposta (blocks):** lista de folgas/férias/indisponibilidades pontuais do profissional; form inline com `start_at`, `end_at`, `reason`.
+
+**Aceite:** Profissional consegue configurar agenda recorrente + marcar exceções; Épico 4 consegue calcular disponibilidade real.
 
 ---
 

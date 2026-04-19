@@ -14,6 +14,32 @@
 
 ---
 
+## Atualizações de decisão — 2026-04-19
+
+Decisões tomadas durante o Épico 3 que **reescrevem** parte deste plano:
+
+1. **App 100% autenticado.** Nada é visível sem login — nem serviços, nem horários, nem disponibilidade. As policies `business_hours_public_read` e `professional_availability_public_read` foram removidas (migration 0016). O arquivo `0017_public_read_helpers.sql` originalmente planejado aqui **não deve ser criado**.
+
+2. **Métodos de login do customer (Fase 1):** OTP por e-mail (Supabase `signInWithOtp`) + Google OAuth. **Sem magic link separado**, **sem Apple** (adiado), **sem senha**. WhatsApp OTP vira Fase 2.
+
+3. **Fluxo revisto:**
+   1. Cliente acessa `<slug>.aralabs.com.br/` → home marketing com CTA "Agendar"
+   2. Clica CTA → `/book` → **login primeiro** (e-mail → OTP, ou botão Google)
+   3. Pós-login: **auto-insert** em `customers(tenant_id, user_id)` se ainda não existir (fields `name`/`phone` ficam NULL). Isso alimenta `/salon/dashboard/clientes` imediatamente.
+   4. Wizard: serviço → profissional → data → horário
+   5. **Confirmação**: popup coleta `name` + `phone` se ainda nulos; ao confirmar, atualiza `customers` e cria `appointment`.
+
+4. **Modelagem já ajustada em Épico 3:**
+   - `customers.user_id NOT NULL` (todo cliente tem `auth.users`)
+   - `customers.name` e `customers.phone` nullable (preenchidos no popup de confirm)
+   - Unique `(tenant_id, user_id)` impede duplicata
+
+5. **Google OAuth precisa de setup manual** (Google Cloud Console + Supabase Dashboard) — ver Épico 10 Task 16.
+
+6. **OTP email** funciona nativo no Supabase free tier (4/hora) pra dev; prod precisa SMTP dedicado (Resend free até 3k/mês). Registrar isso como débito quando ativar prod.
+
+---
+
 ## File Structure
 
 ```
