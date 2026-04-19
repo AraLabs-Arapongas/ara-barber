@@ -17,13 +17,17 @@
 | 1 | pgTAP RLS isolation tests | Épico 1 / Task 7 adiada | Alta |
 | 2 | Rotação de credenciais expostas em chat | Sessão 2026-04-18 | Alta |
 | 3 | Proxy unit tests | Coverage gap desde Épico 0 | Média |
-| 4 | Custom `not-found.tsx` tematizado | Descoberto em 2026-04-19 (login E2E manual) | Baixa |
+| 4 | Custom `not-found.tsx` tematizado | Descoberto em 2026-04-19 | ✅ **Parcial** — not-found.tsx genérico criado; tenant-missing render inline em page.tsx (ver Task 13) |
 | 5 | Script automatizado `pnpm db:types` via MCP/API | Ergonomia — hoje é manual | Média |
 | 6 | Seed idempotente de platform admin via Admin API | Épico 1 / Task 17 adiada (parte 1) | Média |
 | 7 | E2E auth flows + reativar job CI | Épico 1 / Task 17 adiada (parte 2) + Épico 0 tech debt | Média |
 | 8 | Accessibility audit (contraste, focus, ARIA) | Compromisso da Rodada 1 de design | Média |
 | 9 | Documentar setup do MCP Supabase no README/AGENTS.md | Experiência de onboarding solo | Baixa |
 | 10 | Consolidar `src/app/page.tsx` branch por area | Pode virar rewrite via proxy | Baixa |
+| 11 | Script CLI `pnpm create-tenant` | Permite onboarding manual sem UI; reusável pelo admin storefront | Média |
+| 12 | API HTTP `/api/admin/*` para consumo do storefront | Alternativa a expor secret key no storefront; audit/rate limit | Baixa (Fase 2+) |
+| 13 | Status HTTP 404 correto no tenant-not-found | Hoje `page.tsx` renderiza inline com 200; corrigir via `NextResponse.rewrite` no proxy | Média |
+| 14 | Executar migração da UI platform admin pra aralabs-storefront | Spec escrito (§handoff 2026-04-19); implementação em outro repo | Média (blocker pra prod) |
 
 ---
 
@@ -355,11 +359,140 @@ Os valores literais foram omitidos deste plano de propósito para não aparecere
 
 ---
 
+## Task 11: Script CLI `pnpm create-tenant`
+
+**Origem:** Discutido em 2026-04-19 ao decidir migrar admin pra aralabs-storefront. Mesmo sem UI, precisa onboarding repeatable.
+
+**Files:**
+- Create: `scripts/create-tenant.ts`
+- Modify: `package.json` (script)
+
+**Steps:**
+
+- [ ] **Step 1: Script Node**
+
+  Recebe args: `--slug`, `--name`, `--owner-email`, `--plan` (default STARTER). Usa `createSecretClient()` + `supabase.auth.admin.createUser({ email, email_confirm: true })` + insert em `public.tenants` + insert em `public.user_profiles` com role `SALON_OWNER`. Idempotente: se slug já existe, só confirma owner.
+
+- [ ] **Step 2: Script npm**
+
+  ```json
+  "create-tenant": "tsx scripts/create-tenant.ts"
+  ```
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git commit -m "feat(ops): pnpm create-tenant — onboarding CLI de barbershop"
+  ```
+
+**Aceite:** Rodar `pnpm create-tenant --slug=joao-barber --name="João Barber" --owner-email=joao@x.com` cria tudo em ~2s. Segunda execução não duplica.
+
+---
+
+## Task 12: API HTTP `/api/admin/*` para consumo externo
+
+**Origem:** `docs/superpowers/specs/2026-04-19-platform-admin-handoff.md` §3.3. Alternativa mais segura que expor secret key diretamente no storefront.
+
+**Files:**
+- Create: `src/app/api/admin/tenants/route.ts`, etc.
+- Create: `src/lib/admin-api-auth.ts` (valida `x-admin-api-key` header)
+- Modify: `.env.local.example` (adiciona `ADMIN_API_KEY`)
+
+**Steps:**
+
+- [ ] **Step 1: Middleware de auth por API key**
+
+  Header `x-admin-api-key` comparado contra `process.env.ADMIN_API_KEY`. Timing-safe compare.
+
+- [ ] **Step 2: Endpoints mínimos**
+
+  - `GET /api/admin/tenants` — lista + filtros.
+  - `POST /api/admin/tenants` — cria (reaproveita lógica do Task 11).
+  - `PATCH /api/admin/tenants/:id` — update branding/billing.
+  - `GET /api/admin/plans` / `POST` / `PATCH`.
+
+- [ ] **Step 3: OpenAPI / tipos compartilhados**
+
+  Exportar `src/lib/admin-api/types.ts` que o storefront pode copiar ou consumir via OpenAPI.
+
+- [ ] **Step 4: Rate limit + audit log**
+
+- [ ] **Step 5: Commit**
+
+**Aceite:** Storefront consegue listar/criar tenant sem secret key do Supabase direto, com audit trail.
+
+---
+
+## Task 13: Status HTTP 404 real no tenant-not-found
+
+**Origem:** Commit `91dd9d5` (2026-04-19). `src/app/page.tsx` renderiza `<TenantNotFound />` inline via header `x-ara-tenant-missing`, retornando status 200. O `notFound()` nativo do Next 16 dev aciona o error shell em vez de `not-found.tsx` — daí o workaround inline.
+
+**Files:**
+- Modify: `src/proxy.ts`
+- Create: `src/app/tenant-not-found/page.tsx` (ou reaproveitar)
+- Modify: `src/app/page.tsx` (remove TenantNotFound inline)
+
+**Steps:**
+
+- [ ] **Step 1: Investigar comportamento em prod**
+
+  Build + start + curl `http://barba-ruiva.lvh.me:3008`. Se em prod `notFound()` funcionar normal (renderiza `not-found.tsx`), a solução é só ajustar o condicional no page.tsx.
+
+- [ ] **Step 2: Se dev continuar ruim, usar rewrite**
+
+  ```ts
+  // proxy.ts
+  if (!tenantId) {
+    const rewriteUrl = new URL('/tenant-not-found', req.url)
+    return NextResponse.rewrite(rewriteUrl, { status: 404 })
+  }
+  ```
+
+  Criar `src/app/tenant-not-found/page.tsx` com o conteúdo atual de `TenantNotFound`.
+
+- [ ] **Step 3: Limpar**
+
+  Remove `TenantNotFound` inline de `src/app/page.tsx`. Atualiza comentário do proxy.
+
+- [ ] **Step 4: Commit**
+
+**Aceite:** `curl -I http://barba-ruiva.lvh.me:3008` devolve `404 Not Found` + HTML com design system correto.
+
+---
+
+## Task 14: Executar migração da UI platform admin
+
+**Origem:** Decisão 2026-04-19 de mover platform admin pro aralabs-storefront (`docs/superpowers/specs/2026-04-19-platform-admin-handoff.md`). Blocker pra prod — sem admin, não onboarding de clientes reais.
+
+**Fora deste repo** — implementação ocorre no aralabs-storefront. Task aqui é:
+
+- [ ] **Step 1: Compartilhar spec com time/self**
+
+  Link o doc de handoff no ticket/plano do storefront.
+
+- [ ] **Step 2: Esperar storefront implementar admin MVP**
+
+  Screens mínimas: dashboard, tenants CRUD, plans CRUD.
+
+- [ ] **Step 3: Validar integração**
+
+  Storefront lê/escreve no DB ara-barber via secret key (ou Task 12 quando existir).
+
+- [ ] **Step 4: Remover `PLATFORM_ADMIN` user daqui (se opção A de auth)**
+
+  Se storefront for autoridade de auth (§3.1 opção A do spec), deletar `thiago@aralabs.com.br` de `ara-barber.auth.users` e simplificar RLS.
+
+**Aceite:** É possível operar ara-barber em prod sem tocar no DB diretamente.
+
+---
+
 ## Regra: novo débito = linha no índice
 
 Quando descobrir um novo débito durante outro épico:
-1. Cria memory em `~/.claude/projects/-Users-thiagotavares-Projects-a-labs-tech-ara-barber/memory/` (tipo `project`).
+1. Cria memory em `~/.claude/projects/-Users-thiagotavares-Projects-a-labs-tech-ara-barber/memory/` (tipo `project`) quando o débito tiver contexto/decisão worth lembrando.
 2. Anexa uma linha no **índice** deste arquivo.
 3. Cria uma task nova aqui embaixo se for concreta o suficiente.
+
+**Registrar sempre, mesmo sem certeza** — curadoria é feita em revisão periódica; items inválidos recebem status `rejected` e ficam de histórico. Custo de registrar é baixo; custo de esquecer débito que vira bug em prod é alto.
 
 Não para a entrega do épico corrente.
