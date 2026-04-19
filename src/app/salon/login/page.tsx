@@ -39,7 +39,7 @@ export default async function SalonLoginPage() {
           <BarberStripeOrnament />
         </div>
 
-        <div className="relative z-10 flex flex-1 flex-col px-5 pt-10 sm:px-6">
+        <div className="relative z-10 flex flex-1 flex-col justify-center px-5 py-10 sm:px-6">
           <div className="mx-auto flex w-full max-w-md flex-col">
             {/* Hero: tenant logo + nome centrados */}
             <div className="mb-6 flex flex-col items-center gap-3 text-center">
