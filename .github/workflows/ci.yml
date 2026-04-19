@@ -28,22 +28,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
-
-  e2e:
-    name: Playwright smoke
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium webkit
-      - run: pnpm test:e2e
+      - run: pnpm build
         env:
           NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy
@@ -52,3 +37,24 @@ jobs:
           NEXT_PUBLIC_PLATFORM_HOST: admin.aralabs.com.br
           NEXT_PUBLIC_DEV_BASE_HOST: lvh.me
           NEXT_PUBLIC_ENV: test
+
+  # Job E2E desativado temporariamente (2026-04-19, fim do Épico 1).
+  # Reativar quando tivermos:
+  # - Setup script que cria usuários de teste via Supabase Admin API (idempotente).
+  # - Credenciais reais do projeto dev como GitHub secrets (ou projeto dedicado de CI).
+  # - Decisão sobre rodar contra cloud dev ou stack local via supabase CLI.
+  # e2e:
+  #   name: Playwright smoke
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: 'pnpm'
+  #     - run: pnpm install --frozen-lockfile
+  #     - run: pnpm exec playwright install --with-deps chromium webkit
+  #     - run: pnpm test:e2e

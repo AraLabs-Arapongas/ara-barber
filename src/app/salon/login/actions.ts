@@ -11,10 +11,7 @@ const loginSchema = z.object({
 
 export type LoginState = { error?: string }
 
-export async function loginStaffAction(
-  _prev: LoginState,
-  formData: FormData,
-): Promise<LoginState> {
+export async function loginStaffAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = loginSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
