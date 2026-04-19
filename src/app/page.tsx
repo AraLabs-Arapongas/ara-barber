@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, ExternalLink } from 'lucide-react'
 import {
   getCurrentArea,
   getCurrentTenantOrNotFound,
@@ -9,7 +9,7 @@ import {
 } from '@/lib/tenant/context'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
-import { Wordmark } from '@/components/brand/logo'
+import { AraLabsMark } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,12 +33,19 @@ export default async function RootPage() {
 
   if (area === 'platform') redirect('/platform')
   if (area === 'tenant') return <TenantPublicHome />
-  return <AraLabsMarketing />
+
+  // area === 'root'. Em prod, apex e www pertencem ao site institucional AraLabs
+  // (projeto separado). Se alguém chegar aqui via este app em prod, manda pra lá.
+  // Em dev (localhost), mostra um índice de atalhos pro desenvolvedor navegar entre áreas.
+  if (process.env.NEXT_PUBLIC_ENV !== 'development') {
+    redirect('https://aralabs.com.br')
+  }
+
+  return <DevRootIndex />
 }
 
 /**
  * Home do tenant quando acessado via `<slug>.aralabs.com.br`.
- * Branding injetado via ThemeInjector (override dos --brand-* do sistema).
  */
 async function TenantPublicHome() {
   const tenant = await getCurrentTenantOrNotFound()
@@ -118,46 +125,92 @@ async function TenantPublicHome() {
 }
 
 /**
- * Landing raiz (aralabs.com.br / localhost:3008). Marketing stub —
- * conteúdo real virá num épico futuro.
+ * Índice de desenvolvimento — mostrado apenas em `localhost` (area=root).
+ * Em produção esta tela não existe: o apex redireciona para o site institucional.
+ * Usa a porta atual e o dev base host do env; facilita pular entre áreas.
  */
-function AraLabsMarketing() {
+function DevRootIndex() {
+  const devBase = process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me'
+  const port = '3008'
+  const platformHost = `admin.${devBase}:${port}`
+  const tenantExampleHost = `barbearia-teste.${devBase}:${port}`
+  const aralabsSite = 'https://aralabs.com.br'
+
+  const links = [
+    {
+      label: 'Platform admin',
+      url: `http://${platformHost}/platform/login`,
+      hint: `${platformHost} · área AraLabs`,
+    },
+    {
+      label: 'Home pública do tenant de teste',
+      url: `http://${tenantExampleHost}/`,
+      hint: `${tenantExampleHost} · cliente final`,
+    },
+    {
+      label: 'Login do salão (tenant de teste)',
+      url: `http://${tenantExampleHost}/salon/login`,
+      hint: `${tenantExampleHost} · equipe do salão`,
+    },
+    {
+      label: 'Manifest PWA do tenant de teste',
+      url: `http://${tenantExampleHost}/api/manifest/barbearia-teste`,
+      hint: 'manifest.webmanifest dinâmico',
+    },
+  ] as const
+
   return (
-    <main className="noise-overlay relative flex min-h-screen flex-col bg-bg">
-      <header className="relative z-10 flex items-center justify-between px-6 pt-6">
-        <Wordmark />
-        <Link
-          href="/platform/login"
-          className="text-[0.8125rem] text-fg-muted underline-offset-4 hover:text-fg hover:underline"
-        >
-          Entrar
-        </Link>
-      </header>
-
-      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <p className="mb-3 text-[0.75rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
-          Ara Barber · SaaS para barbearias
-        </p>
-        <h1 className="font-display text-[2.5rem] leading-[1.02] tracking-tight text-fg sm:text-[3.5rem]">
-          Agenda, equipe e clientes
-          <br />
-          <span
-            className="italic text-brand-primary"
-            style={{ fontVariationSettings: "'SOFT' 100, 'WONK' 1" }}
+    <main className="relative flex min-h-screen flex-col bg-bg-subtle px-6 py-12 sm:px-10">
+      <div className="mx-auto w-full max-w-2xl">
+        <header className="mb-10 flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AraLabsMark className="h-10 w-auto text-brand-primary" />
+            <div>
+              <p className="text-[0.7rem] font-medium uppercase tracking-[0.2em] text-fg-subtle">
+                Ara Barber · dev
+              </p>
+              <h1 className="font-display text-[1.5rem] font-semibold tracking-tight text-fg">
+                Índice local
+              </h1>
+            </div>
+          </div>
+          <a
+            href={aralabsSite}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted underline-offset-4 hover:text-fg hover:underline"
           >
-            num só lugar
-          </span>
-          <span className="text-brand-accent">.</span>
-        </h1>
-        <p className="mt-5 max-w-md text-[1rem] text-fg-muted">
-          Feito pra quem corta cabelo, não pra quem programa. Seu salão organizado, acessível do
-          celular do cliente ao balcão da loja.
-        </p>
-      </section>
+            aralabs.com.br
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
+        </header>
 
-      <footer className="relative z-10 px-6 pb-6 text-center text-[0.75rem] text-fg-subtle">
-        Ara Barber · AraLabs · 2026
-      </footer>
+        <p className="mb-6 max-w-lg text-[0.9375rem] text-fg-muted">
+          Esta tela só aparece em dev. Em produção, o apex <code>aralabs.com.br</code> pertence ao
+          site institucional da AraLabs; este app responde apenas em{' '}
+          <code>admin.aralabs.com.br</code> e <code>&lt;slug&gt;.aralabs.com.br</code>.
+        </p>
+
+        <ul className="space-y-2">
+          {links.map((item) => (
+            <li key={item.url}>
+              <a
+                href={item.url}
+                className="group flex items-center justify-between gap-4 rounded-xl border border-border bg-surface px-4 py-3 shadow-xs transition-colors hover:border-border-strong hover:bg-surface-raised"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-fg">{item.label}</p>
+                  <p className="truncate text-[0.8125rem] text-fg-muted">{item.hint}</p>
+                </div>
+                <ArrowRight
+                  className="h-4 w-4 shrink-0 text-fg-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-fg"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </main>
   )
 }
