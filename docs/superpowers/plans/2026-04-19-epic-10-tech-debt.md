@@ -33,6 +33,10 @@
 | 17 | Edição/soft-delete completo dos cadastros (edit profissional, edit serviço, deactivate) | Épico 3: hoje só cria; toggle/edit é débito UX | Baixa |
 | 18 | `professional_services` join UI (marcar quais serviços cada profissional faz) | Épico 3: tabela existe, UI não | Média (bloqueia filtros de booking no Épico 5) |
 | 19 | `professional_availability` e `availability_blocks` UIs | Épico 3: tabelas existem, UIs não. Blocker da agenda no Épico 4 | Alta |
+| 20 | Otimizar RLS policies — wrap `auth.uid()` em `(select auth.uid())` | Advisor `auth_rls_initplan` (4 ocorrências: plans, user_profiles, customers×2) | Média |
+| 21 | Consolidar policies permissivas múltiplas por tabela | Advisor `multiple_permissive_policies` (170 ocorrências — desenho atual mantém 2 policies `*_platform_admin_all` + `*_tenant_staff_all` por tabela) | Baixa |
+| 22 | Cobrir FKs sem índice (`availability_blocks.tenant_id`, `professionals.user_id`, `tenants.current_plan_id`) | Advisor `unindexed_foreign_keys` | Média |
+| 23 | Habilitar "Leaked Password Protection" no Supabase Auth + avaliar ListBucket do `tenant-assets` | Advisor security WARN — manual no dashboard | Baixa |
 
 ---
 
@@ -564,6 +568,59 @@ Os valores literais foram omitidos deste plano de propósito para não aparecere
 **UI proposta (blocks):** lista de folgas/férias/indisponibilidades pontuais do profissional; form inline com `start_at`, `end_at`, `reason`.
 
 **Aceite:** Profissional consegue configurar agenda recorrente + marcar exceções; Épico 4 consegue calcular disponibilidade real.
+
+---
+
+## Task 20: Otimizar policies RLS com `(select auth.uid())`
+
+**Origem:** Advisor `auth_rls_initplan`. Postgres re-avalia `auth.uid()` por linha ao invés de uma vez. Em tabelas pequenas não impacta; quando `appointments` crescer sem esse wrap a query planner sofre.
+
+**Policies afetadas (hoje):**
+- `public.plans.plans_read_authenticated`
+- `public.user_profiles.user_profiles_self_read`
+- `public.customers.customers_self_read`
+- `public.customers.customers_self_update`
+
+**Fix:** migration que faz `alter policy ... using ((select auth.uid()) = user_id)` em cada uma.
+
+**Aceite:** 0 ocorrências de `auth_rls_initplan` no advisor.
+
+---
+
+## Task 21: Consolidar policies permissivas duplicadas
+
+**Origem:** Advisor `multiple_permissive_policies` (170 lints). Cada tabela com RLS tem duas policies `FOR ALL`: uma pra platform admin (`is_platform_admin()`) e outra pra staff do tenant (`tenant_id = current_tenant_id()`). Postgres avalia ambas pra cada linha.
+
+**Opções:**
+- (a) Consolidar em policy única com `OR`. Perde legibilidade, ganha ~10% em workload pesado.
+- (b) Manter como está e suprimir o lint. Código legível > micro-otimização.
+
+**Decisão sugerida:** manter (b) enquanto não houver workload que provoque contenção. Registra o trade-off.
+
+---
+
+## Task 22: Índices cobrindo FKs
+
+**Origem:** Advisor `unindexed_foreign_keys`. DELETEs e JOINs em FK sem índice fazem full scan.
+
+**Fix:** adicionar índices em:
+- `public.availability_blocks (tenant_id)`
+- `public.professionals (user_id)`
+- `public.tenants (current_plan_id)`
+
+**Aceite:** 0 ocorrências no advisor.
+
+---
+
+## Task 23: Endurecimento Supabase Auth + Storage
+
+**Origem:** Advisor security WARN.
+
+**Passos manuais:**
+- [ ] **Step 1:** Supabase Dashboard → Authentication → Password protection → enable "Check against HaveIBeenPwned". Protege customer signup/reset quando tivermos password-based (Fase 2).
+- [ ] **Step 2 (avaliar):** bucket `tenant-assets` é público com policy `tenant_assets_public_read` que permite **listar** todos os arquivos. Usuários só precisam de URL direta pra carregar logo/favicon. Decidir: (a) deixar como está, (b) trocar policy por `authenticated only` (quebra `<img src>` externos?), (c) renomear arquivos com slug hash pra URLs não-advinháveis.
+
+**Manual-action flag:** depende do dashboard Supabase.
 
 ---
 
