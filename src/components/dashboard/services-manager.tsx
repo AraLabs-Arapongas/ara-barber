@@ -45,8 +45,8 @@ export function ServicesManager({ services }: Props) {
 
   useEffect(() => {
     if (searchParams?.get('new') === '1') {
-      setEditing(null)
       // eslint-disable-next-line react-hooks/set-state-in-effect -- abre sheet vinda de URL ?new=1
+      setEditing(null)
       setSheetOpen(true)
       router.replace(pathname, { scroll: false })
     }

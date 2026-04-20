@@ -2,6 +2,7 @@ import 'server-only'
 
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { cache } from 'react'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { createSecretClient } from '@/lib/supabase/secret'
@@ -60,35 +61,40 @@ export async function getCurrentArea(): Promise<'platform' | 'tenant' | 'root'> 
 /**
  * Busca o tenant atual via service-role. Anônimos precisam ler branding
  * pra renderizar a landing pública, então não dá pra usar RLS aqui.
+ *
+ * React.cache() dedupa por request: layout e page compartilham o resultado
+ * em vez de refazer o SELECT em cada um.
  */
-export async function getCurrentTenantOrNotFound(): Promise<TenantContext> {
-  const tenantId = await getCurrentTenantId()
-  if (!tenantId) notFound()
+export const getCurrentTenantOrNotFound = cache(
+  async (): Promise<TenantContext> => {
+    const tenantId = await getCurrentTenantId()
+    if (!tenantId) notFound()
 
-  const supabase = createSecretClient()
-  const { data } = await supabase
-    .from('tenants')
-    .select(
-      'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status',
-    )
-    .eq('id', tenantId)
-    .maybeSingle()
+    const supabase = createSecretClient()
+    const { data } = await supabase
+      .from('tenants')
+      .select(
+        'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status',
+      )
+      .eq('id', tenantId)
+      .maybeSingle()
 
-  if (!data) notFound()
+    if (!data) notFound()
 
-  return {
-    id: data.id,
-    slug: data.slug,
-    name: data.name,
-    timezone: data.timezone,
-    primaryColor: data.primary_color,
-    secondaryColor: data.secondary_color,
-    accentColor: data.accent_color,
-    logoUrl: data.logo_url ?? resolveConventionalLogoUrl(data.slug),
-    faviconUrl: data.favicon_url,
-    homeHeadlineTop: data.home_headline_top,
-    homeHeadlineAccent: data.home_headline_accent,
-    status: data.status,
-    billingStatus: data.billing_status,
-  }
-}
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      timezone: data.timezone,
+      primaryColor: data.primary_color,
+      secondaryColor: data.secondary_color,
+      accentColor: data.accent_color,
+      logoUrl: data.logo_url ?? resolveConventionalLogoUrl(data.slug),
+      faviconUrl: data.favicon_url,
+      homeHeadlineTop: data.home_headline_top,
+      homeHeadlineAccent: data.home_headline_accent,
+      status: data.status,
+      billingStatus: data.billing_status,
+    }
+  },
+)

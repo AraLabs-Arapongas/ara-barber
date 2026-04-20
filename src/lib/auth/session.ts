@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type { UserRole } from '@/lib/auth/roles'
 
@@ -14,23 +15,35 @@ export type SessionUser = {
   } | null
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+/**
+ * Resolve o usuário da sessão usando `getClaims()`: a assinatura do JWT é
+ * validada localmente contra o JWKS (cached no client do Supabase), sem
+ * network toda navegação.
+ *
+ * Revogação de token (logout forçado, senha trocada) é detectada pelo SELECT
+ * em `user_profiles` logo abaixo — é uma query RLS autenticada, então se o
+ * JWT estiver inválido ou revogado, ela falha e tratamos como logged out.
+ *
+ * React.cache() dedupa chamadas dentro do mesmo request RSC: layout, guards
+ * e pages compartilham o resultado.
+ */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+  if (claimsError || !claimsData?.claims?.sub) return null
 
-  if (!user) return null
+  const userId = claimsData.claims.sub
+  const email = claimsData.claims.email ?? null
 
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('id, name, role, tenant_id')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle()
 
   return {
-    id: user.id,
-    email: user.email ?? null,
+    id: userId,
+    email,
     profile: profile
       ? {
           id: profile.id,
@@ -40,7 +53,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         }
       : null,
   }
-}
+})
 
 export async function requireSessionUser(): Promise<SessionUser> {
   const user = await getSessionUser()
