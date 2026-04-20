@@ -62,7 +62,7 @@ export async function createAppointment(
     .select('id')
     .single()
 
-  if (error || !data) return { ok: false, error: 'Falha ao criar agendamento.' }
+  if (error || !data) return { ok: false, error: 'Falha ao criar reserva.' }
 
   revalidatePath('/salon/dashboard/agenda')
   revalidatePath('/meus-agendamentos')
@@ -99,7 +99,7 @@ export async function cancelCustomerAppointment(
     .select('id, tenant_id, status, start_at, end_at, customer_id')
     .eq('id', parsed.data.appointmentId)
     .maybeSingle()
-  if (!appt) return { ok: false, error: 'Agendamento não encontrado.' }
+  if (!appt) return { ok: false, error: 'Reserva não encontrada.' }
 
   const { data: tenant } = await supabase
     .from('tenants')
@@ -113,7 +113,7 @@ export async function cancelCustomerAppointment(
     return { ok: false, error: `Cancelamento só até ${windowHours}h antes.` }
   }
   if (appt.status !== 'SCHEDULED' && appt.status !== 'CONFIRMED') {
-    return { ok: false, error: 'Esse agendamento não pode mais ser cancelado.' }
+    return { ok: false, error: 'Essa reserva não pode mais ser cancelada.' }
   }
 
   const { error: updateErr } = await supabase

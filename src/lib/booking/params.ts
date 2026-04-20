@@ -1,6 +1,5 @@
 /**
- * Utilitários pro wizard de booking — lê/escreve `serviceId`, `professionalId`,
- * `date`, `time` em searchParams.
+ * URL state do wizard de booking — `serviceId`, `professionalId`, `date`, `time`.
  */
 
 export const BOOK_KEYS = ['serviceId', 'professionalId', 'date', 'time'] as const
@@ -17,7 +16,9 @@ export function bookHrefWith(path: string, params: BookParams): string {
   return qs ? `${path}?${qs}` : path
 }
 
-export function parseBookParams(raw: Record<string, string | string[] | undefined> | URLSearchParams): BookParams {
+export function parseBookParams(
+  raw: Record<string, string | string[] | undefined> | URLSearchParams,
+): BookParams {
   const out: BookParams = {}
   const get = (k: string) => {
     if (raw instanceof URLSearchParams) return raw.get(k) ?? undefined

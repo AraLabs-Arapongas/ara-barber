@@ -20,7 +20,7 @@ export function TenantLogo({ logoUrl, name, size = 48, className }: Props) {
         alt={name}
         width={size}
         height={size}
-        className={cn('rounded-xl object-contain', className)}
+        className={cn('h-auto max-w-full rounded-xl object-contain', className)}
         priority
       />
     )
@@ -35,13 +35,12 @@ export function TenantLogo({ logoUrl, name, size = 48, className }: Props) {
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-xl',
+        'flex aspect-square max-w-full items-center justify-center rounded-xl',
         'bg-brand-primary text-brand-primary-fg font-display font-semibold',
         className,
       )}
       style={{
         width: size,
-        height: size,
         fontSize: Math.round(size * 0.42),
       }}
       aria-label={name}

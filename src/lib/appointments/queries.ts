@@ -95,11 +95,14 @@ export async function getAgendaForDay(
 }
 
 /**
- * Busca appointments do cliente atual (qualquer tenant que ele tenha customer row).
+ * Busca appointments do cliente atual. Quando `tenantId` for passado, filtra.
+ * RLS já limita ao próprio customer via customers.user_id = auth.uid().
  */
-export async function getMyCustomerAppointments(): Promise<AgendaAppointment[]> {
+export async function getMyCustomerAppointments(
+  tenantId?: string,
+): Promise<AgendaAppointment[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  let query = supabase
     .from('appointments')
     .select(
       `
@@ -112,6 +115,9 @@ export async function getMyCustomerAppointments(): Promise<AgendaAppointment[]> 
     )
     .order('start_at', { ascending: false })
 
+  if (tenantId) query = query.eq('tenant_id', tenantId)
+
+  const { data } = await query
   const rows = (data ?? []) as unknown as Row[]
   return rows.map(rowToAppointment)
 }

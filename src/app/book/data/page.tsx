@@ -1,15 +1,14 @@
-'use client'
-
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { useMemo } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import {
+  getBusinessHours,
+  getProfessionalAvailability,
+  getProfessionalsForService,
+} from '@/lib/booking/queries'
 import { StepIndicator } from '@/components/book/step-indicator'
-import { bookHrefWith, parseBookParams } from '@/lib/mock/booking-params'
-import { atMidnight } from '@/lib/mock/helpers'
+import { bookHrefWith, parseBookParams } from '@/lib/booking/params'
+import { weekdayInTenantTZ } from '@/lib/booking/slots'
 import { cn } from '@/lib/utils'
 
 const WEEK_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -18,47 +17,31 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+/**
+ * Gera YYYY-MM-DD para o "today" no timezone do tenant + offsetDays.
+ */
+function tenantDateISO(tenantTimezone: string, offsetDays: number): string {
+  const now = new Date()
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tenantTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const [y, m, d] = fmt.format(now).split('-').map(Number)
+  const base = new Date(Date.UTC(y, m - 1, d))
+  base.setUTCDate(base.getUTCDate() + offsetDays)
+  return `${base.getUTCFullYear()}-${pad(base.getUTCMonth() + 1)}-${pad(base.getUTCDate())}`
 }
 
-export default function BookStepDate() {
-  const tenantSlug = useTenantSlug()
-  const { data: businessHours } = useMockStore(
-    tenantSlug,
-    ENTITY.businessHours.key,
-    ENTITY.businessHours.schema,
-    ENTITY.businessHours.seed,
-  )
-  const { data: availability } = useMockStore(
-    tenantSlug,
-    ENTITY.availability.key,
-    ENTITY.availability.schema,
-    ENTITY.availability.seed,
-  )
-  const sp = useSearchParams()
-  const current = parseBookParams(sp ?? new URLSearchParams())
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const openWeekdays = useMemo(() => {
-    const salonOpen = new Set(businessHours.filter((h) => h.isOpen).map((h) => h.weekday))
-    if (current.professionalId && current.professionalId !== 'any') {
-      const profDays = new Set(
-        availability.filter((a) => a.professionalId === current.professionalId).map((a) => a.weekday),
-      )
-      return new Set([...salonOpen].filter((w) => profDays.has(w)))
-    }
-    const anyProfDays = new Set(availability.map((a) => a.weekday))
-    return new Set([...salonOpen].filter((w) => anyProfDays.has(w)))
-  }, [businessHours, availability, current.professionalId])
-
-  const days = useMemo(() => {
-    const today = atMidnight(new Date())
-    return Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(today)
-      d.setDate(d.getDate() + i)
-      return d
-    })
-  }, [])
+export default async function BookStepDate({ searchParams }: PageProps) {
+  const tenant = await getCurrentTenantOrNotFound()
+  const sp = await searchParams
+  const current = parseBookParams(sp)
 
   if (!current.serviceId || !current.professionalId) {
     return (
@@ -73,6 +56,24 @@ export default function BookStepDate() {
     )
   }
 
+  const [businessHours, eligiblePros] = await Promise.all([
+    getBusinessHours(tenant.id),
+    getProfessionalsForService(tenant.id, current.serviceId),
+  ])
+
+  const candidateIds =
+    current.professionalId === 'any'
+      ? eligiblePros.map((p) => p.id)
+      : [current.professionalId]
+
+  const availability = await getProfessionalAvailability(tenant.id, candidateIds)
+
+  const salonOpen = new Set(businessHours.filter((h) => h.isOpen).map((h) => h.weekday))
+  const profDays = new Set(availability.map((a) => a.weekday))
+  const openWeekdays = new Set([...salonOpen].filter((w) => profDays.has(w)))
+
+  const days = Array.from({ length: 14 }, (_, i) => tenantDateISO(tenant.timezone, i))
+
   return (
     <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-24 sm:px-6">
       <Link
@@ -83,7 +84,11 @@ export default function BookStepDate() {
         Profissional
       </Link>
 
-      <StepIndicator current={3} total={6} labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']} />
+      <StepIndicator
+        current={3}
+        total={6}
+        labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']}
+      />
 
       <h1 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-fg">
         Quando?
@@ -93,11 +98,15 @@ export default function BookStepDate() {
       </p>
 
       <ul className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-        {days.map((d) => {
-          const weekday = d.getDay()
+        {days.map((dateISO) => {
+          const weekday = weekdayInTenantTZ(dateISO, tenant.timezone)
+          const [, monthStr, dayStr] = dateISO.split('-')
+          const dayNum = Number(dayStr)
+          const monthShort = new Date(
+            Date.UTC(2020, Number(monthStr) - 1, 1),
+          ).toLocaleDateString('pt-BR', { month: 'short' })
           const available = openWeekdays.has(weekday)
-          const dateStr = toDateStr(d)
-          const selected = current.date === dateStr
+          const selected = current.date === dateISO
           const content = (
             <div
               className={cn(
@@ -113,18 +122,16 @@ export default function BookStepDate() {
                 {WEEK_LABELS[weekday]}
               </span>
               <span className="mt-0.5 font-display text-[1.25rem] font-semibold leading-none tracking-tight">
-                {d.getDate()}
+                {dayNum}
               </span>
-              <span className="mt-0.5 text-[0.6875rem]">
-                {d.toLocaleDateString('pt-BR', { month: 'short' })}
-              </span>
+              <span className="mt-0.5 text-[0.6875rem]">{monthShort}</span>
             </div>
           )
           return (
-            <li key={dateStr}>
+            <li key={dateISO}>
               {available ? (
                 <Link
-                  href={bookHrefWith('/book/horario', { ...current, date: dateStr })}
+                  href={bookHrefWith('/book/horario', { ...current, date: dateISO })}
                   aria-current={selected ? 'true' : undefined}
                 >
                   {content}

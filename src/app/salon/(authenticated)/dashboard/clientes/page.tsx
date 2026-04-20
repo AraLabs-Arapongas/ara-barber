@@ -1,8 +1,5 @@
-'use client'
-
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 
 function displayName(name: string | null, email: string | null): string {
@@ -12,29 +9,24 @@ function displayName(name: string | null, email: string | null): string {
 }
 
 function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return new Date(iso).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
-export default function CustomersPage() {
-  const tenantSlug = useTenantSlug()
-  const { data: customers } = useMockStore(
-    tenantSlug,
-    ENTITY.customers.key,
-    ENTITY.customers.schema,
-    ENTITY.customers.seed,
-  )
+export default async function CustomersPage() {
+  const tenant = await getCurrentTenantOrNotFound()
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('customers')
+    .select('id, name, email, phone, is_active, created_at, deleted_at')
+    .eq('tenant_id', tenant.id)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
 
-  const sorted = [...customers].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )
+  const customers = data ?? []
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -50,9 +42,9 @@ export default function CustomersPage() {
         </p>
       </header>
 
-      {sorted.length > 0 ? (
+      {customers.length > 0 ? (
         <ul className="space-y-2">
-          {sorted.map((c) => (
+          {customers.map((c) => (
             <li key={c.id}>
               <Card className="shadow-xs">
                 <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
@@ -61,10 +53,10 @@ export default function CustomersPage() {
                       {displayName(c.name, c.email)}
                     </p>
                     <p className="truncate text-[0.8125rem] text-fg-muted">
-                      {c.phone ?? 'sem telefone'} · desde {formatDate(c.createdAt)}
+                      {c.phone ?? 'sem telefone'} · desde {formatDate(c.created_at)}
                     </p>
                   </div>
-                  {!c.isActive ? (
+                  {!c.is_active ? (
                     <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
                       Inativo
                     </span>

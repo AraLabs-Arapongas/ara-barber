@@ -1,42 +1,54 @@
-'use client'
-
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { fullDateTimeLabel } from '@/lib/mock/helpers'
 
-export default function BookSuccess() {
-  const tenantSlug = useTenantSlug()
-  const sp = useSearchParams()
-  const appointmentId = sp?.get('appointmentId') ?? ''
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const { data: appointments } = useMockStore(
-    tenantSlug,
-    ENTITY.appointments.key,
-    ENTITY.appointments.schema,
-    ENTITY.appointments.seed,
-  )
-  const { data: services } = useMockStore(
-    tenantSlug,
-    ENTITY.services.key,
-    ENTITY.services.schema,
-    ENTITY.services.seed,
-  )
-  const { data: professionals } = useMockStore(
-    tenantSlug,
-    ENTITY.professionals.key,
-    ENTITY.professionals.schema,
-    ENTITY.professionals.seed,
-  )
+type BookingRow = {
+  id: string
+  start_at: string
+  tenant_id: string
+  service: { name: string; duration_minutes: number } | null
+  professional: { name: string; display_name: string | null } | null
+}
 
-  const appt = appointments.find((a) => a.id === appointmentId)
-  const svc = appt ? services.find((s) => s.id === appt.serviceId) : undefined
-  const prof = appt ? professionals.find((p) => p.id === appt.professionalId) : undefined
+export default async function BookSuccess({ searchParams }: PageProps) {
+  const tenant = await getCurrentTenantOrNotFound()
+  const sp = await searchParams
+  const appointmentId =
+    typeof sp.appointmentId === 'string' ? sp.appointmentId : Array.isArray(sp.appointmentId) ? sp.appointmentId[0] : ''
+
+  let appt: BookingRow | null = null
+  if (appointmentId) {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('appointments')
+      .select(
+        `id, start_at, tenant_id,
+         service:services(name, duration_minutes),
+         professional:professionals(name, display_name)`,
+      )
+      .eq('id', appointmentId)
+      .maybeSingle()
+    appt = (data as unknown as BookingRow | null) ?? null
+    if (appt && appt.tenant_id !== tenant.id) appt = null
+  }
+
+  const dateTimeLabel = appt
+    ? new Intl.DateTimeFormat('pt-BR', {
+        timeZone: tenant.timezone,
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(appt.start_at))
+    : null
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col items-center px-5 pt-10 pb-24 text-center sm:px-6">
@@ -48,17 +60,18 @@ export default function BookSuccess() {
       </h1>
       <p className="mt-2 max-w-sm text-[0.9375rem] text-fg-muted">
         Você vai receber uma confirmação por e-mail. Se precisar reagendar, entre em
-        &ldquo;Meus agendamentos&rdquo;.
+        &ldquo;Minhas reservas&rdquo;.
       </p>
 
       {appt ? (
         <Card className="mt-6 w-full shadow-xs">
           <CardContent className="py-5 text-left">
             <p className="font-display text-[1.125rem] font-semibold text-fg">
-              {svc?.name ?? 'Serviço'}
+              {appt.service?.name ?? 'Serviço'}
             </p>
             <p className="text-[0.875rem] text-fg-muted">
-              com {prof?.displayName || prof?.name} · {fullDateTimeLabel(appt.startAt)}
+              com {appt.professional?.display_name || appt.professional?.name} ·{' '}
+              {dateTimeLabel}
             </p>
           </CardContent>
         </Card>
@@ -67,7 +80,7 @@ export default function BookSuccess() {
       <div className="mt-6 flex w-full flex-col gap-2">
         <Link href="/meus-agendamentos">
           <Button size="lg" fullWidth>
-            Ver meus agendamentos
+            Ver minhas reservas
           </Button>
         </Link>
         <Link href="/">

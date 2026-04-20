@@ -1,16 +1,10 @@
-'use client'
-
 import Link from 'next/link'
 import {
   Scissors,
   Users2,
   Clock,
-  Wallet,
-  LineChart,
   CalendarClock,
   Link2,
-  KeyRound,
-  Store,
   LogOut,
   ChevronRight,
   type LucideIcon,
@@ -38,20 +32,6 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
       { href: '/salon/dashboard/disponibilidade', icon: CalendarClock, label: 'Disponibilidade da equipe', hint: 'Jornada e folgas' },
       { href: '/salon/dashboard/equipe-servicos', icon: Link2, label: 'Equipe × Serviços', hint: 'Quem faz o quê' },
       { href: '/salon/dashboard/configuracoes/horarios', icon: Clock, label: 'Horários do salão', hint: 'Quando abre/fecha' },
-    ],
-  },
-  {
-    title: 'Operação',
-    items: [
-      { href: '/salon/dashboard/operacao', icon: KeyRound, label: 'Modo operação', hint: 'PIN pro atendimento' },
-      { href: '/salon/dashboard/financeiro', icon: Wallet, label: 'Financeiro', hint: 'Saldo e payouts' },
-      { href: '/salon/dashboard/relatorios', icon: LineChart, label: 'Relatórios', hint: 'Ocupação, top serviços' },
-    ],
-  },
-  {
-    title: 'Salão',
-    items: [
-      { href: '/salon/dashboard/perfil', icon: Store, label: 'Perfil do salão', hint: 'Nome, endereço, WhatsApp' },
     ],
   },
 ]

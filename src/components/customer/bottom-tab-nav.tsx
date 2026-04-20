@@ -28,7 +28,7 @@ const TABS: Tab[] = [
   {
     href: '/meus-agendamentos',
     icon: CalendarCheck,
-    label: 'Meus',
+    label: 'Reservas',
     match: (p) => p.startsWith('/meus-agendamentos'),
   },
   {

@@ -1,114 +1,110 @@
-'use client'
-
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
-import { useMemo } from 'react'
-import { ChevronLeft, Clock, Scissors, User, Trash2 } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
-import type { AppointmentStatus } from '@/lib/mock/schemas'
+import { notFound } from 'next/navigation'
+import { ChevronLeft, Clock, Scissors, User } from 'lucide-react'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import {
-  STATUS_LABELS,
-  STATUS_TONE,
-  STATUS_TRANSITIONS,
-  fullDateTimeLabel,
-  timeLabel,
-} from '@/lib/mock/helpers'
+import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
+import { AppointmentActions } from '@/components/agenda/appointment-actions'
+import { canTransition, type AppointmentStatus } from '@/lib/appointments/status-rules'
 import { formatCentsToBrl } from '@/lib/money'
 
-const ACTION_LABELS: Record<AppointmentStatus, string> = {
-  SCHEDULED: 'Reabrir',
-  CONFIRMED: 'Confirmar',
-  IN_PROGRESS: 'Iniciar',
-  COMPLETED: 'Finalizar',
-  CANCELED: 'Cancelar',
-  NO_SHOW: 'Não veio',
+type PageProps = {
+  params: Promise<{ id: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-const ACTION_VARIANT: Record<AppointmentStatus, 'primary' | 'secondary' | 'destructive'> = {
-  SCHEDULED: 'secondary',
-  CONFIRMED: 'primary',
-  IN_PROGRESS: 'primary',
-  COMPLETED: 'primary',
-  CANCELED: 'destructive',
-  NO_SHOW: 'destructive',
+type Row = {
+  id: string
+  tenant_id: string
+  start_at: string
+  end_at: string
+  status: AppointmentStatus
+  notes: string | null
+  price_cents_snapshot: number | null
+  customer_name_snapshot: string | null
+  customer: { name: string | null; phone: string | null } | null
+  professional: { name: string; display_name: string | null } | null
+  service: { name: string; duration_minutes: number; price_cents: number } | null
 }
 
-export default function AppointmentDetailPage() {
-  const params = useParams<{ id: string }>()
-  const router = useRouter()
-  const tenantSlug = useTenantSlug()
+type TransitionStatus = 'CONFIRMED' | 'COMPLETED' | 'CANCELED' | 'NO_SHOW'
 
-  const { data: appointments, setData: setAppointments } = useMockStore(
-    tenantSlug,
-    ENTITY.appointments.key,
-    ENTITY.appointments.schema,
-    ENTITY.appointments.seed,
-  )
-  const { data: professionals } = useMockStore(
-    tenantSlug,
-    ENTITY.professionals.key,
-    ENTITY.professionals.schema,
-    ENTITY.professionals.seed,
-  )
-  const { data: services } = useMockStore(
-    tenantSlug,
-    ENTITY.services.key,
-    ENTITY.services.schema,
-    ENTITY.services.seed,
-  )
-  const { data: customers } = useMockStore(
-    tenantSlug,
-    ENTITY.customers.key,
-    ENTITY.customers.schema,
-    ENTITY.customers.seed,
-  )
+const CANDIDATE_STATUSES: Array<{
+  next: TransitionStatus
+  label: string
+  variant: 'primary' | 'secondary' | 'destructive'
+}> = [
+  { next: 'CONFIRMED', label: 'Confirmar', variant: 'primary' },
+  { next: 'COMPLETED', label: 'Finalizar', variant: 'primary' },
+  { next: 'NO_SHOW', label: 'Não veio', variant: 'destructive' },
+  { next: 'CANCELED', label: 'Cancelar', variant: 'destructive' },
+]
 
-  const appt = useMemo(() => appointments.find((a) => a.id === params.id), [appointments, params.id])
+export default async function AppointmentDetailPage({ params, searchParams }: PageProps) {
+  const tenant = await getCurrentTenantOrNotFound()
+  const { id } = await params
+  const sp = await searchParams
+  const fromDate = typeof sp.from === 'string' ? sp.from : undefined
+  const backHref = fromDate
+    ? `/salon/dashboard/agenda?date=${fromDate}`
+    : '/salon/dashboard/agenda'
 
-  if (!appt) {
-    return (
-      <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
-        <Link
-          href="/salon/dashboard/agenda"
-          className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-          Agenda
-        </Link>
-        <Card className="shadow-xs">
-          <CardContent className="py-10 text-center">
-            <p className="text-[0.9375rem] text-fg-muted">Agendamento não encontrado.</p>
-          </CardContent>
-        </Card>
-      </main>
+  const supabase = await createClient()
+  const { data: appt } = await supabase
+    .from('appointments')
+    .select(
+      `id, tenant_id, start_at, end_at, status, notes, price_cents_snapshot, customer_name_snapshot,
+       customer:customers(name, phone),
+       service:services(name, duration_minutes, price_cents),
+       professional:professionals(name, display_name)`,
     )
+    .eq('id', id)
+    .maybeSingle()
+
+  const row = (appt as unknown as Row | null) ?? null
+  if (!row || row.tenant_id !== tenant.id) notFound()
+
+  const { data: tenantRow } = await supabase
+    .from('tenants')
+    .select('cancellation_window_hours')
+    .eq('id', tenant.id)
+    .maybeSingle()
+  const cancellationWindowHours = tenantRow?.cancellation_window_hours ?? 2
+
+  const ctx = {
+    actor: 'staff' as const,
+    now: new Date(),
+    startAt: new Date(row.start_at),
+    endAt: new Date(row.end_at),
+    cancellationWindowHours,
   }
 
-  const prof = professionals.find((p) => p.id === appt.professionalId)
-  const svc = services.find((s) => s.id === appt.serviceId)
-  const cust = customers.find((c) => c.id === appt.customerId)
-  const transitions = STATUS_TRANSITIONS[appt.status]
+  const actions = CANDIDATE_STATUSES.filter(
+    (candidate) => canTransition(row.status, candidate.next, ctx).ok,
+  )
 
-  function moveTo(next: AppointmentStatus) {
-    setAppointments((prev) =>
-      prev.map((a) => (a.id === appt!.id ? { ...a, status: next } : a)),
-    )
-  }
+  const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenant.timezone,
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const timeFmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenant.timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 
-  function remove() {
-    if (!window.confirm('Excluir este agendamento?')) return
-    setAppointments((prev) => prev.filter((a) => a.id !== appt!.id))
-    router.push('/salon/dashboard/agenda')
-  }
+  const customerName = row.customer?.name ?? row.customer_name_snapshot ?? 'Cliente'
+  const customerPhone = row.customer?.phone ?? null
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
       <Link
-        href="/salon/dashboard/agenda"
+        href={backHref}
         className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
@@ -120,64 +116,62 @@ export default function AppointmentDetailPage() {
           Agendamento
         </p>
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          {fullDateTimeLabel(appt.startAt)}
+          {dateTimeFmt.format(new Date(row.start_at))}
         </h1>
         <span
-          className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
+          className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[row.status]}`}
         >
-          {STATUS_LABELS[appt.status]}
+          {STATUS_LABELS[row.status]}
         </span>
       </header>
 
       <Card className="mb-4 shadow-xs">
         <CardContent className="space-y-3 py-4">
-          <InfoRow icon={<Scissors className="h-4 w-4" />} label="Serviço" value={svc?.name} sub={svc ? `${svc.durationMinutes}min · ${formatCentsToBrl(svc.priceCents)}` : undefined} />
-          <InfoRow icon={<User className="h-4 w-4" />} label="Profissional" value={prof?.displayName || prof?.name} />
-          <InfoRow icon={<User className="h-4 w-4" />} label="Cliente" value={cust?.name ?? cust?.email ?? '—'} sub={cust?.phone ?? undefined} />
+          <InfoRow
+            icon={<Scissors className="h-4 w-4" />}
+            label="Serviço"
+            value={row.service?.name}
+            sub={
+              row.service
+                ? `${row.service.duration_minutes}min · ${formatCentsToBrl(
+                    row.price_cents_snapshot ?? row.service.price_cents,
+                  )}`
+                : undefined
+            }
+          />
+          <InfoRow
+            icon={<User className="h-4 w-4" />}
+            label="Profissional"
+            value={row.professional?.display_name || row.professional?.name}
+          />
+          <InfoRow
+            icon={<User className="h-4 w-4" />}
+            label="Cliente"
+            value={customerName}
+            sub={customerPhone ?? undefined}
+          />
           <InfoRow
             icon={<Clock className="h-4 w-4" />}
             label="Horário"
-            value={`${timeLabel(appt.startAt)} → ${timeLabel(appt.endAt)}`}
+            value={`${timeFmt.format(new Date(row.start_at))} → ${timeFmt.format(new Date(row.end_at))}`}
           />
-          {appt.notes ? (
+          {row.notes ? (
             <div className="rounded-lg bg-bg-subtle p-3 text-[0.875rem] text-fg">
               <p className="mb-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
                 Observações
               </p>
-              {appt.notes}
+              {row.notes}
             </div>
           ) : null}
         </CardContent>
       </Card>
 
-      {transitions.length > 0 ? (
-        <section className="mb-4">
-          <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-            Ações
-          </h2>
-          <div className="grid grid-cols-2 gap-2">
-            {transitions.map((next) => (
-              <Button
-                key={next}
-                type="button"
-                variant={ACTION_VARIANT[next]}
-                onClick={() => moveTo(next)}
-              >
-                {ACTION_LABELS[next]}
-              </Button>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <button
-        type="button"
-        onClick={remove}
-        className="mt-2 inline-flex items-center gap-2 rounded-md px-3 py-2 text-[0.8125rem] text-error hover:bg-error-bg"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        Excluir agendamento
-      </button>
+      <section>
+        <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+          Ações
+        </h2>
+        <AppointmentActions appointmentId={row.id} actions={actions} />
+      </section>
     </main>
   )
 }

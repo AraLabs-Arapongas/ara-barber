@@ -9,10 +9,10 @@ import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
-import { TenantSlugProvider } from '@/components/mock/tenant-slug-provider'
 import { CustomerAccess } from '@/components/home/customer-access'
-import { CustomerSessionSync } from '@/components/mock/customer-session-sync'
 import { CustomerShell } from '@/components/customer/customer-shell'
+import { createClient } from '@/lib/supabase/server'
+import { getCustomerForTenant } from '@/lib/customers/ensure'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -101,6 +101,23 @@ async function TenantPublicHome() {
   const tenant = await getCurrentTenantOrNotFound()
   const unavailable = tenant.status !== 'ACTIVE' || tenant.billingStatus === 'SUSPENDED'
 
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let loggedIn = false
+  let displayName: string | null = null
+  let emailForHome: string | null = null
+  if (user && !unavailable) {
+    const customer = await getCustomerForTenant(tenant.id)
+    if (customer) {
+      loggedIn = true
+      displayName = customer.name
+      emailForHome = customer.email ?? user.email ?? null
+    }
+  }
+
   return (
     <>
       <ThemeInjector
@@ -121,41 +138,42 @@ async function TenantPublicHome() {
           </div>
         </main>
       ) : (
-        <TenantSlugProvider slug={tenant.slug}>
-          <CustomerSessionSync />
-          <CustomerShell>
-            <main className="noise-overlay relative flex min-h-[calc(100dvh-4.5rem-env(safe-area-inset-bottom))] flex-col bg-bg">
-              <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-                <TenantLogo
-                  logoUrl={tenant.logoUrl}
-                  name={tenant.name}
-                  size={400}
-                  className="mb-6"
+        <CustomerShell>
+          <main className="noise-overlay relative flex min-h-[calc(100dvh-4.5rem-env(safe-area-inset-bottom))] flex-col bg-bg">
+            <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
+              <TenantLogo
+                logoUrl={tenant.logoUrl}
+                name={tenant.name}
+                size={400}
+                className="mb-6"
+              />
+              <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
+                {tenant.homeHeadlineTop ?? 'Pronto para dar'}
+                <br />
+                <span className="italic text-brand-primary">
+                  {tenant.homeHeadlineAccent ?? 'aquele tapa no visual?'}
+                </span>
+              </h2>
+              <Link href="/book" className="mt-8 w-full max-w-xs">
+                <Button size="lg" fullWidth>
+                  Agendar agora
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </Link>
+              <div className="mt-6">
+                <CustomerAccess
+                  loggedIn={loggedIn}
+                  displayName={displayName}
+                  email={emailForHome}
                 />
-                <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
-                  {tenant.homeHeadlineTop ?? 'Pronto para dar'}
-                  <br />
-                  <span className="italic text-brand-primary">
-                    {tenant.homeHeadlineAccent ?? 'aquele tapa no visual?'}
-                  </span>
-                </h2>
-                <Link href="/book" className="mt-8 w-full max-w-xs">
-                  <Button size="lg" fullWidth>
-                    Agendar agora
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                  </Button>
-                </Link>
-                <div className="mt-6">
-                  <CustomerAccess />
-                </div>
-              </section>
+              </div>
+            </section>
 
-              <footer className="relative z-10 flex justify-center px-6 pb-4">
-                <AraLabsAttribution />
-              </footer>
-            </main>
-          </CustomerShell>
-        </TenantSlugProvider>
+            <footer className="relative z-10 flex justify-center px-6 pb-4">
+              <AraLabsAttribution />
+            </footer>
+          </main>
+        </CustomerShell>
       )}
     </>
   )

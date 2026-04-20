@@ -1,153 +1,27 @@
-'use client'
-
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import {
+  getAppointmentsInRange,
+  getAvailabilityBlocksInRange,
+  getBusinessHours,
+  getProfessionalAvailability,
+  getProfessionalsForService,
+  getServiceById,
+} from '@/lib/booking/queries'
 import { StepIndicator } from '@/components/book/step-indicator'
-import { bookHrefWith, parseBookParams } from '@/lib/mock/booking-params'
+import { bookHrefWith, parseBookParams } from '@/lib/booking/params'
+import { computeFreeSlots, dateTimeInTenantTZ } from '@/lib/booking/slots'
 import { cn } from '@/lib/utils'
 
-type Slot = { time: string; professionalId: string }
-
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(':').map(Number)
-  return (h ?? 0) * 60 + (m ?? 0)
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-function minutesToTime(m: number): string {
-  const h = Math.floor(m / 60)
-  const mm = m % 60
-  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
-}
-
-export default function BookStepTime() {
-  const tenantSlug = useTenantSlug()
-  const { data: services } = useMockStore(
-    tenantSlug,
-    ENTITY.services.key,
-    ENTITY.services.schema,
-    ENTITY.services.seed,
-  )
-  const { data: professionals } = useMockStore(
-    tenantSlug,
-    ENTITY.professionals.key,
-    ENTITY.professionals.schema,
-    ENTITY.professionals.seed,
-  )
-  const { data: businessHours } = useMockStore(
-    tenantSlug,
-    ENTITY.businessHours.key,
-    ENTITY.businessHours.schema,
-    ENTITY.businessHours.seed,
-  )
-  const { data: availability } = useMockStore(
-    tenantSlug,
-    ENTITY.availability.key,
-    ENTITY.availability.schema,
-    ENTITY.availability.seed,
-  )
-  const { data: blocks } = useMockStore(
-    tenantSlug,
-    ENTITY.availabilityBlocks.key,
-    ENTITY.availabilityBlocks.schema,
-    ENTITY.availabilityBlocks.seed,
-  )
-  const { data: appointments } = useMockStore(
-    tenantSlug,
-    ENTITY.appointments.key,
-    ENTITY.appointments.schema,
-    ENTITY.appointments.seed,
-  )
-  const sp = useSearchParams()
-  const current = parseBookParams(sp ?? new URLSearchParams())
-  const [nowMs] = useState(() => Date.now())
-
-  const slots = useMemo((): Slot[] => {
-    if (!current.serviceId || !current.date || !current.professionalId) return []
-    const svc = services.find((s) => s.id === current.serviceId)
-    if (!svc) return []
-
-    const [y, m, d] = current.date.split('-').map(Number)
-    const day = new Date(y, (m ?? 1) - 1, d ?? 1)
-    const weekday = day.getDay()
-
-    const salonHours = businessHours.find((h) => h.weekday === weekday)
-    if (!salonHours || !salonHours.isOpen) return []
-    const salonStart = timeToMinutes(salonHours.startTime)
-    const salonEnd = timeToMinutes(salonHours.endTime)
-
-    const candidatePros =
-      current.professionalId === 'any'
-        ? professionals.filter((p) => p.isActive).map((p) => p.id)
-        : [current.professionalId!]
-
-    const results: Slot[] = []
-    const seen = new Set<string>()
-
-    for (const profId of candidatePros) {
-      const entries = availability.filter(
-        (a) => a.professionalId === profId && a.weekday === weekday,
-      )
-      if (entries.length === 0) continue
-
-      const profBlocks = blocks.filter((b) => b.professionalId === profId)
-      const profAppts = appointments.filter(
-        (a) =>
-          a.professionalId === profId &&
-          a.status !== 'CANCELED' &&
-          a.status !== 'NO_SHOW' &&
-          new Date(a.startAt).toDateString() === day.toDateString(),
-      )
-
-      for (const entry of entries) {
-        const start = Math.max(timeToMinutes(entry.startTime), salonStart)
-        const end = Math.min(timeToMinutes(entry.endTime), salonEnd)
-        for (let t = start; t + svc.durationMinutes <= end; t += 30) {
-          const slotStart = new Date(day)
-          slotStart.setHours(Math.floor(t / 60), t % 60, 0, 0)
-          const slotEnd = new Date(slotStart.getTime() + svc.durationMinutes * 60000)
-
-          const blocked = profBlocks.some(
-            (b) =>
-              new Date(b.startAt).getTime() < slotEnd.getTime() &&
-              new Date(b.endAt).getTime() > slotStart.getTime(),
-          )
-          if (blocked) continue
-
-          const conflict = profAppts.some(
-            (a) =>
-              new Date(a.startAt).getTime() < slotEnd.getTime() &&
-              new Date(a.endAt).getTime() > slotStart.getTime(),
-          )
-          if (conflict) continue
-
-          if (slotStart.getTime() < nowMs) continue
-
-          const key = minutesToTime(t)
-          if (seen.has(key)) continue
-          seen.add(key)
-          results.push({ time: key, professionalId: profId })
-        }
-      }
-    }
-    results.sort((a, b) => a.time.localeCompare(b.time))
-    return results
-  }, [
-    current.serviceId,
-    current.date,
-    current.professionalId,
-    services,
-    professionals,
-    businessHours,
-    availability,
-    blocks,
-    appointments,
-    nowMs,
-  ])
+export default async function BookStepTime({ searchParams }: PageProps) {
+  const tenant = await getCurrentTenantOrNotFound()
+  const sp = await searchParams
+  const current = parseBookParams(sp)
 
   if (!current.serviceId || !current.date || !current.professionalId) {
     return (
@@ -162,6 +36,53 @@ export default function BookStepTime() {
     )
   }
 
+  const svc = await getServiceById(tenant.id, current.serviceId)
+  if (!svc) {
+    return (
+      <main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-6">
+        <p className="text-fg-muted">Serviço não disponível.</p>
+      </main>
+    )
+  }
+
+  const eligiblePros = await getProfessionalsForService(tenant.id, current.serviceId)
+  const candidateIds =
+    current.professionalId === 'any'
+      ? eligiblePros.map((p) => p.id)
+      : [current.professionalId]
+
+  const dayStart = dateTimeInTenantTZ(current.date, '00:00', tenant.timezone)
+  const dayEnd = dateTimeInTenantTZ(current.date, '23:59', tenant.timezone)
+
+  const [businessHours, availability, blocks, existing] = await Promise.all([
+    getBusinessHours(tenant.id),
+    getProfessionalAvailability(tenant.id, candidateIds),
+    getAvailabilityBlocksInRange(
+      tenant.id,
+      candidateIds,
+      dayStart.toISOString(),
+      dayEnd.toISOString(),
+    ),
+    getAppointmentsInRange(
+      tenant.id,
+      candidateIds,
+      dayStart.toISOString(),
+      dayEnd.toISOString(),
+    ),
+  ])
+
+  const slots = computeFreeSlots({
+    serviceDurationMinutes: svc.durationMinutes,
+    dateISO: current.date,
+    tenantTimezone: tenant.timezone,
+    candidateProfessionalIds: candidateIds,
+    businessHours,
+    availability,
+    blocks,
+    existingAppointments: existing,
+    now: new Date(),
+  })
+
   return (
     <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-24 sm:px-6">
       <Link
@@ -172,7 +93,11 @@ export default function BookStepTime() {
         Data
       </Link>
 
-      <StepIndicator current={4} total={6} labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']} />
+      <StepIndicator
+        current={4}
+        total={6}
+        labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']}
+      />
 
       <h1 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-fg">
         Que horas?

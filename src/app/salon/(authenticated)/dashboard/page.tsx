@@ -1,72 +1,63 @@
-'use client'
-
 import Link from 'next/link'
-import { useMemo } from 'react'
-import { ArrowRight, Calendar, Wallet, TrendingUp } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
-import type { Appointment, Professional, Service } from '@/lib/mock/schemas'
+import { ArrowRight, Calendar, TrendingUp } from 'lucide-react'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { getAgendaForDay, type AgendaAppointment } from '@/lib/appointments/queries'
+import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
+import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
 
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  )
+function todayISO(tenantTimezone: string): string {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tenantTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  return fmt.format(new Date())
 }
 
-function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+function timeLabel(iso: string, tenantTimezone: string): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenantTimezone,
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso))
 }
 
-function buildLookup<T extends { id: string }>(items: T[]): Map<string, T> {
-  return new Map(items.map((i) => [i.id, i]))
-}
+export default async function DashboardHome() {
+  const tenant = await getCurrentTenantOrNotFound()
+  const supabase = await createClient()
 
-export default function DashboardHome() {
-  const tenantSlug = useTenantSlug()
-  const { data: appointments } = useMockStore(
-    tenantSlug,
-    ENTITY.appointments.key,
-    ENTITY.appointments.schema,
-    ENTITY.appointments.seed,
-  )
-  const { data: professionals } = useMockStore(
-    tenantSlug,
-    ENTITY.professionals.key,
-    ENTITY.professionals.schema,
-    ENTITY.professionals.seed,
-  )
-  const { data: services } = useMockStore(
-    tenantSlug,
-    ENTITY.services.key,
-    ENTITY.services.schema,
-    ENTITY.services.seed,
-  )
-  const { data: payouts } = useMockStore(
-    tenantSlug,
-    ENTITY.payouts.key,
-    ENTITY.payouts.schema,
-    ENTITY.payouts.seed,
-  )
+  const dateISO = todayISO(tenant.timezone)
+  const today = await getAgendaForDay(tenant.id, dateISO, tenant.timezone)
+  const { data: svcData } = await supabase
+    .from('services')
+    .select('id, price_cents')
+    .eq('tenant_id', tenant.id)
+  const priceById = new Map((svcData ?? []).map((s) => [s.id, s.price_cents]))
 
-  const now = new Date()
-  const proById = useMemo(() => buildLookup(professionals), [professionals])
-  const svcById = useMemo(() => buildLookup(services), [services])
-
-  const today = appointments.filter((a) => isSameDay(new Date(a.startAt), now))
-  const todayActive = today.filter((a) => !['CANCELED', 'NO_SHOW', 'COMPLETED'].includes(a.status))
-  const next = todayActive
-    .filter((a) => new Date(a.startAt).getTime() >= now.getTime() - 30 * 60000)
+  // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
+  const now = Date.now()
+  const active = today.filter(
+    (a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
+  )
+  const next = active
+    .filter((a) => new Date(a.startAt).getTime() >= now - 30 * 60000)
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())[0]
 
-  const currentPayout = payouts.find((p) => p.status === 'PENDING')
-  const todayRevenueCents = today
-    .filter((a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW')
-    .reduce((sum, a) => sum + (svcById.get(a.serviceId)?.priceCents ?? 0), 0)
+  const todayRevenueCents = active.reduce(
+    (sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0),
+    0,
+  )
+  const completed = today.filter((a) => a.status === 'COMPLETED').length
+
+  const headerDate = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenant.timezone,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date())
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -75,11 +66,7 @@ export default function DashboardHome() {
           Hoje
         </p>
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          {now.toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+          {headerDate}
         </h1>
       </header>
 
@@ -89,14 +76,15 @@ export default function DashboardHome() {
             Próximo atendimento
           </div>
           <CardContent className="pt-4 pb-5">
-            <p className="text-[0.8125rem] text-fg-muted">{timeLabel(next.startAt)}</p>
+            <p className="text-[0.8125rem] text-fg-muted">
+              {timeLabel(next.startAt, tenant.timezone)}
+            </p>
             <p className="mt-1 font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
-              {svcById.get(next.serviceId)?.name ?? 'Serviço'}
+              {next.serviceName ?? 'Serviço'}
             </p>
             <p className="mt-0.5 text-[0.875rem] text-fg-muted">
-              com {proById.get(next.professionalId)?.displayName ||
-                proById.get(next.professionalId)?.name ||
-                'profissional'}
+              com {next.professionalName ?? 'profissional'} ·{' '}
+              {next.customerName ?? 'cliente'}
             </p>
           </CardContent>
         </Card>
@@ -106,8 +94,8 @@ export default function DashboardHome() {
         <StatCard
           icon={<Calendar className="h-4 w-4" />}
           label="Agenda hoje"
-          value={String(todayActive.length)}
-          hint={`${today.filter((a) => a.status === 'COMPLETED').length} já concluídos`}
+          value={String(active.length)}
+          hint={`${completed} já concluídos`}
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
@@ -117,42 +105,13 @@ export default function DashboardHome() {
         />
       </div>
 
-      {currentPayout ? (
-        <Card className="mt-4 shadow-xs">
-          <CardContent className="flex items-center gap-3 py-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bg-subtle text-fg-muted">
-              <Wallet className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-                Saldo a receber
-              </p>
-              <p className="font-display text-[1.25rem] font-semibold text-fg">
-                {formatCentsToBrl(currentPayout.netCents)}
-              </p>
-              <p className="text-[0.75rem] text-fg-muted">
-                Próximo repasse no fim do ciclo
-              </p>
-            </div>
-            <Link
-              href="/salon/dashboard/financeiro"
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[0.8125rem] text-fg-muted hover:bg-bg-subtle hover:text-fg"
-            >
-              Ver
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </CardContent>
-        </Card>
-      ) : null}
-
       <QuickActions />
 
       <AgendaPreview
-        appointments={todayActive.sort(
+        appointments={active.sort(
           (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
         )}
-        proById={proById}
-        svcById={svcById}
+        tenantTimezone={tenant.timezone}
       />
     </main>
   )
@@ -210,12 +169,10 @@ function QuickActions() {
 
 function AgendaPreview({
   appointments,
-  proById,
-  svcById,
+  tenantTimezone,
 }: {
-  appointments: Appointment[]
-  proById: Map<string, Professional>
-  svcById: Map<string, Service>
+  appointments: AgendaAppointment[]
+  tenantTimezone: string
 }) {
   if (appointments.length === 0) return null
   return (
@@ -233,68 +190,30 @@ function AgendaPreview({
       </div>
       <Card className="shadow-xs">
         <ul className="divide-y divide-border">
-          {appointments.slice(0, 5).map((a) => {
-            const prof = proById.get(a.professionalId)
-            const svc = svcById.get(a.serviceId)
-            return (
-              <li
-                key={a.id}
-                className="flex items-center gap-3 px-4 py-3"
-              >
-                <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-md bg-bg-subtle">
-                  <span className="font-display text-[0.9375rem] font-semibold text-fg">
-                    {timeLabel(a.startAt)}
-                  </span>
+          {appointments.slice(0, 5).map((a) => (
+            <li key={a.id} className="flex items-center gap-3 px-4 py-3">
+              <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-md bg-bg-subtle">
+                <span className="font-display text-[0.9375rem] font-semibold text-fg">
+                  {timeLabel(a.startAt, tenantTimezone)}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-fg">{svc?.name ?? 'Serviço'}</p>
-                  <p className="truncate text-[0.8125rem] text-fg-muted">
-                    {prof?.displayName || prof?.name || 'profissional'}
-                  </p>
-                </div>
-                <StatusBadge status={a.status} />
-              </li>
-            )
-          })}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-fg">
+                  {a.serviceName ?? 'Serviço'}
+                </p>
+                <p className="truncate text-[0.8125rem] text-fg-muted">
+                  {a.professionalName ?? 'profissional'} · {a.customerName ?? 'cliente'}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[a.status]}`}
+              >
+                {STATUS_LABELS[a.status]}
+              </span>
+            </li>
+          ))}
         </ul>
       </Card>
     </section>
-  )
-}
-
-function StatusBadge({ status }: { status: Appointment['status'] }) {
-  const map: Record<Appointment['status'], { label: string; className: string }> = {
-    SCHEDULED: {
-      label: 'Marcado',
-      className: 'bg-bg-subtle text-fg-muted',
-    },
-    CONFIRMED: {
-      label: 'Confirmado',
-      className: 'bg-info-bg text-info',
-    },
-    IN_PROGRESS: {
-      label: 'Em andamento',
-      className: 'bg-warning-bg text-warning',
-    },
-    COMPLETED: {
-      label: 'Feito',
-      className: 'bg-success-bg text-success',
-    },
-    CANCELED: {
-      label: 'Cancelado',
-      className: 'bg-bg-subtle text-fg-subtle',
-    },
-    NO_SHOW: {
-      label: 'Não veio',
-      className: 'bg-error-bg text-error',
-    },
-  }
-  const s = map[status]
-  return (
-    <span
-      className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${s.className}`}
-    >
-      {s.label}
-    </span>
   )
 }

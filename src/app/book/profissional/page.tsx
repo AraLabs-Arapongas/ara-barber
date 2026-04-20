@@ -1,31 +1,19 @@
-'use client'
-
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Sparkles, User } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { getProfessionalsForService } from '@/lib/booking/queries'
 import { Card } from '@/components/ui/card'
 import { StepIndicator } from '@/components/book/step-indicator'
-import { bookHrefWith, parseBookParams } from '@/lib/mock/booking-params'
+import { bookHrefWith, parseBookParams } from '@/lib/booking/params'
 
-export default function BookStepProfessional() {
-  const tenantSlug = useTenantSlug()
-  const { data: professionals } = useMockStore(
-    tenantSlug,
-    ENTITY.professionals.key,
-    ENTITY.professionals.schema,
-    ENTITY.professionals.seed,
-  )
-  const { data: links } = useMockStore(
-    tenantSlug,
-    ENTITY.professionalServices.key,
-    ENTITY.professionalServices.schema,
-    ENTITY.professionalServices.seed,
-  )
-  const sp = useSearchParams()
-  const current = parseBookParams(sp ?? new URLSearchParams())
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function BookStepProfessional({ searchParams }: PageProps) {
+  const tenant = await getCurrentTenantOrNotFound()
+  const sp = await searchParams
+  const current = parseBookParams(sp)
 
   if (!current.serviceId) {
     return (
@@ -40,10 +28,7 @@ export default function BookStepProfessional() {
     )
   }
 
-  const serviceLinks = new Set(
-    links.filter((l) => l.serviceId === current.serviceId).map((l) => l.professionalId),
-  )
-  const eligible = professionals.filter((p) => p.isActive && serviceLinks.has(p.id))
+  const eligible = await getProfessionalsForService(tenant.id, current.serviceId)
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-24 sm:px-6">
@@ -55,7 +40,11 @@ export default function BookStepProfessional() {
         Serviço
       </Link>
 
-      <StepIndicator current={2} total={6} labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']} />
+      <StepIndicator
+        current={2}
+        total={6}
+        labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']}
+      />
 
       <h1 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-fg">
         Com quem?
@@ -98,7 +87,9 @@ export default function BookStepProfessional() {
                     <User className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-fg">{p.displayName || p.name}</p>
+                    <p className="truncate font-medium text-fg">
+                      {p.displayName || p.name}
+                    </p>
                     {p.phone ? (
                       <p className="truncate text-[0.8125rem] text-fg-muted">{p.phone}</p>
                     ) : null}

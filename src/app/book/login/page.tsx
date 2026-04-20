@@ -1,28 +1,18 @@
-'use client'
-
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { redirect } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { useTenantSlug } from '@/components/mock/tenant-slug-provider'
-import { useMockStore } from '@/lib/mock/store'
-import { ENTITY } from '@/lib/mock/entities'
+import { createClient } from '@/lib/supabase/server'
 import { StepIndicator } from '@/components/book/step-indicator'
 import { CustomerLoginForm } from '@/components/auth/customer-login-form'
-import { bookHrefWith, parseBookParams } from '@/lib/mock/booking-params'
+import { bookHrefWith, parseBookParams } from '@/lib/booking/params'
 
-export default function BookStepLogin() {
-  const tenantSlug = useTenantSlug()
-  const router = useRouter()
-  const sp = useSearchParams()
-  const current = parseBookParams(sp ?? new URLSearchParams())
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const { data: session } = useMockStore(
-    tenantSlug,
-    ENTITY.currentCustomer.key,
-    ENTITY.currentCustomer.schema,
-    ENTITY.currentCustomer.seed,
-  )
+export default async function BookStepLogin({ searchParams }: PageProps) {
+  const sp = await searchParams
+  const current = parseBookParams(sp)
 
   const hasWizardParams = Boolean(
     current.serviceId && current.date && current.time && current.professionalId,
@@ -31,9 +21,11 @@ export default function BookStepLogin() {
     ? bookHrefWith('/book/confirmar', current)
     : '/meus-agendamentos'
 
-  useEffect(() => {
-    if (session.email) router.replace(nextHref)
-  }, [session.email, nextHref, router])
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user) redirect(nextHref)
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-24 sm:px-6">

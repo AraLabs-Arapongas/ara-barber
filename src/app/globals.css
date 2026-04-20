@@ -101,6 +101,9 @@ body {
 html,
 body {
   height: 100%;
+  /* Safety net mobile: qualquer elemento que estourar o viewport é clipado
+     ao invés de gerar scroll lateral. Isola bugs de layout em telas grandes. */
+  overflow-x: hidden;
 }
 
 body {
