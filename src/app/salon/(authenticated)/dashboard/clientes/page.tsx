@@ -21,7 +21,9 @@ export default async function CustomersPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('customers')
-    .select('id, name, email, phone, is_active, created_at, deleted_at')
+    .select(
+      'id, name, email, phone, is_active, created_at, deleted_at, pwa_installed_at, pwa_install_dismissed_at',
+    )
     .eq('tenant_id', tenant.id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -56,11 +58,29 @@ export default async function CustomersPage() {
                       {c.phone ?? 'sem telefone'} · desde {formatDate(c.created_at)}
                     </p>
                   </div>
-                  {!c.is_active ? (
-                    <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
-                      Inativo
-                    </span>
-                  ) : null}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {c.pwa_installed_at ? (
+                      <span className="rounded-full bg-success-bg px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-success">
+                        📱 Instalado
+                      </span>
+                    ) : c.pwa_install_dismissed_at ? (
+                      <span
+                        className="rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle"
+                        title={`Dispensou em ${formatDate(c.pwa_install_dismissed_at)}`}
+                      >
+                        — Dispensou
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
+                        — Não instalado
+                      </span>
+                    )}
+                    {!c.is_active ? (
+                      <span className="rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle">
+                        Inativo
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               </Card>
             </li>

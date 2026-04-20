@@ -5,6 +5,7 @@ import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { Card, CardContent } from '@/components/ui/card'
 import { DaySwitcher } from '@/components/agenda/day-switcher'
 import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
+import { StaffPushBanner } from '@/components/push/staff-push-banner'
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -52,6 +53,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
         </h1>
       </header>
 
+      <StaffPushBanner />
       <DaySwitcher dateISO={dateISO} tenantTimezone={tenant.timezone} />
       <RealtimeAgendaRefresh tenantId={tenant.id} />
 

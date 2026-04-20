@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
+import { AfterBookingPushPrompt } from '@/components/push/after-booking-prompt'
 import { formatBrPhone } from '@/lib/format'
 import { confirmBookingAction, type ConfirmBookingInput } from '@/app/book/confirmar/actions'
 
@@ -21,6 +22,8 @@ export function ConfirmForm({ initialName, initialPhone, payload }: Props) {
   const [phone, setPhone] = useState(initialPhone)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [pushTrigger, setPushTrigger] = useState(false)
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -47,7 +50,12 @@ export function ConfirmForm({ initialName, initialPhone, payload }: Props) {
       setError(result.error)
       return
     }
-    router.push(`/book/sucesso?appointmentId=${result.appointmentId}`)
+    setPendingRedirect(`/book/sucesso?appointmentId=${result.appointmentId}`)
+    setPushTrigger(true)
+  }
+
+  function handlePushDone() {
+    if (pendingRedirect) router.push(pendingRedirect)
   }
 
   return (
@@ -88,6 +96,7 @@ export function ConfirmForm({ initialName, initialPhone, payload }: Props) {
           </Button>
         </form>
       </CardContent>
+      <AfterBookingPushPrompt trigger={pushTrigger} onDone={handlePushDone} />
     </Card>
   )
 }

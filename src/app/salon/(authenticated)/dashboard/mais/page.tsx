@@ -7,6 +7,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { StaffPushToggle } from '@/components/push/staff-push-toggle'
 
 type Item = {
   href: string
@@ -77,6 +78,15 @@ export default function MaisPage() {
             </Card>
           </section>
         ))}
+
+        <section>
+          <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+            Avisos
+          </h2>
+          <Card className="shadow-xs">
+            <StaffPushToggle />
+          </Card>
+        </section>
 
         <Card className="shadow-xs">
           <CardContent className="p-0">

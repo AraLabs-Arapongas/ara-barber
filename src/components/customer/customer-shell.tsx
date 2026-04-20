@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CustomerBottomTabNav } from './bottom-tab-nav'
+import { PwaInstallPrompt } from '@/components/pwa/install-prompt'
 
 /**
  * Wrapper de páginas tenant-facing (cliente): aplica padding bottom
@@ -13,6 +14,7 @@ export function CustomerShell({ children }: { children: ReactNode }) {
     <>
       <div className="pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">{children}</div>
       <CustomerBottomTabNav />
+      <PwaInstallPrompt />
     </>
   )
 }

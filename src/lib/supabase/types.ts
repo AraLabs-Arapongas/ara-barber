@@ -27,6 +27,8 @@ export type Database = {
           notes: string | null
           price_cents_snapshot: number | null
           professional_id: string
+          reminder_24h_sent_at: string | null
+          reminder_2h_sent_at: string | null
           service_id: string
           start_at: string
           status: Database["public"]["Enums"]["appointment_status"]
@@ -45,6 +47,8 @@ export type Database = {
           notes?: string | null
           price_cents_snapshot?: number | null
           professional_id: string
+          reminder_24h_sent_at?: string | null
+          reminder_2h_sent_at?: string | null
           service_id: string
           start_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -63,6 +67,8 @@ export type Database = {
           notes?: string | null
           price_cents_snapshot?: number | null
           professional_id?: string
+          reminder_24h_sent_at?: string | null
+          reminder_2h_sent_at?: string | null
           service_id?: string
           start_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -198,6 +204,8 @@ export type Database = {
           name: string | null
           notes: string | null
           phone: string | null
+          pwa_install_dismissed_at: string | null
+          pwa_installed_at: string | null
           tenant_id: string
           updated_at: string
           user_id: string | null
@@ -214,6 +222,8 @@ export type Database = {
           name?: string | null
           notes?: string | null
           phone?: string | null
+          pwa_install_dismissed_at?: string | null
+          pwa_installed_at?: string | null
           tenant_id: string
           updated_at?: string
           user_id?: string | null
@@ -230,6 +240,8 @@ export type Database = {
           name?: string | null
           notes?: string | null
           phone?: string | null
+          pwa_install_dismissed_at?: string | null
+          pwa_installed_at?: string | null
           tenant_id?: string
           updated_at?: string
           user_id?: string | null
@@ -238,6 +250,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_log: {
+        Row: {
+          appointment_id: string | null
+          channel: string
+          created_at: string
+          error_message: string | null
+          event: string
+          id: string
+          recipient: string | null
+          status: string
+          tenant_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          event: string
+          id?: string
+          recipient?: string | null
+          status: string
+          tenant_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          event?: string
+          id?: string
+          recipient?: string | null
+          status?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -433,6 +496,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "professionals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_seen_at: string
+          p256dh_key: string
+          tenant_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_seen_at?: string
+          p256dh_key: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_seen_at?: string
+          p256dh_key?: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -689,6 +796,20 @@ export type Database = {
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_tenant_staff: { Args: { target_tenant: string }; Returns: boolean }
+      select_reminder_candidates: {
+        Args: {
+          p_flag_column: string
+          p_lower_interval: string
+          p_upper_interval: string
+        }
+        Returns: {
+          customer_user_id: string
+          id: string
+          service_name: string
+          start_at: string
+          tenant_id: string
+        }[]
+      }
       validate_appointment_conflict: {
         Args: {
           p_end_at: string

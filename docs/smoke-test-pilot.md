@@ -86,6 +86,45 @@ Toda gestão do profissional vive em `/salon/dashboard/profissionais/[id]`.
 
 - [ ] `/salon/dashboard/clientes` lista o cliente criado no passo 2 (read-only).
 
+## 7c. Notificações — confirmação (email + push cliente)
+
+- [ ] Agendar pelo wizard: email "Reserva confirmada" chega no inbox do cliente.
+- [ ] Prompt de push aparece após confirmar; aceitar registra subscription.
+- [ ] Próximo agendamento com push ativo: push "Horário marcado" chega em <5s.
+- [ ] Clicar notificação abre `/meus-agendamentos/[id]`.
+
+## 7d. Notificações — cancelamento
+
+- [ ] Cliente cancela: email com "recebemos seu cancelamento" + push cliente + push staff.
+- [ ] Staff cancela: email com "o salão cancelou" + pushes equivalentes.
+- [ ] `canceled_by` preenchido em `appointments` (uuid do user que cancelou).
+
+## 7e. Notificações — staff push
+
+- [ ] Primeiro acesso em `/salon/dashboard/agenda`: banner "Ativar avisos" aparece.
+- [ ] Ativar registra subscription com tenant_id. Em X: dismiss permanente.
+- [ ] Recuperação via `/salon/dashboard/mais` → Avisos (toggle).
+- [ ] Novo agendamento via cliente → push no staff em <5s.
+
+## 7f. Notificações — lembretes
+
+- [ ] Appointment com `start_at = now()+24h` recebe push em ≤5min (cron).
+- [ ] Flag `reminder_24h_sent_at` preenchida; cron 2× não duplica push.
+- [ ] Mesmo fluxo pro 2h.
+
+## 7g. PWA install
+
+- [ ] Cliente logado sem PWA instalada: bottom sheet aparece.
+- [ ] Chrome/Edge: botão "Instalar" usa dialog nativo.
+- [ ] iOS Safari: instruções manuais.
+- [ ] "Mais tarde" salva `pwa_install_dismissed_at` + localStorage por 30d.
+- [ ] Após instalar: `pwa_installed_at` preenche, badge "📱 Instalado" em `/salon/dashboard/clientes`.
+
+## 7h. Notificações — auditoria
+
+- [ ] `notification_log` tem rows `status=sent` pros eventos disparados.
+- [ ] Falhas aparecem com `error_message` preenchido.
+
 ## 8. LGPD
 
 - [ ] `/perfil` → "Baixar meus dados" baixa JSON com customer + appointments + snapshot do tenant.
