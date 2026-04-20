@@ -41,6 +41,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Nunca confiar em `tenantId` vindo do cliente** — usar sempre o resolvido pelo proxy (`x-ara-tenant-id` header).
 - **Toda mutation passa por Zod** antes de tocar o banco.
 - **Toda tabela com `tenant_id` tem policies RLS** cobrindo platform admin, staff, customer read, customer write; role `PLATFORM_ADMIN` fica definida mesmo que a UI correspondente more em outro repo.
+- **Smoke test é contrato.** Ao mudar qualquer fluxo visível (telas, navegação, ações, copy de CTAs, credenciais, seed, stubs de "em breve"), atualizar `docs/smoke-test-pilot.md` no **mesmo PR**. Roteiro desatualizado mascara regressões — o smoke só serve se for fiel ao produto.
 
 ## Comandos principais
 
