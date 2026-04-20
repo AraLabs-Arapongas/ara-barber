@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          cancel_reason: string | null
+          canceled_at: string | null
+          canceled_by: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name_snapshot: string | null
+          end_at: string
+          id: string
+          notes: string | null
+          price_cents_snapshot: number | null
+          professional_id: string
+          service_id: string
+          start_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          canceled_at?: string | null
+          canceled_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name_snapshot?: string | null
+          end_at: string
+          id?: string
+          notes?: string | null
+          price_cents_snapshot?: number | null
+          professional_id: string
+          service_id: string
+          start_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          canceled_at?: string | null
+          canceled_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name_snapshot?: string | null
+          end_at?: string
+          id?: string
+          notes?: string | null
+          price_cents_snapshot?: number | null
+          professional_id?: string
+          service_id?: string
+          start_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_blocks: {
         Row: {
           created_at: string
@@ -103,7 +189,9 @@ export type Database = {
       customers: {
         Row: {
           birth_date: string | null
+          consent_given_at: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           id: string
           is_active: boolean
@@ -112,12 +200,14 @@ export type Database = {
           phone: string | null
           tenant_id: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           whatsapp: string | null
         }
         Insert: {
           birth_date?: string | null
+          consent_given_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
@@ -126,12 +216,14 @@ export type Database = {
           phone?: string | null
           tenant_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           whatsapp?: string | null
         }
         Update: {
           birth_date?: string | null
+          consent_given_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
@@ -140,7 +232,7 @@ export type Database = {
           phone?: string | null
           tenant_id?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           whatsapp?: string | null
         }
         Relationships: [
@@ -411,6 +503,7 @@ export type Database = {
           address_line2: string | null
           billing_model: Database["public"]["Enums"]["billing_model"]
           billing_status: Database["public"]["Enums"]["billing_status"]
+          cancellation_window_hours: number
           city: string | null
           contact_phone: string | null
           created_at: string
@@ -453,6 +546,7 @@ export type Database = {
           address_line2?: string | null
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
+          cancellation_window_hours?: number
           city?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -495,6 +589,7 @@ export type Database = {
           address_line2?: string | null
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
+          cancellation_window_hours?: number
           city?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -594,8 +689,24 @@ export type Database = {
       }
       is_platform_admin: { Args: never; Returns: boolean }
       is_tenant_staff: { Args: { target_tenant: string }; Returns: boolean }
+      validate_appointment_conflict: {
+        Args: {
+          p_end_at: string
+          p_exclude_id?: string
+          p_professional_id: string
+          p_start_at: string
+          p_tenant_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      appointment_status:
+        | "SCHEDULED"
+        | "CONFIRMED"
+        | "COMPLETED"
+        | "CANCELED"
+        | "NO_SHOW"
       billing_model: "TRIAL" | "SUBSCRIPTION_WITH_TRANSACTION_FEE"
       billing_status:
         | "TRIALING"
@@ -739,6 +850,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      appointment_status: [
+        "SCHEDULED",
+        "CONFIRMED",
+        "COMPLETED",
+        "CANCELED",
+        "NO_SHOW",
+      ],
       billing_model: ["TRIAL", "SUBSCRIPTION_WITH_TRANSACTION_FEE"],
       billing_status: [
         "TRIALING",
