@@ -10,6 +10,309 @@
 
 **Referência:** [Spec 1 design](../specs/2026-04-19-spec-01-operacao-agenda-design.md).
 
+## Addendum (2026-04-19) — Remoção completa do mock
+
+**Descoberta durante execução:** toda a camada operacional (agenda, booking wizard, cadastros,
+meus-agendamentos) lê e grava via `useMockStore`. A tabela `appointments` **não existe** no banco.
+`professionals`, `services`, `customers` existem mas estão zeradas. Decisão: **remover todo mock**
+e migrar pra banco real antes de implementar as features novas do Spec 1.
+
+Ordem de execução revisada:
+
+- **Phase 0** — Fundação & migração mock → real (novas Tasks A0–A14)
+- **Phase 1** — Features do Spec 1 original (Tasks 1–15 abaixo, na mesma ordem)
+
+Out-of-pilot features (operacao, financeiro, relatorios, tenant profile config) viram **stubs "em breve"** em vez de mock, porque não precisam funcionar pro pilot e liberam deletar `src/lib/mock/*` inteiro.
+
+---
+
+## Phase 0 — Migração mock → real
+
+### Task A0: Criar tabela `appointments` + RLS + indexes
+
+**Files:** migration `create_appointments_table` via MCP
+
+- [ ] **Step 1: Aplicar migration**
+
+```sql
+CREATE TYPE appointment_status AS ENUM (
+  'SCHEDULED', 'CONFIRMED', 'COMPLETED', 'CANCELED', 'NO_SHOW'
+);
+
+CREATE TABLE appointments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_id uuid REFERENCES customers(id) ON DELETE SET NULL,
+  professional_id uuid NOT NULL REFERENCES professionals(id) ON DELETE RESTRICT,
+  service_id uuid NOT NULL REFERENCES services(id) ON DELETE RESTRICT,
+  start_at timestamptz NOT NULL,
+  end_at timestamptz NOT NULL,
+  status appointment_status NOT NULL DEFAULT 'SCHEDULED',
+  customer_name_snapshot text,
+  price_cents_snapshot integer,
+  notes text,
+  canceled_at timestamptz,
+  canceled_by uuid REFERENCES auth.users(id),
+  cancel_reason text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (end_at > start_at)
+);
+
+CREATE INDEX appointments_tenant_day_idx ON appointments (tenant_id, start_at);
+CREATE INDEX appointments_professional_day_idx ON appointments (professional_id, start_at);
+CREATE INDEX appointments_customer_idx ON appointments (customer_id);
+
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+
+-- Platform admin vê tudo
+CREATE POLICY appointments_platform_admin_all ON appointments
+  FOR ALL TO authenticated
+  USING (public.is_platform_admin())
+  WITH CHECK (public.is_platform_admin());
+
+-- Staff do tenant vê e manipula do próprio tenant
+CREATE POLICY appointments_tenant_staff_all ON appointments
+  FOR ALL TO authenticated
+  USING (public.is_tenant_staff(tenant_id))
+  WITH CHECK (public.is_tenant_staff(tenant_id));
+
+-- Customer lê os próprios appointments (via customers.user_id)
+CREATE POLICY appointments_customer_read ON appointments
+  FOR SELECT TO authenticated
+  USING (
+    customer_id IN (SELECT id FROM customers WHERE user_id = auth.uid())
+  );
+
+-- Customer cria appointment via wizard (INSERT)
+CREATE POLICY appointments_customer_insert ON appointments
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    customer_id IN (SELECT id FROM customers WHERE user_id = auth.uid())
+  );
+
+-- Customer atualiza status pra CANCELED dentro da janela
+-- (RLS permite UPDATE; a action valida a janela antes de rodar)
+CREATE POLICY appointments_customer_update ON appointments
+  FOR UPDATE TO authenticated
+  USING (
+    customer_id IN (SELECT id FROM customers WHERE user_id = auth.uid())
+  )
+  WITH CHECK (
+    customer_id IN (SELECT id FROM customers WHERE user_id = auth.uid())
+  );
+
+-- Trigger de updated_at
+CREATE TRIGGER appointments_updated_at
+  BEFORE UPDATE ON appointments
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+```
+
+*Observação:* confirmar que `public.touch_updated_at()` existe (outras tabelas usam). Se não existir, criar.
+
+- [ ] **Step 2: Habilitar Realtime na tabela**
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;
+```
+
+- [ ] **Step 3: Regenerar types**
+
+Via `mcp__supabase__generate_typescript_types` e copiar pra `src/lib/supabase/types.ts`.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add supabase/migrations src/lib/supabase/types.ts
+git commit -m "feat(db): tabela appointments + RLS + realtime"
+```
+
+### Task A1: Coluna `customer.user_id` nullable + `deleted_at`
+
+Já incluso na Task 1 do plano original (consent_given_at, deleted_at). Manter lá.
+
+### Task A2: Server actions de CRUD `appointments`
+
+**Files:**
+- Create: `src/lib/appointments/server-actions.ts`
+
+- [ ] **Step 1: Criar ações**
+
+```ts
+'use server'
+
+import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
+
+const CreateInput = z.object({
+  tenantId: z.string().uuid(),
+  customerId: z.string().uuid(),
+  professionalId: z.string().uuid(),
+  serviceId: z.string().uuid(),
+  startAt: z.string().datetime(),
+  endAt: z.string().datetime(),
+  customerNameSnapshot: z.string(),
+  priceCentsSnapshot: z.number().int().nonnegative(),
+  notes: z.string().max(500).optional(),
+})
+
+export async function createAppointment(raw: z.infer<typeof CreateInput>) {
+  const parsed = CreateInput.safeParse(raw)
+  if (!parsed.success) return { ok: false as const, error: 'Input inválido.' }
+  const { tenantId, professionalId, startAt, endAt } = parsed.data
+
+  const supabase = await createClient()
+
+  // Validar conflito via function
+  const { data: noConflict } = await supabase.rpc('validate_appointment_conflict', {
+    p_tenant_id: tenantId,
+    p_professional_id: professionalId,
+    p_start_at: startAt,
+    p_end_at: endAt,
+    p_exclude_id: null,
+  })
+  if (!noConflict) return { ok: false as const, error: 'Horário não disponível. Escolha outro.' }
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .insert({
+      tenant_id: tenantId,
+      customer_id: parsed.data.customerId,
+      professional_id: professionalId,
+      service_id: parsed.data.serviceId,
+      start_at: startAt,
+      end_at: endAt,
+      customer_name_snapshot: parsed.data.customerNameSnapshot,
+      price_cents_snapshot: parsed.data.priceCentsSnapshot,
+      notes: parsed.data.notes ?? null,
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) return { ok: false as const, error: 'Falha ao criar agendamento.' }
+
+  revalidatePath('/salon/dashboard/agenda')
+  revalidatePath('/meus-agendamentos')
+  return { ok: true as const, appointmentId: data.id }
+}
+```
+
+- [ ] **Step 2: Typecheck + commit**
+
+### Task A3: Migrar `/book/*` wizard — do mock pro Supabase
+
+**Files:** todas as páginas em `src/app/book/*`. Mudança: em vez de gravar via `useMockStore`, cada passo passa parâmetros pela URL (como já faz) e o `/book/confirmar` chama `createAppointment`.
+
+- [ ] **Step 1: Listar serviços em `/book/page.tsx`** (server component lendo de `services` por tenant)
+- [ ] **Step 2: Listar profissionais em `/book/profissional`** (filtrando via `professional_services`)
+- [ ] **Step 3: Gerar slots em `/book/horario`** (server: lê `business_hours`, `professional_availability`, `availability_blocks`, `appointments`; exclui conflitos)
+- [ ] **Step 4: `/book/confirmar` chama `createAppointment`** (client component com server action)
+- [ ] **Step 5: `/book/sucesso` lê appointment via id da URL** (server)
+- [ ] **Step 6: Commit**
+
+### Task A4: Migrar `/meus-agendamentos`
+
+**Files:** `src/app/meus-agendamentos/page.tsx`
+
+- [ ] **Step 1: Server component** que busca appointments do customer atual via RLS
+- [ ] **Step 2: Remover `useMockStore`**
+- [ ] **Step 3: Commit**
+
+### Task A5: Migrar `/salon/dashboard/agenda` + `[id]`
+
+**Files:** `src/app/salon/(authenticated)/dashboard/agenda/page.tsx`, `agenda/[id]/page.tsx`
+
+- [ ] **Step 1: Usar `getAgendaForDay` (criada na Task 7)** pra listar
+- [ ] **Step 2: Detalhe [id] busca por id via RLS**
+- [ ] **Step 3: Commit**
+
+### Task A6: Migrar cadastros `profissionais`, `servicos`, `clientes`
+
+**Files:** `src/app/salon/(authenticated)/dashboard/profissionais/page.tsx`, `servicos/page.tsx`, `clientes/page.tsx`
+
+- [ ] **Step 1: Cada página vira server component lendo do Supabase**
+- [ ] **Step 2: Server actions pra create/update/toggle** (mínimo pra pilot)
+- [ ] **Step 3: Commit**
+
+### Task A7: Migrar disponibilidade / horários / equipe-servicos
+
+**Files:** `disponibilidade/page.tsx`, `configuracoes/horarios/page.tsx`, `equipe-servicos/page.tsx`
+
+- [ ] **Step 1: Tudo server component + server actions CRUD**
+- [ ] **Step 2: Commit**
+
+### Task A8: Migrar /perfil cliente
+
+Já parcial. Só remover `useMockStore` e ler direto de `customers` via RLS.
+
+### Task A9: Migrar home `customer-access` + `customer-session-sync`
+
+**Files:** `src/components/home/customer-access.tsx`, `src/components/mock/customer-session-sync.tsx`
+
+- [ ] **Step 1:** `CustomerSessionSync` já grava em `customers` — revisar, remover leitura/escrita em mock
+- [ ] **Step 2:** `CustomerAccess` lê direto do auth session + `customers` query em vez de `useMockStore`
+- [ ] **Step 3: Commit**
+
+### Task A10: Stub páginas out-of-pilot
+
+**Files:**
+- `operacao/page.tsx`, `financeiro/page.tsx`, `relatorios/page.tsx`, `perfil/page.tsx` (tenant staff, não cliente)
+
+- [ ] **Step 1: Cada uma vira página simples "Em breve"** com ícone + texto. Sem `useMockStore`.
+- [ ] **Step 2: Commit**
+
+### Task A11: Deletar `src/lib/mock/`
+
+Confirmar zero imports restantes de `@/lib/mock/*` e remover:
+
+```bash
+grep -rln "@/lib/mock\|from '.*mock/store\|from '.*mock/entities\|from '.*mock/seed\|useMockStore\|TenantSlugProvider" src/
+# Deve mostrar só TenantSlugProvider (que NÃO deleta — precisa adaptar pra deixar só o slug provider sem dependência do mock)
+```
+
+Se `TenantSlugProvider` está em `src/components/mock/`, movê-lo pra `src/components/tenant/tenant-slug-provider.tsx` antes de apagar a pasta `mock`.
+
+- [ ] **Step 1: Mover TenantSlugProvider**
+- [ ] **Step 2: Atualizar imports (muitos — grep + replace)**
+- [ ] **Step 3: Deletar `src/lib/mock/`, `src/components/mock/` vazio**
+- [ ] **Step 4: Typecheck**
+- [ ] **Step 5: Commit**
+
+### Task A12: Seed realista pros tenants pilot
+
+**Files:** `scripts/seed-pilot-data.ts` (estende a Task 14 do plano original)
+
+- [ ] **Step 1:** Pros 2 tenants piloto (`barbearia-teste`, `bela-imagem`), seedar idempotente:
+  - 2-3 profissionais ativos
+  - 4-6 serviços ativos (preços/duração realistas)
+  - `professional_services` (todos os profissionais fazem todos os serviços)
+  - `business_hours` (já na Task 14)
+  - `professional_availability` (herda dos business_hours)
+- [ ] **Step 2: Rodar e verificar via SQL**
+- [ ] **Step 3: Commit**
+
+### Task A13: Smoke test sem mock
+
+Depois de A11, testar o fluxo inteiro sem mock em `bela-imagem.lvh.me:3008`:
+
+- Home → Agendar agora → seleciona serviço → profissional → data → horário → confirma (OTP) → sucesso
+- Staff logado vê o appointment na agenda em realtime
+
+- [ ] **Step 1: Checklist no doc de smoke test** (Task 15 do plano original, acrescentar "sem mock" no header)
+
+### Task A14: Remover imports/components do FAB/SpeedDial que eram mock-only
+
+Pesquisar no FAB/speed-dial se depende de mock; ajustar.
+
+---
+
+## Phase 1 — Features do Spec 1 original
+
+Tasks 1–15 originais seguem como estão abaixo. Algumas se sobrepõem com Phase 0 (por exemplo, Task 1 do original = Task A1 implícita; Task 2 = função de conflito pode vir antes da A2 na ordem de execução). Ordem recomendada pra execução linear:
+
+**A0 → 1 (original) → 2 (original) → A2 → A3 → A4 → A5 → A6 → A7 → A8 → A9 → A10 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → A11 → A12 → 14 → A13 → 15**
+
 ---
 
 ## File structure
