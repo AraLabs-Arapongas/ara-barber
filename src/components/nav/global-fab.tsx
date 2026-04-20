@@ -1,34 +1,8 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { UserPlus, Scissors, CalendarX } from 'lucide-react'
-import { Fab, type FabAction } from './fab'
-
 /**
- * FAB global do salão com speed dial. Aparece em todas as páginas
- * autenticadas. Criação de agendamento é out-of-scope do pilot
- * (todo cliente agenda online), então não aparece aqui.
+ * FAB global do salão. Todas as ações de criação migraram pra botões
+ * contextuais dentro de cada tab (profissional, serviço, bloqueio).
+ * Mantemos o arquivo pra fácil reintrodução de ações rápidas no futuro.
  */
 export function GlobalFab() {
-  const router = useRouter()
-
-  const actions: FabAction[] = [
-    {
-      label: 'Novo profissional',
-      icon: UserPlus,
-      onClick: () => router.push('/salon/dashboard/profissionais?new=1'),
-    },
-    {
-      label: 'Novo serviço',
-      icon: Scissors,
-      onClick: () => router.push('/salon/dashboard/servicos?new=1'),
-    },
-    {
-      label: 'Bloqueio de agenda',
-      icon: CalendarX,
-      onClick: () => router.push('/salon/dashboard/disponibilidade?new=1'),
-    },
-  ]
-
-  return <Fab srLabel="Ações rápidas" actions={actions} />
+  return null
 }

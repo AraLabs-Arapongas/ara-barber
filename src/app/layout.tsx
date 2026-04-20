@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Figtree } from 'next/font/google'
 import './globals.css'
+import { ConfirmProvider } from '@/components/ui/confirm/provider'
 
 const figtree = Figtree({
   variable: '--font-figtree',
@@ -23,7 +24,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={figtree.variable}>
-      <body>{children}</body>
+      <body>
+        <ConfirmProvider>{children}</ConfirmProvider>
+      </body>
     </html>
   )
 }

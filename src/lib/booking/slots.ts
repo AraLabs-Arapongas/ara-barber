@@ -17,9 +17,11 @@ export type SlotInput = {
   stepMinutes?: number
 }
 
-export type FreeSlot = {
+export type Slot = {
   time: string
-  professionalId: string
+  available: boolean
+  /** Só presente quando available=true — primeiro profissional livre naquele horário. */
+  professionalId?: string
   startISO: string
   endISO: string
 }
@@ -101,7 +103,17 @@ export function weekdayInTenantTZ(dateISO: string, tenantTimezone: string): numb
   return map[weekdayName] ?? 0
 }
 
-export function computeFreeSlots(input: SlotInput): FreeSlot[] {
+/**
+ * Retorna todos os slots do dia dentro do horário de funcionamento do salão
+ * (union das janelas dos profissionais candidatos com as horas do salão),
+ * marcando cada um como disponível ou não. Slots no passado são omitidos.
+ *
+ * Um slot é "disponível" se existe ao menos um profissional candidato:
+ * - cuja jornada semanal cobre aquele horário inteiro,
+ * - sem conflito com appointments ativos,
+ * - sem bloqueio em availability_blocks.
+ */
+export function computeSlots(input: SlotInput): Slot[] {
   const step = input.stepMinutes ?? 30
   const weekday = weekdayInTenantTZ(input.dateISO, input.tenantTimezone)
 
@@ -110,57 +122,56 @@ export function computeFreeSlots(input: SlotInput): FreeSlot[] {
   const salonStart = timeToMinutes(salonHours.startTime)
   const salonEnd = timeToMinutes(salonHours.endTime)
 
-  const results: FreeSlot[] = []
-  const seenTimes = new Set<string>()
+  const results: Slot[] = []
 
-  for (const profId of input.candidateProfessionalIds) {
-    const entries = input.availability.filter(
-      (a) => a.professionalId === profId && a.weekday === weekday,
+  for (let t = salonStart; t + input.serviceDurationMinutes <= salonEnd; t += step) {
+    const time = minutesToTime(t)
+    const slotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
+    const slotEnd = new Date(
+      slotStart.getTime() + input.serviceDurationMinutes * 60_000,
     )
-    if (entries.length === 0) continue
 
-    const profBlocks = input.blocks.filter((b) => b.professionalId === profId)
-    const profAppts = input.existingAppointments.filter((a) => a.professionalId === profId)
+    if (slotStart.getTime() < input.now.getTime()) continue
 
-    for (const entry of entries) {
-      const start = Math.max(timeToMinutes(entry.startTime), salonStart)
-      const end = Math.min(timeToMinutes(entry.endTime), salonEnd)
+    let availableProId: string | undefined
+    for (const profId of input.candidateProfessionalIds) {
+      const withinJourney = input.availability.some(
+        (a) =>
+          a.professionalId === profId &&
+          a.weekday === weekday &&
+          timeToMinutes(a.startTime) <= t &&
+          timeToMinutes(a.endTime) >= t + input.serviceDurationMinutes,
+      )
+      if (!withinJourney) continue
 
-      for (let t = start; t + input.serviceDurationMinutes <= end; t += step) {
-        const time = minutesToTime(t)
-        const slotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
-        const slotEnd = new Date(
-          slotStart.getTime() + input.serviceDurationMinutes * 60_000,
-        )
+      const blocked = input.blocks.some(
+        (b) =>
+          b.professionalId === profId &&
+          new Date(b.startAt).getTime() < slotEnd.getTime() &&
+          new Date(b.endAt).getTime() > slotStart.getTime(),
+      )
+      if (blocked) continue
 
-        if (slotStart.getTime() < input.now.getTime()) continue
+      const conflict = input.existingAppointments.some(
+        (a) =>
+          a.professionalId === profId &&
+          new Date(a.startAt).getTime() < slotEnd.getTime() &&
+          new Date(a.endAt).getTime() > slotStart.getTime(),
+      )
+      if (conflict) continue
 
-        const blocked = profBlocks.some(
-          (b) =>
-            new Date(b.startAt).getTime() < slotEnd.getTime() &&
-            new Date(b.endAt).getTime() > slotStart.getTime(),
-        )
-        if (blocked) continue
-
-        const conflict = profAppts.some(
-          (a) =>
-            new Date(a.startAt).getTime() < slotEnd.getTime() &&
-            new Date(a.endAt).getTime() > slotStart.getTime(),
-        )
-        if (conflict) continue
-
-        if (seenTimes.has(time)) continue
-        seenTimes.add(time)
-        results.push({
-          time,
-          professionalId: profId,
-          startISO: slotStart.toISOString(),
-          endISO: slotEnd.toISOString(),
-        })
-      }
+      availableProId = profId
+      break
     }
+
+    results.push({
+      time,
+      available: availableProId !== undefined,
+      professionalId: availableProId,
+      startISO: slotStart.toISOString(),
+      endISO: slotEnd.toISOString(),
+    })
   }
 
-  results.sort((a, b) => a.time.localeCompare(b.time))
   return results
 }

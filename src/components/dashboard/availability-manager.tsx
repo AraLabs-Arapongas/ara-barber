@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, CalendarX, Trash2 } from 'lucide-react'
+import { ChevronLeft, CalendarX, Plus, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { useConfirm } from '@/components/ui/confirm/provider'
 import {
   createAvailabilityBlock,
   deleteAvailabilityBlock,
@@ -65,6 +66,7 @@ export function AvailabilityManager({ professionals, availability, blocks }: Pro
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const confirm = useConfirm()
 
   const [editingProId, setEditingProId] = useState<string | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
@@ -137,8 +139,14 @@ export function AvailabilityManager({ professionals, availability, blocks }: Pro
     })
   }
 
-  function removeBlock(id: string) {
-    if (!window.confirm('Remover este bloqueio?')) return
+  async function removeBlock(id: string) {
+    const ok = await confirm({
+      title: 'Remover este bloqueio?',
+      description: 'O profissional volta a aceitar reservas no período.',
+      confirmLabel: 'Remover',
+      destructive: true,
+    })
+    if (!ok) return
     startTransition(async () => {
       await deleteAvailabilityBlock({ id })
       router.refresh()
@@ -168,6 +176,18 @@ export function AvailabilityManager({ professionals, availability, blocks }: Pro
           <p className="mt-1 text-[0.875rem] text-fg-muted">
             Jornada semanal recorrente e bloqueios pontuais.
           </p>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setError(null)
+              setBlockOpen(true)
+            }}
+            className="mt-3"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Novo bloqueio
+          </Button>
         </header>
 
         <ul className="space-y-3">

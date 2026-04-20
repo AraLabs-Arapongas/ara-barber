@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Calendar, Users, Menu, type LucideIcon } from 'lucide-react'
+import { Home, Calendar, Users, Scissors, Menu, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Tab = {
@@ -33,12 +33,17 @@ const TABS: Tab[] = [
     match: (p) => p.startsWith('/salon/dashboard/profissionais'),
   },
   {
+    href: '/salon/dashboard/servicos',
+    icon: Scissors,
+    label: 'Serviços',
+    match: (p) => p.startsWith('/salon/dashboard/servicos'),
+  },
+  {
     href: '/salon/dashboard/mais',
     icon: Menu,
     label: 'Mais',
     match: (p) =>
       p.startsWith('/salon/dashboard/mais') ||
-      p.startsWith('/salon/dashboard/servicos') ||
       p.startsWith('/salon/dashboard/clientes') ||
       p.startsWith('/salon/dashboard/configuracoes') ||
       p.startsWith('/salon/dashboard/financeiro') ||

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useTransition, type FormEvent } from 'react'
-import { Scissors, Clock, Power } from 'lucide-react'
+import { Pencil, Plus, Scissors, Clock, Power } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import {
   createService,
   toggleServiceActive,
+  updateService,
 } from '@/app/salon/(authenticated)/actions/services'
 
 export type ServiceListItem = {
@@ -28,22 +29,45 @@ type Props = {
   services: ServiceListItem[]
 }
 
+function centsToInputValue(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',')
+}
+
 export function ServicesManager({ services }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editing, setEditing] = useState<ServiceListItem | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
     if (searchParams?.get('new') === '1') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- abre sheet vinda do FAB global
+      setEditing(null)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- abre sheet vinda de URL ?new=1
       setSheetOpen(true)
       router.replace(pathname, { scroll: false })
     }
   }, [searchParams, pathname, router])
+
+  function openCreate() {
+    setEditing(null)
+    setError(null)
+    setSheetOpen(true)
+  }
+
+  function openEdit(item: ServiceListItem) {
+    setEditing(item)
+    setError(null)
+    setSheetOpen(true)
+  }
+
+  function closeSheet() {
+    setSheetOpen(false)
+    setError(null)
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -67,19 +91,21 @@ export function ServicesManager({ services }: Props) {
     const description = String(fd.get('description') ?? '').trim() || undefined
 
     startTransition(async () => {
-      const result = await createService({
+      const payload = {
         name,
         description,
         durationMinutes: Math.round(durationRaw),
         priceCents,
-      })
+      }
+      const result = editing
+        ? await updateService({ id: editing.id, ...payload })
+        : await createService(payload)
       if (!result.ok) {
         setError(result.error)
         return
       }
       form.reset()
-      setError(null)
-      setSheetOpen(false)
+      closeSheet()
       router.refresh()
     })
   }
@@ -102,6 +128,10 @@ export function ServicesManager({ services }: Props) {
             Serviços
           </h1>
           <p className="mt-1 text-[0.875rem] text-fg-muted">O que seu salão oferece.</p>
+          <Button type="button" size="sm" onClick={openCreate} className="mt-3">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Adicionar serviço
+          </Button>
         </header>
 
         {services.length > 0 ? (
@@ -110,12 +140,16 @@ export function ServicesManager({ services }: Props) {
               <li key={s.id}>
                 <Card className="shadow-xs">
                   <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
-                    <div className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(s)}
+                      className="min-w-0 flex-1 text-left"
+                    >
                       <p className="truncate font-medium text-fg">{s.name}</p>
                       <p className="truncate text-[0.8125rem] text-fg-muted">
                         {s.durationMinutes} min · {formatCentsToBrl(s.priceCents)}
                       </p>
-                    </div>
+                    </button>
                     <div className="flex shrink-0 items-center gap-1">
                       <span
                         className={
@@ -126,6 +160,15 @@ export function ServicesManager({ services }: Props) {
                       >
                         {s.isActive ? 'Ativo' : 'Inativo'}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(s)}
+                        disabled={pending}
+                        className="rounded-md p-1.5 text-fg-subtle hover:bg-bg-subtle hover:text-fg disabled:opacity-50"
+                        aria-label="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => toggle(s.id, s.isActive)}
@@ -145,8 +188,11 @@ export function ServicesManager({ services }: Props) {
           <Card className="shadow-xs">
             <CardContent className="py-10 text-center">
               <p className="text-[0.9375rem] text-fg-muted">
-                Nenhum serviço ainda. Toque no <strong>+</strong> para começar.
+                Nenhum serviço ainda. Toque em <strong>+</strong> para começar ou use o botão abaixo.
               </p>
+              <Button className="mt-4" onClick={openCreate}>
+                Adicionar serviço
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -154,20 +200,26 @@ export function ServicesManager({ services }: Props) {
 
       <BottomSheet
         open={sheetOpen}
-        onClose={() => {
-          setSheetOpen(false)
-          setError(null)
-        }}
-        title="Novo serviço"
-        description="Adicione um item ao catálogo do salão."
+        onClose={closeSheet}
+        title={editing ? 'Editar serviço' : 'Novo serviço'}
+        description={
+          editing
+            ? 'Ajuste nome, duração, preço ou descrição.'
+            : 'Adicione um item ao catálogo do salão.'
+        }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          key={editing?.id ?? 'new'}
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           <Input
             label="Nome"
             name="name"
             required
             autoFocus
             maxLength={200}
+            defaultValue={editing?.name ?? ''}
             placeholder="Ex: Corte masculino"
             leftIcon={<Scissors className="h-4 w-4" />}
           />
@@ -180,7 +232,7 @@ export function ServicesManager({ services }: Props) {
               inputMode="numeric"
               min={5}
               max={480}
-              defaultValue={30}
+              defaultValue={editing?.durationMinutes ?? 30}
               required
               leftIcon={<Clock className="h-4 w-4" />}
               rightSlot={<span className="text-[0.8125rem] text-fg-muted">min</span>}
@@ -202,6 +254,7 @@ export function ServicesManager({ services }: Props) {
                   type="text"
                   inputMode="decimal"
                   required
+                  defaultValue={editing ? centsToInputValue(editing.priceCents) : ''}
                   placeholder="45,00"
                   className={cn(
                     'w-full rounded-lg border border-transparent bg-bg-subtle py-3 pl-11 pr-3.5 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:bg-surface-raised focus:outline-none',
@@ -217,31 +270,24 @@ export function ServicesManager({ services }: Props) {
               name="description"
               rows={3}
               maxLength={1000}
+              defaultValue={editing?.description ?? ''}
               placeholder="Detalhes opcionais exibidos no booking."
               className="w-full rounded-lg border border-transparent bg-bg-subtle px-3 py-2.5 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
             />
           </label>
 
           {error ? (
-            <Alert variant="error" title="Não foi possível adicionar">
+            <Alert variant="error" title="Não foi possível salvar">
               {error}
             </Alert>
           ) : null}
 
           <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                setSheetOpen(false)
-                setError(null)
-              }}
-            >
+            <Button type="button" variant="secondary" fullWidth onClick={closeSheet}>
               Cancelar
             </Button>
             <Button type="submit" fullWidth loading={pending}>
-              Adicionar
+              {editing ? 'Salvar' : 'Adicionar'}
             </Button>
           </div>
         </form>

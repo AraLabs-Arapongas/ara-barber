@@ -11,7 +11,7 @@ import {
 } from '@/lib/booking/queries'
 import { StepIndicator } from '@/components/book/step-indicator'
 import { bookHrefWith, parseBookParams } from '@/lib/booking/params'
-import { computeFreeSlots, dateTimeInTenantTZ } from '@/lib/booking/slots'
+import { computeSlots, dateTimeInTenantTZ } from '@/lib/booking/slots'
 import { cn } from '@/lib/utils'
 
 type PageProps = {
@@ -71,7 +71,7 @@ export default async function BookStepTime({ searchParams }: PageProps) {
     ),
   ])
 
-  const slots = computeFreeSlots({
+  const slots = computeSlots({
     serviceDurationMinutes: svc.durationMinutes,
     dateISO: current.date,
     tenantTimezone: tenant.timezone,
@@ -110,8 +110,24 @@ export default async function BookStepTime({ searchParams }: PageProps) {
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {slots.map((slot) => {
             const selected = current.time === slot.time
+            if (!slot.available) {
+              return (
+                <li key={slot.time}>
+                  <div
+                    aria-disabled="true"
+                    className={cn(
+                      'flex items-center justify-center rounded-lg py-3 font-medium',
+                      'cursor-not-allowed border border-border bg-bg-subtle text-fg-subtle line-through opacity-60',
+                    )}
+                    title="Indisponível"
+                  >
+                    {slot.time}
+                  </div>
+                </li>
+              )
+            }
             return (
-              <li key={`${slot.time}:${slot.professionalId}`}>
+              <li key={slot.time}>
                 <Link
                   href={bookHrefWith('/book/login', {
                     ...current,

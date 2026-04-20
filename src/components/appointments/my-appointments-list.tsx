@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui/alert'
 import { STATUS_LABELS, STATUS_TONE, fullDateTimeLabel } from '@/lib/appointments/labels'
 import type { AgendaAppointment } from '@/lib/appointments/queries'
 import { cancelCustomerAppointment } from '@/lib/appointments/server-actions'
+import { useConfirm } from '@/components/ui/confirm/provider'
 
 type Props = {
   appointments: AgendaAppointment[]
@@ -23,6 +24,7 @@ export function MyAppointmentsList({
   cancellationWindowHours,
 }: Props) {
   const router = useRouter()
+  const confirm = useConfirm()
   const [tab, setTab] = useState<'futuros' | 'passados'>('futuros')
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -51,8 +53,15 @@ export function MyAppointmentsList({
 
   const shown = tab === 'futuros' ? futuros : passados
 
-  function cancel(id: string) {
-    if (!window.confirm('Cancelar esta reserva?')) return
+  async function cancel(id: string) {
+    const ok = await confirm({
+      title: 'Cancelar esta reserva?',
+      description: 'Seu horário será liberado pra outros clientes.',
+      confirmLabel: 'Cancelar reserva',
+      cancelLabel: 'Voltar',
+      destructive: true,
+    })
+    if (!ok) return
     setError(null)
     startTransition(async () => {
       const result = await cancelCustomerAppointment({ appointmentId: id })

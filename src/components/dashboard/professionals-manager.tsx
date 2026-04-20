@@ -1,18 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useTransition, type FormEvent } from 'react'
-import { User, Phone, Power } from 'lucide-react'
+import { ChevronRight, Plus, User, Phone } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { formatBrPhone } from '@/lib/format'
-import {
-  createProfessional,
-  toggleProfessionalActive,
-} from '@/app/salon/(authenticated)/actions/professionals'
+import { createProfessional } from '@/app/salon/(authenticated)/actions/professionals'
 
 export type ProfessionalListItem = {
   id: string
@@ -44,8 +42,14 @@ export function ProfessionalsManager({ professionals }: Props) {
     }
   }, [searchParams, pathname, router])
 
-  function reset() {
+  function openCreate() {
     setPhone('')
+    setError(null)
+    setSheetOpen(true)
+  }
+
+  function closeSheet() {
+    setSheetOpen(false)
     setError(null)
   }
 
@@ -71,15 +75,8 @@ export function ProfessionalsManager({ professionals }: Props) {
         return
       }
       form.reset()
-      reset()
-      setSheetOpen(false)
-      router.refresh()
-    })
-  }
-
-  function toggle(id: string, current: boolean) {
-    startTransition(async () => {
-      await toggleProfessionalActive({ id, isActive: !current })
+      setPhone('')
+      closeSheet()
       router.refresh()
     })
   }
@@ -95,44 +92,45 @@ export function ProfessionalsManager({ professionals }: Props) {
             Profissionais
           </h1>
           <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu salão.</p>
+          <Button type="button" size="sm" onClick={openCreate} className="mt-3">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Adicionar profissional
+          </Button>
         </header>
 
         {professionals.length > 0 ? (
           <ul className="space-y-2">
             {professionals.map((p) => (
               <li key={p.id}>
-                <Card className="shadow-xs">
-                  <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-fg">
-                        {p.displayName || p.name}
-                      </p>
-                      <p className="truncate text-[0.8125rem] text-fg-muted">
-                        {p.phone ?? 'sem telefone'}
-                      </p>
+                <Link href={`/salon/dashboard/profissionais/${p.id}`} className="block">
+                  <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-fg">
+                          {p.displayName || p.name}
+                        </p>
+                        <p className="truncate text-[0.8125rem] text-fg-muted">
+                          {p.phone ?? 'sem telefone'}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span
+                          className={
+                            p.isActive
+                              ? 'rounded-full bg-success-bg px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-success'
+                              : 'rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle'
+                          }
+                        >
+                          {p.isActive ? 'Ativo' : 'Inativo'}
+                        </span>
+                        <ChevronRight
+                          className="h-4 w-4 text-fg-subtle"
+                          aria-hidden="true"
+                        />
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <span
-                        className={
-                          p.isActive
-                            ? 'rounded-full bg-success-bg px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-success'
-                            : 'rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle'
-                        }
-                      >
-                        {p.isActive ? 'Ativo' : 'Inativo'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => toggle(p.id, p.isActive)}
-                        disabled={pending}
-                        className="rounded-md p-1.5 text-fg-subtle hover:bg-bg-subtle hover:text-fg disabled:opacity-50"
-                        aria-label={p.isActive ? 'Desativar' : 'Ativar'}
-                      >
-                        <Power className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               </li>
             ))}
           </ul>
@@ -140,8 +138,11 @@ export function ProfessionalsManager({ professionals }: Props) {
           <Card className="shadow-xs">
             <CardContent className="py-10 text-center">
               <p className="text-[0.9375rem] text-fg-muted">
-                Nenhum profissional ainda. Toque no <strong>+</strong> para começar.
+                Nenhum profissional ainda.
               </p>
+              <Button className="mt-4" onClick={openCreate}>
+                Adicionar profissional
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -149,10 +150,7 @@ export function ProfessionalsManager({ professionals }: Props) {
 
       <BottomSheet
         open={sheetOpen}
-        onClose={() => {
-          setSheetOpen(false)
-          reset()
-        }}
+        onClose={closeSheet}
         title="Novo profissional"
         description="Adicione alguém da equipe do salão."
       >
@@ -193,15 +191,7 @@ export function ProfessionalsManager({ professionals }: Props) {
           ) : null}
 
           <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                setSheetOpen(false)
-                reset()
-              }}
-            >
+            <Button type="button" variant="secondary" fullWidth onClick={closeSheet}>
               Cancelar
             </Button>
             <Button type="submit" fullWidth loading={pending}>

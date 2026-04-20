@@ -1,10 +1,7 @@
 import Link from 'next/link'
 import {
-  Scissors,
   Users2,
   Clock,
-  CalendarClock,
-  Link2,
   LogOut,
   ChevronRight,
   type LucideIcon,
@@ -22,15 +19,12 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
   {
     title: 'Cadastros',
     items: [
-      { href: '/salon/dashboard/servicos', icon: Scissors, label: 'Serviços', hint: 'Catálogo, duração, preço' },
       { href: '/salon/dashboard/clientes', icon: Users2, label: 'Clientes', hint: 'Quem já logou no salão' },
     ],
   },
   {
     title: 'Agenda',
     items: [
-      { href: '/salon/dashboard/disponibilidade', icon: CalendarClock, label: 'Disponibilidade da equipe', hint: 'Jornada e folgas' },
-      { href: '/salon/dashboard/equipe-servicos', icon: Link2, label: 'Equipe × Serviços', hint: 'Quem faz o quê' },
       { href: '/salon/dashboard/configuracoes/horarios', icon: Clock, label: 'Horários do salão', hint: 'Quando abre/fecha' },
     ],
   },

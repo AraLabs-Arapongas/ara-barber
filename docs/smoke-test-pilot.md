@@ -10,6 +10,17 @@ URLs locais:
 
 > Pré-condição: `pnpm dev` rodando na porta 3008 + projeto Supabase `ara-barber-dev` com seed aplicado.
 
+## Credenciais de teste
+
+**Staff (login em `/salon/login`):**
+
+| Tenant | Email | Senha | Role |
+| --- | --- | --- | --- |
+| barbearia-teste | `dono@barbearia-teste.test` | `barber1234` | SALON_OWNER |
+| bela-imagem | `dono@bela-imagem.test` | `bela1234` | SALON_OWNER |
+
+**Cliente final:** use um e-mail real (o OTP chega por email), ex: `thiagodevtavares@gmail.com`.
+
 ---
 
 ## 1. Home pública do tenant
@@ -29,16 +40,17 @@ URLs locais:
 - [ ] Seleção → `/book/data`. Grid de 14 dias; dias sem business_hours/availability aparecem acinzentados.
 - [ ] Selecionar dia aberto → `/book/horario`. Grid de slots a cada 30min.
 - [ ] Slots passados (no mesmo dia) não aparecem.
-- [ ] Selecionar horário → `/book/login` (usuário não autenticado).
-- [ ] Digitar e-mail + recebeo OTP (checar inbox real do Supabase Auth).
+- [ ] Slots indisponíveis (conflito ou bloqueio) aparecem **riscados/acinzentados** e não clicáveis.
+- [ ] Selecionar horário livre → `/book/login` (usuário não autenticado).
+- [ ] Digitar e-mail + recebe OTP (checar inbox real do Supabase Auth).
 - [ ] Preencher 6 dígitos → redireciona `/book/confirmar` com resumo.
-- [ ] Preencher nome/telefone, clicar Confirmar → Supabase grava `appointments` com snapshot e `customers.consent_given_at`.
-- [ ] `/book/sucesso?appointmentId=…` mostra card do agendamento.
+- [ ] Preencher nome/telefone, clicar "Confirmar reserva" → Supabase grava `appointments` com snapshot e `customers.consent_given_at`.
+- [ ] `/book/sucesso?appointmentId=…` mostra card da reserva.
 
 ## 3. Customer já logado
 
-- [ ] Voltar na home: card "Bem-vindo, Nome" + botão "Meus agendamentos".
-- [ ] `/meus-agendamentos` mostra o agendamento criado em "Próximos".
+- [ ] Voltar na home: card "Bem-vindo, Nome" + botão "Minhas reservas".
+- [ ] `/meus-agendamentos` mostra a reserva criada em "Próximos".
 - [ ] Badge de status "Marcado" (SCHEDULED).
 - [ ] Botão "Cancelar" aparece se ainda estiver dentro da janela de cancelamento do tenant.
 - [ ] Clicar Cancelar → confirm → status vira "Cancelado", aparece em "Histórico".
@@ -46,10 +58,10 @@ URLs locais:
 
 ## 4. Conflito de horário
 
-- [ ] Como cliente 1: criar appointment `hoje 15:00` pro profissional X.
-- [ ] Em anônimo (ou outro cliente): tentar criar appointment no mesmo slot/profissional.
-- [ ] O slot `15:00` do profissional X **não** aparece em `/book/horario`.
-- [ ] Se forçado via URL, o server action `createAppointment` retorna "Horário não disponível".
+- [ ] Como cliente 1: criar reserva `hoje 15:00` pro profissional X.
+- [ ] Em anônimo (ou outro cliente): voltar em `/book/horario` pro profissional X.
+- [ ] O slot `15:00` aparece **riscado/disabled** (não clicável).
+- [ ] Se forçado via request direto, o server action `createAppointment` retorna "Horário não disponível. Escolha outro.".
 
 ## 5. Staff — agenda
 
@@ -71,16 +83,16 @@ URLs locais:
 
 - [ ] `/salon/dashboard/configuracoes/horarios`: mudar um dia pra fechado → o wizard bloqueia este weekday.
 - [ ] `/salon/dashboard/equipe-servicos`: desvincular profissional de um serviço → ele some de `/book/profissional`.
-- [ ] `/salon/dashboard/disponibilidade`: adicionar bloqueio (ex: amanhã 14-17h) → os slots neste intervalo somem do wizard.
-- [ ] Editar jornada semanal de um profissional: remover segunda → `/book/data` não aceita segundas.
+- [ ] `/salon/dashboard/disponibilidade`: adicionar bloqueio (ex: amanhã 14-17h) → os slots neste intervalo aparecem disabled em `/book/horario`.
+- [ ] Editar jornada semanal de um profissional: remover segunda → `/book/data` desativa segundas pra ele.
 
 ## 8. LGPD
 
 - [ ] `/perfil` como cliente: botão "Baixar meus dados" faz download JSON.
 - [ ] Arquivo contém: customer row + lista de appointments + snapshot do tenant.
 - [ ] "Política de privacidade" abre página branded.
-- [ ] "Apagar minha conta" pede confirmação com "APAGAR":
-  - Cancela appointments futuros do cliente.
+- [ ] "Apagar minha conta neste salão" pede confirmação digitando "APAGAR":
+  - Cancela reservas futuras do cliente.
   - `customer.name/phone/email/user_id/notes` zerados, `deleted_at` preenchido.
   - `customer_name_snapshot` dos appointments antigos vira "Cliente removido".
   - Sessão expira, redireciona pra home.
