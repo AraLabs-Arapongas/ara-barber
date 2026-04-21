@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { CalendarPlus, CalendarCheck, Home, User, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -41,6 +42,13 @@ const TABS: Tab[] = [
 
 export function CustomerBottomTabNav() {
   const pathname = usePathname() ?? ''
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (pendingHref === null) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reage a pathname externo
+    setPendingHref(null)
+  }, [pathname, pendingHref])
 
   return (
     <nav
@@ -53,20 +61,30 @@ export function CustomerBottomTabNav() {
     >
       <ul className="mx-auto flex max-w-2xl">
         {TABS.map((tab) => {
-          const active = tab.match(pathname)
+          const realActive = tab.match(pathname)
+          const optimisticActive = pendingHref === tab.href
+          const active = optimisticActive || (!pendingHref && realActive)
+          const pending = optimisticActive && !realActive
           const Icon = tab.icon
           return (
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
+                prefetch
                 aria-current={active ? 'page' : undefined}
+                onClick={() => {
+                  if (!tab.match(pathname)) setPendingHref(tab.href)
+                }}
                 className={cn(
                   'flex flex-col items-center justify-center gap-1 py-2.5',
                   'transition-colors',
                   active ? 'text-brand-primary' : 'text-fg-subtle hover:text-fg',
                 )}
               >
-                <Icon className="h-5 w-5" aria-hidden="true" />
+                <Icon
+                  className={cn('h-5 w-5', pending && 'animate-pulse')}
+                  aria-hidden="true"
+                />
                 <span className="text-[0.6875rem] font-medium tracking-wide">
                   {tab.label}
                 </span>
