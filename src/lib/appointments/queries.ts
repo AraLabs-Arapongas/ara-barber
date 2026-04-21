@@ -95,6 +95,38 @@ export async function getAgendaForDay(
 }
 
 /**
+ * Agendamentos SCHEDULED (aguardando confirmação do staff) a partir de `fromISO`,
+ * ordenados por horário ascendente. Limita a 10 pra não explodir a home.
+ * RLS permite leitura via policy `appointments_tenant_staff_all`.
+ */
+export async function getPendingConfirmations(
+  tenantId: string,
+  fromISO: string,
+  limit = 10,
+): Promise<AgendaAppointment[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('appointments')
+    .select(
+      `
+      id, start_at, end_at, status, customer_id, professional_id, service_id,
+      customer_name_snapshot, price_cents_snapshot, notes,
+      customer:customers(name),
+      service:services(name),
+      professional:professionals(name)
+    `,
+    )
+    .eq('tenant_id', tenantId)
+    .eq('status', 'SCHEDULED')
+    .gte('start_at', fromISO)
+    .order('start_at', { ascending: true })
+    .limit(limit)
+
+  const rows = (data ?? []) as unknown as Row[]
+  return rows.map(rowToAppointment)
+}
+
+/**
  * Busca appointments do cliente atual. Quando `tenantId` for passado, filtra.
  * RLS já limita ao próprio customer via customers.user_id = auth.uid().
  */

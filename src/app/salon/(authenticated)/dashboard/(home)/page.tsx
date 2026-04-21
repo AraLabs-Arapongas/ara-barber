@@ -1,11 +1,16 @@
 import Link from 'next/link'
-import { ArrowRight, Calendar, TrendingUp } from 'lucide-react'
+import { ArrowRight, BellRing, Calendar, TrendingUp } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
-import { getAgendaForDay, type AgendaAppointment } from '@/lib/appointments/queries'
+import {
+  getAgendaForDay,
+  getPendingConfirmations,
+  type AgendaAppointment,
+} from '@/lib/appointments/queries'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
+import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -30,12 +35,14 @@ export default async function DashboardHome() {
   const supabase = await createClient()
 
   const dateISO = todayISO(tenant.timezone)
-  const today = await getAgendaForDay(tenant.id, dateISO, tenant.timezone)
-  const { data: svcData } = await supabase
-    .from('services')
-    .select('id, price_cents')
-    .eq('tenant_id', tenant.id)
-  const priceById = new Map((svcData ?? []).map((s) => [s.id, s.price_cents]))
+  // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
+  const nowISO = new Date().toISOString()
+  const [today, pending, svcRes] = await Promise.all([
+    getAgendaForDay(tenant.id, dateISO, tenant.timezone),
+    getPendingConfirmations(tenant.id, nowISO),
+    supabase.from('services').select('id, price_cents').eq('tenant_id', tenant.id),
+  ])
+  const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
 
   // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const now = Date.now()
@@ -107,6 +114,11 @@ export default async function DashboardHome() {
 
       <QuickActions />
 
+      <PendingConfirmations
+        appointments={pending}
+        tenantTimezone={tenant.timezone}
+      />
+
       <AgendaPreview
         appointments={active.sort(
           (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
@@ -114,6 +126,61 @@ export default async function DashboardHome() {
         tenantTimezone={tenant.timezone}
       />
     </main>
+  )
+}
+
+function PendingConfirmations({
+  appointments,
+  tenantTimezone,
+}: {
+  appointments: AgendaAppointment[]
+  tenantTimezone: string
+}) {
+  if (appointments.length === 0) return null
+  const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenantTimezone,
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  return (
+    <section className="mt-6">
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <h2 className="flex items-center gap-1.5 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-warning">
+          <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
+          Precisam confirmar ({appointments.length})
+        </h2>
+      </div>
+      <Card className="shadow-xs">
+        <ul className="divide-y divide-border">
+          {appointments.map((a) => (
+            <li key={a.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-fg">
+                  {a.serviceName ?? 'Serviço'}
+                </p>
+                <p className="truncate text-[0.8125rem] text-fg-muted">
+                  {dateTimeFmt.format(new Date(a.startAt))} ·{' '}
+                  {a.customerName ?? 'cliente'}
+                  {a.professionalName ? ` · ${a.professionalName}` : ''}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <ConfirmAppointmentInline appointmentId={a.id} />
+                <Link
+                  href={`/salon/dashboard/agenda/${a.id}`}
+                  className="text-[0.75rem] text-fg-muted hover:text-fg"
+                  aria-label="Ver detalhe do agendamento"
+                >
+                  Ver
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
   )
 }
 
