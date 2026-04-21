@@ -2,17 +2,22 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, ExternalLink } from 'lucide-react'
+import { ArrowRight, Clock, ExternalLink, Tag } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { CustomerAccess } from '@/components/home/customer-access'
 import { CustomerShell } from '@/components/customer/customer-shell'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
+import { getActiveServicesForTenant, getBusinessHours } from '@/lib/booking/queries'
+import { getMyCustomerAppointments, type AgendaAppointment } from '@/lib/appointments/queries'
+import { formatCentsToBrl } from '@/lib/money'
+import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -118,6 +123,48 @@ async function TenantPublicHome() {
     }
   }
 
+  if (unavailable) {
+    return (
+      <>
+        <ThemeInjector
+          branding={{
+            primaryColor: tenant.primaryColor,
+            secondaryColor: tenant.secondaryColor,
+            accentColor: tenant.accentColor,
+          }}
+        />
+        <main className="flex min-h-screen items-center justify-center bg-bg p-6">
+          <div className="max-w-sm text-center">
+            <h1 className="font-display text-2xl font-semibold text-fg">
+              Estabelecimento indisponível
+            </h1>
+            <p className="mt-3 text-[0.9375rem] text-fg-muted">
+              Este estabelecimento está temporariamente fora do ar. Tente de novo mais tarde.
+            </p>
+          </div>
+        </main>
+      </>
+    )
+  }
+
+  const [services, businessHours, myAppointments] = await Promise.all([
+    getActiveServicesForTenant(tenant.id),
+    getBusinessHours(tenant.id),
+    loggedIn ? getMyCustomerAppointments(tenant.id) : Promise.resolve([]),
+  ])
+
+  // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
+  const nowMs = Date.now()
+  const nextAppointment =
+    myAppointments.find(
+      (a) =>
+        new Date(a.startAt).getTime() >= nowMs &&
+        a.status !== 'CANCELED' &&
+        a.status !== 'NO_SHOW',
+    ) ?? null
+
+  const featuredServices = services.slice(0, 4)
+
   return (
     <>
       <ThemeInjector
@@ -128,54 +175,176 @@ async function TenantPublicHome() {
         }}
       />
 
-      {unavailable ? (
-        <main className="flex min-h-screen items-center justify-center bg-bg p-6">
-          <div className="max-w-sm text-center">
-            <h1 className="font-display text-2xl font-semibold text-fg">Estabelecimento indisponível</h1>
-            <p className="mt-3 text-[0.9375rem] text-fg-muted">
-              Este estabelecimento está temporariamente fora do ar. Tente de novo mais tarde.
+      <CustomerShell showTabBar={loggedIn}>
+        <main className="mx-auto flex w-full max-w-xl flex-col px-5 pt-8 pb-12 sm:px-6">
+          <header className="mb-6 flex flex-col items-center gap-3 text-center">
+            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={72} />
+            <div>
+              <p className="font-display text-[1.25rem] font-semibold leading-tight tracking-tight text-fg">
+                {tenant.name}
+              </p>
+            </div>
+          </header>
+
+          <section className="mb-8 text-center">
+            <h1 className="font-display text-[1.875rem] leading-[1.1] tracking-tight text-fg sm:text-[2.25rem]">
+              {tenant.homeHeadlineTop ?? 'Seu horário em'}{' '}
+              <span className="italic text-brand-primary">
+                {tenant.homeHeadlineAccent ?? 'poucos toques.'}
+              </span>
+            </h1>
+            <Link href="/book" className="mt-6 inline-block w-full max-w-xs">
+              <Button size="lg" fullWidth>
+                {nextAppointment ? 'Agendar novamente' : 'Agendar agora'}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </Link>
+            <p className="mt-3 text-[0.8125rem] text-fg-muted">
+              Escolha serviço, profissional e horário.
+            </p>
+          </section>
+
+          {nextAppointment ? (
+            <section className="mb-8">
+              <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+                Sua próxima reserva
+              </p>
+              <NextAppointmentCard
+                appt={nextAppointment}
+                tenantTimezone={tenant.timezone}
+              />
+            </section>
+          ) : null}
+
+          {featuredServices.length > 0 ? (
+            <section className="mb-8">
+              <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+                Serviços
+              </p>
+              <ul className="space-y-2">
+                {featuredServices.map((s) => (
+                  <li key={s.id}>
+                    <Link href="/book" className="block">
+                      <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
+                        <CardContent className="flex items-center gap-3 py-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg-subtle text-fg-muted">
+                            <Tag className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium text-fg">{s.name}</p>
+                            <p className="truncate text-[0.8125rem] text-fg-muted">
+                              {s.durationMinutes}min · {formatCentsToBrl(s.priceCents)}
+                            </p>
+                          </div>
+                          <ArrowRight
+                            className="h-4 w-4 shrink-0 text-fg-subtle"
+                            aria-hidden="true"
+                          />
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {businessHours.length > 0 ? (
+            <section className="mb-8">
+              <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+                Horário de funcionamento
+              </p>
+              <Card className="shadow-xs">
+                <CardContent className="py-3">
+                  <BusinessHoursList hours={businessHours} />
+                </CardContent>
+              </Card>
+            </section>
+          ) : null}
+
+          <div className="mb-6 flex flex-col items-center">
+            <CustomerAccess
+              loggedIn={loggedIn}
+              displayName={displayName}
+              email={emailForHome}
+            />
+          </div>
+
+          <footer className="mt-auto flex justify-center pt-4">
+            <AraLabsAttribution />
+          </footer>
+        </main>
+      </CustomerShell>
+    </>
+  )
+}
+
+const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const
+
+function BusinessHoursList({
+  hours,
+}: {
+  hours: Array<{ weekday: number; isOpen: boolean; startTime: string; endTime: string }>
+}) {
+  // Ordena semana começando na segunda (weekday 1..6, 0) pra leitura mais natural
+  const sorted = [...hours].sort((a, b) => {
+    const aw = a.weekday === 0 ? 7 : a.weekday
+    const bw = b.weekday === 0 ? 7 : b.weekday
+    return aw - bw
+  })
+  return (
+    <ul className="space-y-1 text-[0.875rem]">
+      {sorted.map((h) => (
+        <li key={h.weekday} className="flex items-center justify-between">
+          <span className="font-medium text-fg">{WEEKDAY_LABELS[h.weekday]}</span>
+          <span className="text-fg-muted">
+            {h.isOpen ? `${h.startTime.slice(0, 5)} – ${h.endTime.slice(0, 5)}` : 'Fechado'}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function NextAppointmentCard({
+  appt,
+  tenantTimezone,
+}: {
+  appt: AgendaAppointment
+  tenantTimezone: string
+}) {
+  const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenantTimezone,
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  return (
+    <Link href={`/meus-agendamentos/${appt.id}`} className="block">
+      <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
+        <CardContent className="flex items-center gap-3 py-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10 text-brand-primary">
+            <Clock className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-fg">
+              {appt.serviceName ?? 'Serviço'}
+            </p>
+            <p className="truncate text-[0.8125rem] text-fg-muted">
+              {dateTimeFmt.format(new Date(appt.startAt))}
+              {appt.professionalName ? ` · ${appt.professionalName}` : ''}
             </p>
           </div>
-        </main>
-      ) : (
-        <CustomerShell>
-          <main className="noise-overlay relative flex min-h-[calc(100dvh-4.5rem-env(safe-area-inset-bottom))] flex-col bg-bg">
-            <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <TenantLogo
-                logoUrl={tenant.logoUrl}
-                name={tenant.name}
-                size={400}
-                className="mb-6"
-              />
-              <h2 className="font-display text-[2.5rem] leading-[1.05] tracking-tight text-fg sm:text-[3rem]">
-                {tenant.homeHeadlineTop ?? 'Pronto para dar'}
-                <br />
-                <span className="italic text-brand-primary">
-                  {tenant.homeHeadlineAccent ?? 'aquele tapa no visual?'}
-                </span>
-              </h2>
-              <Link href="/book" className="mt-8 w-full max-w-xs">
-                <Button size="lg" fullWidth>
-                  Agendar agora
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </Link>
-              <div className="mt-6">
-                <CustomerAccess
-                  loggedIn={loggedIn}
-                  displayName={displayName}
-                  email={emailForHome}
-                />
-              </div>
-            </section>
-
-            <footer className="relative z-10 flex justify-center px-6 pb-4">
-              <AraLabsAttribution />
-            </footer>
-          </main>
-        </CustomerShell>
-      )}
-    </>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
+          >
+            {STATUS_LABELS[appt.status]}
+          </span>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
 
