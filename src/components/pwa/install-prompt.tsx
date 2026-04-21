@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { MoreVertical, Plus, Scroll } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { markPwaInstalled, markPwaInstallDismissed } from '@/app/actions/pwa-tracking'
@@ -34,14 +35,25 @@ function wasDismissedRecently(): boolean {
   return Date.now() - ts < DISMISS_DAYS * 86_400_000
 }
 
+type Mode = 'native' | 'ios' | 'android'
+
 /**
  * Bottom sheet que oferece instalação do PWA. Só dispara no client, uma vez
  * por sessão de visita, se (1) não está rodando standalone e (2) não foi
  * dispensado nos últimos 30 dias.
+ *
+ * Três modos:
+ * - `native`: o browser suporta `beforeinstallprompt` (Chrome/Edge/Samsung).
+ *   Mostra botão "Instalar" que chama o prompt nativo.
+ * - `ios`: detecta iPhone/iPad via UA. Mostra passo a passo do Safari
+ *   (Compartilhar → Adicionar à Tela de Início).
+ * - `android`: fallback pra navegadores que não disparam o evento mas
+ *   suportam PWA via menu (Firefox Android, Brave, UC Browser etc).
+ *   Mostra instrução genérica de abrir menu → Instalar.
  */
 export function PwaInstallPrompt() {
   const [open, setOpen] = useState(false)
-  const [mode, setMode] = useState<'chrome' | 'manual'>('chrome')
+  const [mode, setMode] = useState<Mode>('native')
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
@@ -52,26 +64,41 @@ export function PwaInstallPrompt() {
     }
     if (wasDismissedRecently()) return
 
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null
+
     const onBeforeInstall = (e: Event) => {
       e.preventDefault()
       setDeferred(e as BeforeInstallPromptEvent)
-      setMode('chrome')
+      setMode('native')
       setOpen(true)
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer)
+        fallbackTimer = null
+      }
     }
     window.addEventListener('beforeinstallprompt', onBeforeInstall)
 
-    let iosTimer: ReturnType<typeof setTimeout> | null = null
     if (isIOS()) {
-      iosTimer = setTimeout(() => {
+      fallbackTimer = setTimeout(() => {
         if (!wasDismissedRecently()) {
-          setMode('manual')
+          setMode('ios')
           setOpen(true)
         }
       }, 1500)
+    } else {
+      // Se `beforeinstallprompt` não disparar em 4s, assume browser sem suporte
+      // nativo (Firefox Android, Brave etc) e mostra instruções genéricas.
+      fallbackTimer = setTimeout(() => {
+        if (!wasDismissedRecently()) {
+          setMode('android')
+          setOpen(true)
+        }
+      }, 4000)
     }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-      if (iosTimer) clearTimeout(iosTimer)
+      if (fallbackTimer) clearTimeout(fallbackTimer)
     }
   }, [])
 
@@ -95,35 +122,128 @@ export function PwaInstallPrompt() {
 
   if (!open) return null
 
+  const description =
+    mode === 'native'
+      ? 'Receba avisos e agende mais rápido.'
+      : mode === 'ios'
+        ? 'No Safari do iPhone, em 3 passos:'
+        : 'No seu navegador, em 3 passos:'
+
   return (
-    <BottomSheet
-      open={open}
-      onClose={later}
-      title="Instale o app"
-      description={
-        mode === 'chrome'
-          ? 'Receba avisos e agende mais rápido.'
-          : 'No Safari iOS, use o menu compartilhar pra adicionar à tela de início.'
-      }
-    >
+    <BottomSheet open={open} onClose={later} title="Instale o app" description={description}>
       <div className="space-y-3 pb-2">
-        {mode === 'chrome' ? (
+        {mode === 'native' ? (
           <Button fullWidth onClick={install}>
             Instalar
           </Button>
+        ) : mode === 'ios' ? (
+          <IosInstallSteps />
         ) : (
-          <div className="rounded-lg bg-bg-subtle p-4 text-[0.9375rem] text-fg">
-            1. Toque no ícone <strong>Compartilhar</strong> (retângulo com seta pra cima).
-            <br />
-            2. Role e escolha <strong>Adicionar à Tela de Início</strong>.
-            <br />
-            3. Confirme. Pronto.
-          </div>
+          <AndroidInstallSteps />
         )}
         <Button variant="secondary" fullWidth onClick={later}>
           Mais tarde
         </Button>
       </div>
     </BottomSheet>
+  )
+}
+
+function IosShareIcon({ className }: { className?: string }) {
+  // Aproximação do ícone "Compartilhar" do Safari iOS: quadrado aberto no topo
+  // com uma seta apontando pra cima. O render do Safari real é mais curvo, mas
+  // essa forma é o suficiente pra reconhecimento visual.
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 4v12" />
+      <path d="M8 8l4-4 4 4" />
+      <path d="M6 11v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8" />
+    </svg>
+  )
+}
+
+function IosInstallSteps() {
+  return (
+    <ol className="space-y-2">
+      <Step
+        number={1}
+        icon={<IosShareIcon className="h-5 w-5 text-brand-primary" />}
+        title="Toque no ícone de Compartilhar"
+        hint="Fica na barra inferior do Safari (quadrado com seta ↑)."
+      />
+      <Step
+        number={2}
+        icon={<Scroll className="h-4 w-4 text-brand-primary" />}
+        title="Role até Adicionar à Tela de Início"
+        hint="Dentro do menu que abriu, deslize pra baixo se precisar."
+      />
+      <Step
+        number={3}
+        icon={<Plus className="h-4 w-4 text-brand-primary" />}
+        title="Toque em Adicionar"
+        hint="O ícone aparece na tela inicial do celular."
+      />
+    </ol>
+  )
+}
+
+function AndroidInstallSteps() {
+  return (
+    <ol className="space-y-2">
+      <Step
+        number={1}
+        icon={<MoreVertical className="h-4 w-4 text-brand-primary" />}
+        title="Abra o menu do navegador"
+        hint="Geralmente três pontinhos (⋮) no canto superior."
+      />
+      <Step
+        number={2}
+        icon={<Plus className="h-4 w-4 text-brand-primary" />}
+        title="Toque em Instalar app"
+        hint='Em alguns navegadores aparece como "Adicionar à tela inicial".'
+      />
+      <Step
+        number={3}
+        icon={<Scroll className="h-4 w-4 text-brand-primary" />}
+        title="Confirme"
+        hint="O ícone aparece na tela inicial, pronto pra usar como app."
+      />
+    </ol>
+  )
+}
+
+function Step({
+  number,
+  icon,
+  title,
+  hint,
+}: {
+  number: number
+  icon: React.ReactNode
+  title: string
+  hint: string
+}) {
+  return (
+    <li className="flex items-start gap-3 rounded-lg bg-bg-subtle p-3">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-primary text-[0.75rem] font-semibold text-brand-primary-fg">
+        {number}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="font-medium text-fg">{title}</p>
+          <span className="shrink-0">{icon}</span>
+        </div>
+        <p className="mt-0.5 text-[0.8125rem] text-fg-muted">{hint}</p>
+      </div>
+    </li>
   )
 }
