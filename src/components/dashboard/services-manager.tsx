@@ -54,10 +54,9 @@ export function ServicesManager({ services }: Props) {
   const filtered = useMemo(() => {
     const q = normalizeForSearch(query.trim())
     if (!q) return services
-    return services.filter((s) => {
-      const haystack = normalizeForSearch(`${s.name} ${s.description ?? ''}`)
-      return haystack.includes(q)
-    })
+    // Match só por nome: no card admin, descrição não aparece, então
+    // bater na descrição é surpresa ruim pro staff.
+    return services.filter((s) => normalizeForSearch(s.name).includes(q))
   }, [services, query])
 
   useEffect(() => {
