@@ -45,7 +45,7 @@ export function BookServiceList({ services, current }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar serviço..."
-            className="w-full rounded-lg border border-transparent bg-bg-subtle py-2.5 pl-10 pr-10 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+            className="w-full rounded-lg border border-transparent bg-bg-subtle py-2.5 pl-10 pr-10 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:bg-surface-raised focus:outline-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
             aria-label="Buscar serviço"
           />
           {query ? (
