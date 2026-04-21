@@ -4,6 +4,7 @@ import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { CustomerShell } from '@/components/customer/customer-shell'
+import { CustomerTenantProvider } from '@/components/customer/customer-tenant-provider'
 
 export default async function MeusAgendamentosLayout({
   children,
@@ -41,7 +42,14 @@ export default async function MeusAgendamentosLayout({
               </Link>
             </div>
           </header>
-          {children}
+          <CustomerTenantProvider
+            value={{
+              timezone: tenant.timezone,
+              cancellationWindowHours: tenant.cancellationWindowHours,
+            }}
+          >
+            {children}
+          </CustomerTenantProvider>
         </CustomerShell>
       </div>
     </>

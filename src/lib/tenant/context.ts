@@ -37,6 +37,7 @@ export type TenantContext = {
   homeHeadlineAccent: string | null
   status: Database['public']['Enums']['tenant_status']
   billingStatus: Database['public']['Enums']['billing_status']
+  cancellationWindowHours: number
 }
 
 export async function getCurrentTenantId(): Promise<string | null> {
@@ -74,7 +75,7 @@ export const getCurrentTenantOrNotFound = cache(
     const { data } = await supabase
       .from('tenants')
       .select(
-        'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status',
+        'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours',
       )
       .eq('id', tenantId)
       .maybeSingle()
@@ -95,6 +96,7 @@ export const getCurrentTenantOrNotFound = cache(
       homeHeadlineAccent: data.home_headline_accent,
       status: data.status,
       billingStatus: data.billing_status,
+      cancellationWindowHours: data.cancellation_window_hours ?? 2,
     }
   },
 )

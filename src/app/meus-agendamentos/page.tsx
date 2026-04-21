@@ -35,18 +35,6 @@ export default async function MeusAgendamentosPage() {
 
   const customer = await getCustomerForTenant(tenant.id)
   const appointments = customer ? await getMyCustomerAppointments(tenant.id) : []
-  const tenantRowResult = await supabase
-    .from('tenants')
-    .select('cancellation_window_hours')
-    .eq('id', tenant.id)
-    .maybeSingle()
-  const cancellationWindowHours = tenantRowResult.data?.cancellation_window_hours ?? 2
 
-  return (
-    <MyAppointmentsList
-      appointments={appointments}
-      tenantTimezone={tenant.timezone}
-      cancellationWindowHours={cancellationWindowHours}
-    />
-  )
+  return <MyAppointmentsList appointments={appointments} />
 }

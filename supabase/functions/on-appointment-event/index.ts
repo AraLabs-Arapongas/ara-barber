@@ -67,14 +67,22 @@ async function loadEnrichedData(appointmentId: string): Promise<EnrichedData | n
   return (data as unknown as EnrichedData) ?? null
 }
 
+function tenantRoot(): { protocol: 'http' | 'https'; host: string } {
+  const host = Deno.env.get('TENANT_ROOT_DOMAIN') ?? 'aralabs.com.br'
+  const protocol = host.includes('lvh.me') || host.startsWith('localhost')
+    ? 'http'
+    : 'https'
+  return { protocol, host }
+}
+
 function tenantAppointmentUrl(slug: string, appointmentId: string): string {
-  const root = Deno.env.get('TENANT_ROOT_DOMAIN') ?? 'aralabs.com.br'
-  return `https://${slug}.${root}/meus-agendamentos/${appointmentId}`
+  const { protocol, host } = tenantRoot()
+  return `${protocol}://${slug}.${host}/meus-agendamentos/${appointmentId}`
 }
 
 function tenantBookAgainUrl(slug: string): string {
-  const root = Deno.env.get('TENANT_ROOT_DOMAIN') ?? 'aralabs.com.br'
-  return `https://${slug}.${root}/book`
+  const { protocol, host } = tenantRoot()
+  return `${protocol}://${slug}.${host}/book`
 }
 
 async function logPush(

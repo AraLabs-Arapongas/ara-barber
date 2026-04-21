@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarPlus, Clock, LogOut, Scissors, User, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,25 +10,26 @@ import { Alert } from '@/components/ui/alert'
 import { STATUS_LABELS, STATUS_TONE, fullDateTimeLabel } from '@/lib/appointments/labels'
 import type { AgendaAppointment } from '@/lib/appointments/queries'
 import { cancelCustomerAppointment } from '@/lib/appointments/server-actions'
+import { cacheAppointments } from '@/lib/appointments/client-cache'
+import { useCustomerTenant } from '@/components/customer/customer-tenant-provider'
 import { useConfirm } from '@/components/ui/confirm/provider'
 
 type Props = {
   appointments: AgendaAppointment[]
-  tenantTimezone: string
-  cancellationWindowHours: number
 }
 
-export function MyAppointmentsList({
-  appointments,
-  tenantTimezone,
-  cancellationWindowHours,
-}: Props) {
+export function MyAppointmentsList({ appointments }: Props) {
+  const { timezone: tenantTimezone, cancellationWindowHours } = useCustomerTenant()
   const router = useRouter()
   const confirm = useConfirm()
   const [tab, setTab] = useState<'futuros' | 'passados'>('futuros')
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [nowMs] = useState(() => Date.now())
+
+  useEffect(() => {
+    cacheAppointments(appointments)
+  }, [appointments])
 
   const futuros = useMemo(
     () =>
@@ -166,47 +167,54 @@ function AppointmentCard({
   tenantTimezone: string
 }) {
   return (
-    <Card className="shadow-xs">
-      <CardContent className="py-4">
-        <div className="flex items-start justify-between gap-2">
-          <p className="font-display text-[1.125rem] font-semibold leading-tight tracking-tight text-fg">
-            {appt.serviceName ?? 'Serviço'}
-          </p>
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
-          >
-            {STATUS_LABELS[appt.status]}
-          </span>
-        </div>
-        <dl className="mt-3 space-y-1 text-[0.875rem] text-fg-muted">
-          <div className="flex items-center gap-2">
-            <Clock className="h-3.5 w-3.5" />
-            {fullDateTimeLabel(appt.startAt, tenantTimezone)}
+    <Card className="shadow-xs overflow-hidden">
+      <Link
+        href={`/meus-agendamentos/${appt.id}`}
+        className="block transition-colors hover:bg-bg-subtle/40 focus-visible:bg-bg-subtle/40 focus-visible:outline-none"
+      >
+        <CardContent className="py-4">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-display text-[1.125rem] font-semibold leading-tight tracking-tight text-fg">
+              {appt.serviceName ?? 'Serviço'}
+            </p>
+            <span
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
+            >
+              {STATUS_LABELS[appt.status]}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <User className="h-3.5 w-3.5" />
-            {appt.professionalName || '—'}
-          </div>
-          <div className="flex items-center gap-2">
-            <Scissors className="h-3.5 w-3.5" />
-            {Math.round(
-              (new Date(appt.endAt).getTime() - new Date(appt.startAt).getTime()) / 60000,
-            )}
-            min
-          </div>
-        </dl>
-        {canCancel ? (
+          <dl className="mt-3 space-y-1 text-[0.875rem] text-fg-muted">
+            <div className="flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5" />
+              {fullDateTimeLabel(appt.startAt, tenantTimezone)}
+            </div>
+            <div className="flex items-center gap-2">
+              <User className="h-3.5 w-3.5" />
+              {appt.professionalName || '—'}
+            </div>
+            <div className="flex items-center gap-2">
+              <Scissors className="h-3.5 w-3.5" />
+              {Math.round(
+                (new Date(appt.endAt).getTime() - new Date(appt.startAt).getTime()) / 60000,
+              )}
+              min
+            </div>
+          </dl>
+        </CardContent>
+      </Link>
+      {canCancel ? (
+        <div className="border-t border-border/60 px-4 py-2">
           <button
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="mt-3 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[0.8125rem] text-error hover:bg-error-bg disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[0.8125rem] text-error hover:bg-error-bg disabled:opacity-50"
           >
             <X className="h-3.5 w-3.5" />
             {pending ? 'Cancelando...' : 'Cancelar'}
           </button>
-        ) : null}
-      </CardContent>
+        </div>
+      ) : null}
     </Card>
   )
 }

@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import type { AgendaAppointment, AppointmentStatus } from '@/lib/appointments/queries'
 
 const CreateInput = z.object({
   tenantId: z.string().uuid(),
@@ -131,4 +132,70 @@ export async function cancelCustomerAppointment(
 
   revalidatePath('/meus-agendamentos')
   return { ok: true }
+}
+
+type FetchRow = {
+  id: string
+  start_at: string
+  end_at: string
+  status: AppointmentStatus
+  customer_id: string | null
+  professional_id: string
+  service_id: string
+  customer_name_snapshot: string | null
+  price_cents_snapshot: number | null
+  notes: string | null
+  customer: { name: string | null } | null
+  service: { name: string } | null
+  professional: { name: string } | null
+}
+
+export type FetchCustomerAppointmentResult =
+  | { ok: true; appointment: AgendaAppointment }
+  | { ok: false; error: 'not-found' | 'invalid' }
+
+/**
+ * Fetch de um único appointment do próprio cliente. RLS já restringe ao owner.
+ * Usado como fallback quando o cache client-side não tem o dado (acesso via URL
+ * direta, refresh, etc).
+ */
+export async function fetchCustomerAppointment(
+  appointmentId: string,
+): Promise<FetchCustomerAppointmentResult> {
+  const parsed = z.string().uuid().safeParse(appointmentId)
+  if (!parsed.success) return { ok: false, error: 'invalid' }
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('appointments')
+    .select(
+      `id, start_at, end_at, status, customer_id, professional_id, service_id,
+       customer_name_snapshot, price_cents_snapshot, notes,
+       customer:customers(name),
+       service:services(name),
+       professional:professionals(name)`,
+    )
+    .eq('id', parsed.data)
+    .maybeSingle()
+
+  const row = (data as unknown as FetchRow | null) ?? null
+  if (!row) return { ok: false, error: 'not-found' }
+
+  return {
+    ok: true,
+    appointment: {
+      id: row.id,
+      startAt: row.start_at,
+      endAt: row.end_at,
+      status: row.status,
+      customerName: row.customer?.name ?? row.customer_name_snapshot ?? null,
+      serviceName: row.service?.name ?? null,
+      professionalName: row.professional?.name ?? null,
+      customerId: row.customer_id,
+      professionalId: row.professional_id,
+      serviceId: row.service_id,
+      priceCentsSnapshot: row.price_cents_snapshot,
+      notes: row.notes,
+    },
+  }
 }
