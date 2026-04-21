@@ -1,8 +1,8 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useTransition, type FormEvent } from 'react'
-import { Pencil, Plus, Tag, Clock, Power } from 'lucide-react'
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from 'react'
+import { Pencil, Plus, Search, Tag, Clock, Power, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,13 @@ function centsToInputValue(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',')
 }
 
+function normalizeForSearch(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
 export function ServicesManager({ services }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -42,6 +49,16 @@ export function ServicesManager({ services }: Props) {
   const [editing, setEditing] = useState<ServiceListItem | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = normalizeForSearch(query.trim())
+    if (!q) return services
+    return services.filter((s) => {
+      const haystack = normalizeForSearch(`${s.name} ${s.description ?? ''}`)
+      return haystack.includes(q)
+    })
+  }, [services, query])
 
   useEffect(() => {
     if (searchParams?.get('new') === '1') {
@@ -135,8 +152,45 @@ export function ServicesManager({ services }: Props) {
         </header>
 
         {services.length > 0 ? (
+          <div className="relative mb-3">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar serviço..."
+              className="w-full rounded-lg border border-transparent bg-bg-subtle py-2.5 pl-10 pr-10 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+              aria-label="Buscar serviço"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-fg-subtle hover:bg-border hover:text-fg"
+                aria-label="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {services.length > 0 && filtered.length === 0 ? (
+          <Card className="shadow-xs">
+            <CardContent className="py-8 text-center">
+              <p className="text-[0.9375rem] text-fg-muted">
+                Nada encontrado para <strong>{query}</strong>.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {filtered.length > 0 ? (
           <ul className="space-y-2">
-            {services.map((s) => (
+            {filtered.map((s) => (
               <li key={s.id}>
                 <Card className="shadow-xs">
                   <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
@@ -184,7 +238,7 @@ export function ServicesManager({ services }: Props) {
               </li>
             ))}
           </ul>
-        ) : (
+        ) : services.length === 0 ? (
           <Card className="shadow-xs">
             <CardContent className="py-10 text-center">
               <p className="text-[0.9375rem] text-fg-muted">
@@ -195,7 +249,7 @@ export function ServicesManager({ services }: Props) {
               </Button>
             </CardContent>
           </Card>
-        )}
+        ) : null}
       </main>
 
       <BottomSheet
