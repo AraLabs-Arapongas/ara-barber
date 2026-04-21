@@ -27,9 +27,25 @@ URLs locais:
 
 ## 1. Home pública do tenant
 
+**Visitante deslogado:**
 - [ ] Abrir `/` em anônimo carrega sem erro.
-- [ ] Link de login inline funciona (OTP por email).
-- [ ] Tab bar do cliente navega: Início / Agendar / Reservas / Perfil.
+- [ ] Logo do tenant aparece em tamanho compacto (não ocupa a tela inteira).
+- [ ] Headline aparece (texto do tenant se setado, fallback genérico caso contrário).
+- [ ] CTA "Agendar agora" leva pra `/book`.
+- [ ] Bloco "Serviços" mostra até 4 serviços ativos com nome, duração e preço. Clicar leva pra `/book`.
+- [ ] Bloco "Horário de funcionamento" mostra os 7 dias da semana com `HH:MM – HH:MM` ou "Fechado".
+- [ ] "Já sou cliente? Entrar" abre bottom sheet com login OTP.
+- [ ] **Tab bar do cliente NÃO aparece** (só após login).
+
+**Visitante logado (sem reserva futura):**
+- [ ] Mesmos blocos da versão deslogada.
+- [ ] CustomerAccess mostra "Bem-vindo, [nome]" + botão "Minhas reservas".
+- [ ] **Tab bar do cliente aparece**: Início / Agendar / Reservas / Perfil.
+
+**Visitante logado (com reserva futura):**
+- [ ] Bloco "Sua próxima reserva" aparece logo após o hero, com horário + serviço + profissional + badge de status.
+- [ ] Clicar na próxima reserva abre `/meus-agendamentos/[id]` direto.
+- [ ] CTA principal muda pra "Agendar novamente".
 
 ## 2. Wizard de booking (cliente novo)
 
@@ -60,6 +76,9 @@ URLs locais:
 
 - [ ] Login em `/salon/login` com staff seeded redireciona pro dashboard.
 - [ ] Tab bar do staff navega: Início / Agenda / Equipe / Serviços / Mais.
+- [ ] `/salon/dashboard` (home staff) mostra bloco "Precisam confirmar" com count quando há SCHEDULED futuros. Botão inline "Confirmar" transiciona pra CONFIRMED sem abrir detalhe, row some da lista após o refresh.
+- [ ] Quando não há SCHEDULED pendentes, o bloco "Precisam confirmar" some da home.
+- [ ] MARCADO (SCHEDULED) aparece com badge em tom warning/amber — visualmente distinto de CANCELADO (badge cinza, card opaco + line-through).
 - [ ] `/salon/dashboard/agenda` lista appointments do dia.
 - [ ] `?date=YYYY-MM-DD` navega entre dias.
 - [ ] Detalhe do appointment expõe só transições permitidas por `canTransition`.
