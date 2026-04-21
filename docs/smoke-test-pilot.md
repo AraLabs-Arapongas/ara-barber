@@ -44,8 +44,12 @@ URLs locais:
 ## 3. Customer já logado
 
 - [ ] `/meus-agendamentos` lista a reserva criada com status `SCHEDULED`.
-- [ ] Cancelar dentro da janela → status vira `CANCELED`.
-- [ ] Cancelar fora da janela (ajustar `cancellation_window_hours` pra forçar) → erro.
+- [ ] Clicar no card (em qualquer área que não seja o botão Cancelar) abre `/meus-agendamentos/[id]` com os dados do agendamento. Navegação NÃO dispara fetch no appointment (Network tab: só RSC payload do boundary, zero request ao Supabase).
+- [ ] Acessar `/meus-agendamentos/[id]` via URL direta (ou email de confirmação) carrega — cache vazio aciona server action de fallback.
+- [ ] "Voltar" (link topo do detalhe ou botão do OS) volta pra lista sem reload.
+- [ ] Cancelar pelo card na lista dentro da janela → status vira `CANCELED`.
+- [ ] Cancelar pelo botão na tela de detalhe dentro da janela → redireciona pra lista, status `CANCELED`.
+- [ ] Cancelar fora da janela (ajustar `cancellation_window_hours` pra forçar) → erro com copy clara da janela de horas.
 
 ## 4. Conflito de horário
 
