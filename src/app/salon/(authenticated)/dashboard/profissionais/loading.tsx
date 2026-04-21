@@ -12,7 +12,7 @@ export default function ProfessionalsLoading() {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Profissionais
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu salão.</p>
+        <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu negócio.</p>
       </header>
 
       <ul className="space-y-2">

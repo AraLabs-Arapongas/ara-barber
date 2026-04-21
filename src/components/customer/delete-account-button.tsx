@@ -16,7 +16,7 @@ export function DeleteAccountButton() {
 
   async function handleClick() {
     const ok = await confirm.typed({
-      title: 'Apagar minha conta neste salão?',
+      title: 'Apagar minha conta neste estabelecimento?',
       description:
         'Essa ação apaga seu cadastro, cancela reservas futuras e não pode ser desfeita.',
       phrase: 'APAGAR',
@@ -47,7 +47,7 @@ export function DeleteAccountButton() {
         loading={pending}
       >
         <Trash2 className="h-4 w-4" aria-hidden="true" />
-        Apagar minha conta neste salão
+        Apagar minha conta neste estabelecimento
       </Button>
       {error ? (
         <Alert variant="error" className="mt-2">

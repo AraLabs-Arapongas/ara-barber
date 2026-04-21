@@ -44,17 +44,17 @@ export async function loginStaffAction(_prev: LoginState, formData: FormData): P
 
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut()
-    return { error: 'Esta conta não tem acesso a este salão.' }
+    return { error: 'Esta conta não tem acesso a este negócio.' }
   }
 
   if (!isStaffRole(profile.role)) {
     await supabase.auth.signOut()
-    return { error: 'Esta conta não é da equipe do salão.' }
+    return { error: 'Esta conta não é da equipe.' }
   }
 
   if (tenantId && profile.tenant_id !== tenantId) {
     await supabase.auth.signOut()
-    return { error: 'Esta conta é de outro salão.' }
+    return { error: 'Esta conta é de outro negócio.' }
   }
 
   redirect('/salon/dashboard')

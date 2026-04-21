@@ -62,7 +62,7 @@ export default async function SalonLoginPage() {
                   <span className="text-brand-accent">.</span>
                 </h2>
                 <p className="mt-2 text-[0.875rem] leading-relaxed text-fg-muted">
-                  Use o e-mail que o dono do salão cadastrou pra você.
+                  Use o e-mail que o responsável pelo negócio cadastrou pra você.
                 </p>
               </div>
 

@@ -80,7 +80,7 @@ export function ConfirmForm({ initialName, initialPhone, payload }: Props) {
             onChange={(e) => setPhone(formatBrPhone(e.target.value))}
             placeholder="(00) 00000-0000"
             maxLength={16}
-            hint="Pro salão te avisar em caso de mudança."
+            hint="Pro estabelecimento te avisar em caso de mudança."
           />
 
           {error ? <Alert variant="error">{error}</Alert> : null}

@@ -5,7 +5,7 @@ export default function FinanceiroPage() {
     <OutOfPilotStub
       section="Financeiro"
       title="Saldo e repasses"
-      description="Pagamentos online e repasses automáticos entram em Fase 2. No piloto, o atendimento é cobrado diretamente no salão."
+      description="Pagamentos online e repasses automáticos entram em Fase 2. No piloto, o atendimento é cobrado diretamente pelo negócio."
     />
   )
 }

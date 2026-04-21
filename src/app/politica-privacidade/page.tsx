@@ -23,7 +23,7 @@ export default async function PrivacyPolicyPage() {
             <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-3 sm:px-6">
               <Link
                 href="/"
-                aria-label="Home do salão"
+                aria-label="Home"
                 className="flex min-w-0 items-center gap-3"
               >
                 <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={40} />
@@ -64,7 +64,7 @@ export default async function PrivacyPolicyPage() {
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
                   <li>Seu e-mail, usado para login e avisos da reserva.</li>
                   <li>Seu nome e telefone, se você preencher ao confirmar reserva.</li>
-                  <li>Histórico de reservas neste salão.</li>
+                  <li>Histórico de reservas neste estabelecimento.</li>
                 </ul>
               </section>
 
@@ -75,10 +75,10 @@ export default async function PrivacyPolicyPage() {
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
                   <li>Confirmar e lembrar de horários agendados.</li>
                   <li>
-                    Avisar quando o salão precisar mudar algo (profissional indisponível,
-                    reagendamento).
+                    Avisar quando o estabelecimento precisar mudar algo (profissional
+                    indisponível, reagendamento).
                   </li>
-                  <li>Mostrar ao salão quem chegou e o histórico de atendimentos.</li>
+                  <li>Mostrar ao estabelecimento quem chegou e o histórico de atendimentos.</li>
                 </ul>
               </section>
 
@@ -87,9 +87,9 @@ export default async function PrivacyPolicyPage() {
                   Com quem compartilhamos
                 </h2>
                 <p className="mt-2 text-fg-muted">
-                  Seus dados ficam visíveis apenas para a equipe deste salão e para a
-                  AraLabs (operadora da plataforma). Não vendemos nem compartilhamos com
-                  terceiros para marketing.
+                  Seus dados ficam visíveis apenas para a equipe deste estabelecimento e
+                  para a AraLabs (operadora da plataforma). Não vendemos nem compartilhamos
+                  com terceiros para marketing.
                 </p>
               </section>
 
@@ -100,7 +100,7 @@ export default async function PrivacyPolicyPage() {
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
                   <li>
                     <strong className="text-fg">Acessar:</strong> na tela de perfil você
-                    baixa uma cópia completa dos seus dados neste salão em JSON.
+                    baixa uma cópia completa dos seus dados neste estabelecimento em JSON.
                   </li>
                   <li>
                     <strong className="text-fg">Corrigir:</strong> você pode atualizar
@@ -108,7 +108,7 @@ export default async function PrivacyPolicyPage() {
                   </li>
                   <li>
                     <strong className="text-fg">Apagar:</strong> na tela de perfil você
-                    apaga seu cadastro deste salão — as reservas futuras são
+                    apaga seu cadastro deste estabelecimento — as reservas futuras são
                     canceladas e o histórico fica anonimizado.
                   </li>
                 </ul>
@@ -119,7 +119,7 @@ export default async function PrivacyPolicyPage() {
                   Contato
                 </h2>
                 <p className="mt-2 text-fg-muted">
-                  Fale diretamente com o salão para dúvidas sobre o atendimento, ou com a
+                  Fale diretamente com o estabelecimento para dúvidas sobre o atendimento, ou com a
                   AraLabs em{' '}
                   <a
                     href="mailto:contato@aralabs.com.br"

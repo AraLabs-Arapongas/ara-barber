@@ -11,8 +11,8 @@ const figtree = Figtree({
 })
 
 export const metadata: Metadata = {
-  title: 'Ara Barber',
-  description: 'Agendamento e operação para barbearias e salões.',
+  title: 'Aralabs',
+  description: 'Agenda online e operação pro seu negócio.',
 }
 
 export const viewport: Viewport = {

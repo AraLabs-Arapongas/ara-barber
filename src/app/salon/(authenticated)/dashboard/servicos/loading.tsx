@@ -12,7 +12,7 @@ export default function ServicesLoading() {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Serviços
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">O que seu salão oferece.</p>
+        <p className="mt-1 text-[0.875rem] text-fg-muted">O que seu negócio oferece.</p>
       </header>
 
       <ul className="space-y-2">

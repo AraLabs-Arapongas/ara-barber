@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, Clock, LogOut, Scissors, User, X } from 'lucide-react'
+import { CalendarPlus, Clock, Hourglass, LogOut, User, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
@@ -193,7 +193,7 @@ function AppointmentCard({
               {appt.professionalName || '—'}
             </div>
             <div className="flex items-center gap-2">
-              <Scissors className="h-3.5 w-3.5" />
+              <Hourglass className="h-3.5 w-3.5" />
               {Math.round(
                 (new Date(appt.endAt).getTime() - new Date(appt.startAt).getTime()) / 60000,
               )}

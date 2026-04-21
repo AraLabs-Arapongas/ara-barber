@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronLeft, Clock, Scissors, User } from 'lucide-react'
+import { ChevronLeft, Clock, Tag, User } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
@@ -128,7 +128,7 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
       <Card className="mb-4 shadow-xs">
         <CardContent className="space-y-3 py-4">
           <InfoRow
-            icon={<Scissors className="h-4 w-4" />}
+            icon={<Tag className="h-4 w-4" />}
             label="Serviço"
             value={row.service?.name}
             sub={

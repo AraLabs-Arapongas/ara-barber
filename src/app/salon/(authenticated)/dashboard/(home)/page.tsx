@@ -149,7 +149,7 @@ function StatCard({
 function QuickActions() {
   const actions = [
     { href: '/salon/dashboard/agenda', label: 'Abrir agenda', icon: Calendar },
-    { href: '/salon/dashboard/mais', label: 'Ajustes do salão', icon: ArrowRight },
+    { href: '/salon/dashboard/mais', label: 'Ajustes do negócio', icon: ArrowRight },
   ] as const
   return (
     <div className="mt-4 flex gap-2">

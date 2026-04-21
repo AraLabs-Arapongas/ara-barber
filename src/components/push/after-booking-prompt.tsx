@@ -61,7 +61,7 @@ export function AfterBookingPushPrompt({ trigger, onDone }: Props) {
     <BottomSheet
       open={open}
       onClose={later}
-      title="Receber avisos do salão"
+      title="Receber avisos"
       description="Confirmação e lembretes direto no seu celular."
     >
       <div className="space-y-3 pb-2">

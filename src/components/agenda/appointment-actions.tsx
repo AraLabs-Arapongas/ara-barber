@@ -33,7 +33,7 @@ export function AppointmentActions({ appointmentId, actions }: Props) {
       const r = await confirm.prompt({
         title: 'Cancelar agendamento?',
         description: 'Informe o motivo (opcional) — o cliente será avisado.',
-        placeholder: 'Ex: salão fechado, feriado...',
+        placeholder: 'Ex: fechado pra feriado, imprevisto...',
         confirmLabel: 'Cancelar agendamento',
         cancelLabel: 'Voltar',
         destructive: true,

@@ -43,7 +43,7 @@ export async function transitionAppointmentStatus(
 
   // Garante que o staff é do mesmo tenant (RLS já faz isso, mas dupla checagem)
   if (user.profile.tenantId !== appt.tenant_id) {
-    return { ok: false, error: 'Agendamento de outro salão.' }
+    return { ok: false, error: 'Agendamento de outro negócio.' }
   }
 
   const { data: tenant } = await supabase

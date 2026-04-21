@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useTransition, type FormEvent } from 'react'
-import { Pencil, Plus, Scissors, Clock, Power } from 'lucide-react'
+import { Pencil, Plus, Tag, Clock, Power } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -127,7 +127,7 @@ export function ServicesManager({ services }: Props) {
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
             Serviços
           </h1>
-          <p className="mt-1 text-[0.875rem] text-fg-muted">O que seu salão oferece.</p>
+          <p className="mt-1 text-[0.875rem] text-fg-muted">O que seu negócio oferece.</p>
           <Button type="button" size="sm" onClick={openCreate} className="mt-3">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Adicionar serviço
@@ -205,7 +205,7 @@ export function ServicesManager({ services }: Props) {
         description={
           editing
             ? 'Ajuste nome, duração, preço ou descrição.'
-            : 'Adicione um item ao catálogo do salão.'
+            : 'Adicione um item ao catálogo.'
         }
       >
         <form
@@ -220,8 +220,8 @@ export function ServicesManager({ services }: Props) {
             autoFocus
             maxLength={200}
             defaultValue={editing?.name ?? ''}
-            placeholder="Ex: Corte masculino"
-            leftIcon={<Scissors className="h-4 w-4" />}
+            placeholder="Ex: Consulta 30min"
+            leftIcon={<Tag className="h-4 w-4" />}
           />
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -92,7 +92,7 @@ export function ProfessionalsManager({ professionals }: Props) {
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
             Profissionais
           </h1>
-          <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu salão.</p>
+          <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu negócio.</p>
           <Button type="button" size="sm" onClick={openCreate} className="mt-3">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Adicionar profissional
@@ -154,7 +154,7 @@ export function ProfessionalsManager({ professionals }: Props) {
         open={sheetOpen}
         onClose={closeSheet}
         title="Novo profissional"
-        description="Adicione alguém da equipe do salão."
+        description="Adicione alguém da equipe."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

@@ -40,7 +40,7 @@ export default async function CustomersPage() {
           Clientes
         </h1>
         <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Quem já logou no seu salão. Cadastro é feito pelo próprio cliente no booking.
+          Quem já logou no seu negócio. Cadastro é feito pelo próprio cliente no booking.
         </p>
       </header>
 

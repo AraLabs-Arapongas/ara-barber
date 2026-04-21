@@ -131,9 +131,9 @@ async function TenantPublicHome() {
       {unavailable ? (
         <main className="flex min-h-screen items-center justify-center bg-bg p-6">
           <div className="max-w-sm text-center">
-            <h1 className="font-display text-2xl font-semibold text-fg">Salão indisponível</h1>
+            <h1 className="font-display text-2xl font-semibold text-fg">Estabelecimento indisponível</h1>
             <p className="mt-3 text-[0.9375rem] text-fg-muted">
-              Este salão está temporariamente fora do ar. Tente de novo mais tarde.
+              Este estabelecimento está temporariamente fora do ar. Tente de novo mais tarde.
             </p>
           </div>
         </main>
@@ -204,9 +204,9 @@ function DevRootIndex() {
         hint: `${host} · cliente final`,
       },
       {
-        label: `Login do salão · ${slug}`,
+        label: `Login staff · ${slug}`,
         url: `http://${host}/salon/login`,
-        hint: `${host} · equipe do salão`,
+        hint: `${host} · equipe do negócio`,
       },
       {
         label: `Manifest PWA · ${slug}`,

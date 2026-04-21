@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ChevronLeft, Scissors, User, Clock, Calendar } from 'lucide-react'
+import { ChevronLeft, Tag, User, Clock, Calendar } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { getProfessionalById, getServiceById } from '@/lib/booking/queries'
 import { dateTimeInTenantTZ } from '@/lib/booking/slots'
@@ -97,7 +97,7 @@ export default async function BookStepConfirm({ searchParams }: PageProps) {
       <Card className="mb-4 shadow-xs">
         <CardContent className="space-y-3 py-4">
           <Line
-            icon={<Scissors className="h-4 w-4" />}
+            icon={<Tag className="h-4 w-4" />}
             label="Serviço"
             value={svc.name}
             sub={`${svc.durationMinutes}min · ${formatCentsToBrl(svc.priceCents)}`}

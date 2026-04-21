@@ -5,7 +5,7 @@ export default function OperacaoPage() {
     <OutOfPilotStub
       section="Operação"
       title="Modo operação"
-      description="PIN de atendimento rápido no tablet do salão entra numa próxima fase. Por enquanto, opere pela agenda logado na sua conta."
+      description="PIN de atendimento rápido no tablet entra numa próxima fase. Por enquanto, opere pela agenda logado na sua conta."
     />
   )
 }

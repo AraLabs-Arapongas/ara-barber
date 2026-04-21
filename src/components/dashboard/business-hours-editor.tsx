@@ -75,7 +75,7 @@ export function BusinessHoursEditor({ initial }: Props) {
           Horários de funcionamento
         </h1>
         <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Quando seu salão abre e fecha em cada dia da semana.
+          Quando seu negócio abre e fecha em cada dia da semana.
         </p>
       </header>
 

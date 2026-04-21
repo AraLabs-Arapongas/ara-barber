@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronLeft, Clock, Scissors, User } from 'lucide-react'
+import { ChevronLeft, Clock, Tag, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { getCachedAppointment } from '@/lib/appointments/client-cache'
@@ -91,7 +91,7 @@ export function AppointmentDetailView({ id }: Props) {
       <Card className="mb-4 shadow-xs">
         <CardContent className="space-y-3 py-4">
           <InfoRow
-            icon={<Scissors className="h-4 w-4" />}
+            icon={<Tag className="h-4 w-4" />}
             label="Serviço"
             value={appt.serviceName ?? undefined}
             sub={

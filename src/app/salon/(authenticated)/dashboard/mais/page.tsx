@@ -20,13 +20,13 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
   {
     title: 'Cadastros',
     items: [
-      { href: '/salon/dashboard/clientes', icon: Users2, label: 'Clientes', hint: 'Quem já logou no salão' },
+      { href: '/salon/dashboard/clientes', icon: Users2, label: 'Clientes', hint: 'Quem já logou no negócio' },
     ],
   },
   {
     title: 'Agenda',
     items: [
-      { href: '/salon/dashboard/configuracoes/horarios', icon: Clock, label: 'Horários do salão', hint: 'Quando abre/fecha' },
+      { href: '/salon/dashboard/configuracoes/horarios', icon: Clock, label: 'Horários de funcionamento', hint: 'Quando abre/fecha' },
     ],
   },
 ]

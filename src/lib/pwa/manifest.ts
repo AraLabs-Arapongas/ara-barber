@@ -45,7 +45,7 @@ export async function buildManifestForSlug(slug: string): Promise<TenantManifest
   return {
     name: data.name,
     short_name: data.name.slice(0, 12),
-    description: `App do salão ${data.name}`,
+    description: `App de ${data.name}`,
     start_url: `${origin}/`,
     scope: `${origin}/`,
     display: 'standalone',

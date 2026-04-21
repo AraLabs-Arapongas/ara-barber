@@ -34,7 +34,7 @@ export default async function BookStepService({ searchParams }: PageProps) {
 
       {services.length === 0 ? (
         <div className="rounded-xl border border-border bg-surface p-6 text-center text-[0.875rem] text-fg-muted">
-          Este salão ainda não cadastrou serviços.
+          Este estabelecimento ainda não cadastrou serviços.
         </div>
       ) : (
         <ul className="space-y-2">
