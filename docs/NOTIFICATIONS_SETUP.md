@@ -10,7 +10,8 @@ Gera par de chaves localmente:
 
 ```bash
 npx -y web-push generate-vapid-keys --json
-```
+
+
 
 Saída será algo como:
 
@@ -53,24 +54,21 @@ openssl rand -base64 32
 
 No Supabase dashboard (Edge Function Secrets):
 
-- `CRON_SECRET` → valor gerado
+- `CRON_SECRET` → valor gerado (**guarda esse valor** — vai precisar literalmente no passo 5 pra injetar no cron SQL)
 - `TENANT_ROOT_DOMAIN` → em dev: `lvh.me:3008`. Em produção: `aralabs.com.br`
 
-**GUC Postgres pro pg_cron usar o secret:**
 
-Isto vai em Supabase dashboard → Project Settings → Database → Custom Postgres Config (ou equivalente):
 
-```
-app.cron_secret = '<mesmo valor do CRON_SECRET acima>'
-```
 
-Alternativa: setar via SQL (roda uma vez):
 
-```sql
-alter database postgres set app.cron_secret = '<valor>';
-```
 
-E reinicia a conexão (ou `reload`).
+
+
+
+
+> ⚠️ **Edge Function Secrets não são visíveis do Postgres.** O `CRON_SECRET` aqui é validado dentro da edge function. O pg_cron roda em Postgres (outro ambiente) e precisa do mesmo valor literalmente na SQL que agenda o job — ver passo 5.
+>
+> Tentativas de `alter database postgres set app.cron_secret = ...` falham com "permission denied" no Supabase Cloud (role `postgres` não é superuser). Vault é alternativa, mas pro MVP hardcoda no cron SQL mesmo.
 
 ## 4. Database Webhook — `on-appointment-event`
 
@@ -87,7 +85,7 @@ Dashboard Supabase → Database → Webhooks → **Create a new hook**:
 
 ## 5. Cron schedule pra reminders
 
-Depois que `CRON_SECRET` e `app.cron_secret` estiverem setados, rodar via SQL:
+Pega o valor do `CRON_SECRET` (visualizando em Edge Function Secrets) e **cola literalmente** no `Bearer ...` abaixo. Roda no SQL Editor:
 
 ```sql
 -- unschedule qualquer versão antiga
@@ -101,7 +99,7 @@ begin
   end if;
 end $$;
 
--- agenda a cada 5min
+-- agenda a cada 5min (substituir COLE_O_CRON_SECRET_AQUI pelo valor do secret)
 select cron.schedule(
   'send-reminders',
   '*/5 * * * *',
@@ -110,13 +108,15 @@ select cron.schedule(
       url := 'https://sixgkgiirifigoiqbyow.supabase.co/functions/v1/send-reminders',
       headers := jsonb_build_object(
         'content-type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.cron_secret')
+        'Authorization', 'Bearer COLE_O_CRON_SECRET_AQUI'
       ),
       body := '{}'::jsonb
     );
   $cmd$
 );
 ```
+
+Segurança: `cron.job` só é legível por `service_role`, então o secret fica protegido do público. Aceitável pro piloto. Pra rotação frequente, migrar pra Supabase Vault no futuro.
 
 Verifica:
 
@@ -157,9 +157,8 @@ Edge function logs: Supabase dashboard → Edge Functions → selecionar a funç
 - [ ] VAPID: private + public + subject nas secrets; public em `.env.local`
 - [ ] Resend: domínio verificado + API key + 3 secrets
 - [ ] CRON_SECRET + TENANT_ROOT_DOMAIN como secret
-- [ ] `app.cron_secret` GUC setada
 - [ ] Database Webhook criado apontando pra `on-appointment-event`
-- [ ] Cron `send-reminders` agendado (verificar via `select * from cron.job`)
+- [ ] Cron `send-reminders` agendado com o CRON_SECRET hardcoded no Bearer (verificar via `select * from cron.job`)
 - [ ] Smoke test passou
 
 Qualquer erro inesperado, inspecionar `notification_log` e edge function logs antes de qualquer outra ação.
