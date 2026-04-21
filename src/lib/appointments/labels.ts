@@ -9,7 +9,7 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
 }
 
 export const STATUS_TONE: Record<AppointmentStatus, string> = {
-  SCHEDULED: 'bg-bg-subtle text-fg-muted',
+  SCHEDULED: 'bg-warning-bg text-warning',
   CONFIRMED: 'bg-info-bg text-info',
   COMPLETED: 'bg-success-bg text-success',
   CANCELED: 'bg-bg-subtle text-fg-subtle',

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { InitialsAvatar } from '@/components/ui/initials-avatar'
 import { formatBrPhone } from '@/lib/format'
 import { createProfessional } from '@/app/salon/(authenticated)/actions/professionals'
 
@@ -104,7 +105,8 @@ export function ProfessionalsManager({ professionals }: Props) {
               <li key={p.id}>
                 <Link href={`/salon/dashboard/profissionais/${p.id}`} className="block">
                   <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
-                    <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                    <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                      <InitialsAvatar name={p.displayName || p.name} size={40} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-fg">
                           {p.displayName || p.name}

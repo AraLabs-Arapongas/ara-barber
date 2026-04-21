@@ -63,13 +63,22 @@ export default async function AgendaPage({ searchParams }: PageProps) {
             const durationMin = Math.round(
               (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60000,
             )
+            const isCanceled = a.status === 'CANCELED' || a.status === 'NO_SHOW'
             return (
               <li key={a.id}>
                 <Link href={`/salon/dashboard/agenda/${a.id}${rawDate ? `?from=${rawDate}` : ''}`}>
-                  <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
+                  <Card
+                    className={`shadow-xs transition-colors hover:bg-bg-subtle ${
+                      isCanceled ? 'opacity-60' : ''
+                    }`}
+                  >
                     <CardContent className="flex items-center gap-3 py-3">
                       <span className="flex h-14 w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-bg-subtle">
-                        <span className="font-display text-[0.9375rem] font-semibold text-fg">
+                        <span
+                          className={`font-display text-[0.9375rem] font-semibold text-fg ${
+                            isCanceled ? 'line-through decoration-fg-subtle' : ''
+                          }`}
+                        >
                           {timeLabel(a.startAt, tenant.timezone)}
                         </span>
                         <span className="text-[0.6875rem] text-fg-muted">
@@ -77,7 +86,11 @@ export default async function AgendaPage({ searchParams }: PageProps) {
                         </span>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-fg">
+                        <p
+                          className={`truncate font-medium text-fg ${
+                            isCanceled ? 'line-through decoration-fg-subtle' : ''
+                          }`}
+                        >
                           {a.serviceName ?? 'Serviço'}
                         </p>
                         <p className="truncate text-[0.8125rem] text-fg-muted">
