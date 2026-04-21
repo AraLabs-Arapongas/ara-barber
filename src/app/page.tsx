@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, Clock, ExternalLink, Tag } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
+import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
@@ -30,13 +31,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const tenant = await getCurrentTenantOrNotFound()
   const slug = await getCurrentTenantSlug()
 
-  return {
-    title: tenant.name,
-    description: `Agende seu horário no ${tenant.name}.`,
+  return buildTenantMetadata(tenant, {
+    description: `Agende seu horário em ${tenant.name}.`,
     manifest: slug ? `/api/manifest/${slug}` : undefined,
-    icons: tenant.faviconUrl ? [{ rel: 'icon', url: tenant.faviconUrl }] : undefined,
-    appleWebApp: { title: tenant.name, capable: true, statusBarStyle: 'default' },
-  }
+  })
 }
 
 export default async function RootPage() {

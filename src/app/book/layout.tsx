@@ -1,9 +1,16 @@
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { CustomerShell } from '@/components/customer/customer-shell'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getCurrentTenantOrNotFound()
+  return buildTenantMetadata(tenant)
+}
 
 export default async function BookLayout({ children }: { children: ReactNode }) {
   const tenant = await getCurrentTenantOrNotFound()
