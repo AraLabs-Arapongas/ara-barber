@@ -25,6 +25,10 @@ export function BottomSheet({ open, onClose, title, description, children }: Pro
         style={{
           backgroundColor: 'var(--color-surface)',
           boxShadow: '0 -8px 32px rgb(0 0 0 / 0.18)',
+          // iOS Safari: vh inclui a área da URL bar inferior; svh respeita a
+          // visible viewport considerando toolbars sempre visíveis. Sem isso,
+          // a parte inferior da sheet fica escondida atrás da barra.
+          maxHeight: '100svh',
         }}
       >
         <Sheet.Header>
@@ -56,7 +60,7 @@ export function BottomSheet({ open, onClose, title, description, children }: Pro
           </div>
         </Sheet.Header>
         <Sheet.Content disableDrag>
-          <div className="max-h-[70vh] overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-1 sm:px-6">
+          <div className="max-h-[70svh] overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-1 sm:px-6">
             {children}
           </div>
         </Sheet.Content>
