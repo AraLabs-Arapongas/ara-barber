@@ -15,6 +15,14 @@ const TONE_CLASSES: Record<ChecklistSection['tone'], string> = {
   plan: 'border-brand-primary/40 bg-brand-primary/5',
 }
 
+const TONE_CODE: Record<ChecklistSection['tone'], string> = {
+  blocker: 'BT',
+  decision: 'DE',
+  limitation: 'LI',
+  nice: 'NH',
+  plan: 'OR',
+}
+
 type Props = {
   sections: ChecklistSection[]
 }
@@ -121,8 +129,9 @@ export function MvpChecklistView({ sections }: Props) {
             </header>
 
             <ul className="space-y-2">
-              {section.items.map((item) => {
+              {section.items.map((item, index) => {
                 const isChecked = !!checked[item.id]
+                const code = `${TONE_CODE[section.tone]}-${String(index + 1).padStart(2, '0')}`
                 return (
                   <li key={item.id}>
                     <button
@@ -154,6 +163,9 @@ export function MvpChecklistView({ sections }: Props) {
                             isChecked && 'line-through decoration-fg-subtle',
                           )}
                         >
+                          <span className="mr-2 inline-block rounded bg-bg-subtle px-1.5 py-0.5 font-mono text-[0.6875rem] font-semibold tracking-wider text-fg-muted align-middle">
+                            {code}
+                          </span>
                           {item.title}
                         </p>
                         {item.detail ? (
