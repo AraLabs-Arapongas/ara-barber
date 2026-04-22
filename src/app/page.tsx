@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Clock, ExternalLink, Tag } from 'lucide-react'
+import { ArrowRight, Clock, ExternalLink } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
 import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
@@ -15,9 +15,8 @@ import { CustomerAccess } from '@/components/home/customer-access'
 import { CustomerShell } from '@/components/customer/customer-shell'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
-import { getActiveServicesForTenant, getBusinessHours } from '@/lib/booking/queries'
+import { getBusinessHours } from '@/lib/booking/queries'
 import { getMyCustomerAppointments, type AgendaAppointment } from '@/lib/appointments/queries'
-import { formatCentsToBrl } from '@/lib/money'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -145,8 +144,7 @@ async function TenantPublicHome() {
     )
   }
 
-  const [services, businessHours, myAppointments] = await Promise.all([
-    getActiveServicesForTenant(tenant.id),
+  const [businessHours, myAppointments] = await Promise.all([
     getBusinessHours(tenant.id),
     loggedIn ? getMyCustomerAppointments(tenant.id) : Promise.resolve([]),
   ])
@@ -161,8 +159,6 @@ async function TenantPublicHome() {
         a.status !== 'NO_SHOW',
     ) ?? null
 
-  const featuredServices = services.slice(0, 4)
-
   return (
     <>
       <ThemeInjector
@@ -175,23 +171,12 @@ async function TenantPublicHome() {
 
       <CustomerShell showTabBar={loggedIn}>
         <main className="mx-auto flex w-full max-w-xl flex-col px-5 pt-8 pb-12 sm:px-6">
-          <header className="mb-6 flex flex-col items-center gap-3 text-center">
-            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={72} />
-            <div>
-              <p className="font-display text-[1.25rem] font-semibold leading-tight tracking-tight text-fg">
-                {tenant.name}
-              </p>
-            </div>
+          <header className="mb-6 flex flex-col items-center gap-4 text-center">
+            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={350} />
           </header>
 
-          <section className="mb-8 text-center">
-            <h1 className="font-display text-[1.875rem] leading-[1.1] tracking-tight text-fg sm:text-[2.25rem]">
-              {tenant.homeHeadlineTop ?? 'Seu horário em'}{' '}
-              <span className="italic text-brand-primary">
-                {tenant.homeHeadlineAccent ?? 'poucos toques.'}
-              </span>
-            </h1>
-            <Link href="/book" className="mt-6 inline-block w-full max-w-xs">
+          <section className="mb-2 text-center">
+            <Link href="/book" className="inline-block w-full max-w-xs">
               <Button size="lg" fullWidth>
                 {nextAppointment ? 'Agendar novamente' : 'Agendar agora'}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -203,7 +188,7 @@ async function TenantPublicHome() {
           </section>
 
           {nextAppointment ? (
-            <section className="mb-8">
+            <section className="mb-2">
               <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
                 Sua próxima reserva
               </p>
@@ -214,41 +199,8 @@ async function TenantPublicHome() {
             </section>
           ) : null}
 
-          {featuredServices.length > 0 ? (
-            <section className="mb-8">
-              <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-                Serviços
-              </p>
-              <ul className="space-y-2">
-                {featuredServices.map((s) => (
-                  <li key={s.id}>
-                    <Link href="/book" className="block">
-                      <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
-                        <CardContent className="flex items-center gap-3 py-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg-subtle text-fg-muted">
-                            <Tag className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium text-fg">{s.name}</p>
-                            <p className="truncate text-[0.8125rem] text-fg-muted">
-                              {s.durationMinutes}min · {formatCentsToBrl(s.priceCents)}
-                            </p>
-                          </div>
-                          <ArrowRight
-                            className="h-4 w-4 shrink-0 text-fg-subtle"
-                            aria-hidden="true"
-                          />
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
           {businessHours.length > 0 ? (
-            <section className="mb-8">
+            <section className="mb-2">
               <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
                 Horário de funcionamento
               </p>
@@ -260,7 +212,7 @@ async function TenantPublicHome() {
             </section>
           ) : null}
 
-          <div className="mb-6 flex flex-col items-center">
+          <div className="mb-4 mt-2 flex flex-col items-center">
             <CustomerAccess
               loggedIn={loggedIn}
               displayName={displayName}
@@ -268,7 +220,7 @@ async function TenantPublicHome() {
             />
           </div>
 
-          <footer className="mt-auto flex justify-center pt-4">
+          <footer className="mt-auto flex justify-center pt-6">
             <AraLabsAttribution />
           </footer>
         </main>
