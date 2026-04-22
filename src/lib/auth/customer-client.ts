@@ -35,15 +35,8 @@ export async function verifyCustomerOtp(
 export async function signInCustomerGoogle(
   nextPath = '/meus-agendamentos',
 ): Promise<{ error: string | null }> {
-  console.log('[customer-auth] signInCustomerGoogle: iniciando', {
-    nextPath,
-    origin: window.location.origin,
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
-  })
   const supabase = createClient()
   const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-  console.log('[customer-auth] redirectTo =', redirectTo)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -51,14 +44,12 @@ export async function signInCustomerGoogle(
       skipBrowserRedirect: true,
     },
   })
-  console.log('[customer-auth] signInWithOAuth retornou', { data, error })
   if (error) {
     return { error: error.message }
   }
   if (!data?.url) {
     return { error: 'Supabase não retornou URL de consent do Google.' }
   }
-  console.log('[customer-auth] navegando pra', data.url)
   window.location.href = data.url
   return { error: null }
 }

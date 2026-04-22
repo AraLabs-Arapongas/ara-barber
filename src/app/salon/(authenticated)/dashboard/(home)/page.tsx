@@ -35,7 +35,6 @@ export default async function DashboardHome() {
   const supabase = await createClient()
 
   const dateISO = todayISO(tenant.timezone)
-  // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const nowISO = new Date().toISOString()
   const [today, pending, svcRes] = await Promise.all([
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
