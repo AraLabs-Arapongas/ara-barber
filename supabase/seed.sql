@@ -3,41 +3,33 @@
 -- Roda automático no `supabase start` e `supabase db reset`.
 -- Staff user NÃO é seedado aqui — criar via Studio local (apontar p/ dashboard).
 
+-- Planos: PRO é base (agenda + email), PREMIUM adiciona retenção (push, WhatsApp,
+-- fidelidade, no-show protection). AraLabs nunca cobra % da receita do salão —
+-- monetização é 100% subscription. Valores aspiracionais; billing_status=TRIALING
+-- no piloto significa "grátis pro salão piloto". Modelo final em BT-03.
 insert into public.plans (id, code, name, description, monthly_price_cents, transaction_fee_type, transaction_fee_value, trial_days_default, is_active, is_default)
 values
-  (
-    '00000000-0000-0000-0000-000000000001',
-    'STARTER',
-    'Starter',
-    'Plano inicial — ideal para salões pequenos.',
-    4900,
-    'PERCENTAGE',
-    700,
-    30,
-    true,
-    true
-  ),
   (
     '00000000-0000-0000-0000-000000000002',
     'PRO',
     'Pro',
-    'Plano intermediário — até 5 profissionais, taxa reduzida.',
-    12900,
-    'PERCENTAGE',
-    300,
-    30,
+    'Agenda online, multi-profissional, branding, email transacional.',
+    7990,
+    'NONE',
+    0,
+    14,
     true,
-    false
+    true
   ),
   (
     '00000000-0000-0000-0000-000000000003',
     'PREMIUM',
     'Premium',
-    'Plano premium — sem taxa por transação, recursos completos.',
-    24900,
+    'Pro + push, WhatsApp bot, fidelidade/pontos, no-show protection, retenção automática.',
+    14990,
     'NONE',
     0,
-    30,
+    14,
     true,
     false
   )
@@ -60,7 +52,7 @@ values (
   'America/Sao_Paulo',
   '#9d4d6e',
   '#e6c8a0',
-  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000002',
   'TRIALING',
   'TRIAL'
 )
