@@ -16,7 +16,7 @@ const COMMON_PASSWORDS = new Set([
 ])
 
 function validatePassword(pw: string): string | null {
-  if (pw.length < 10) return 'Mínimo 10 caracteres.'
+  if (pw.length < 8) return 'Mínimo 8 caracteres.'
   if (!/[a-zA-Z]/.test(pw)) return 'Inclua pelo menos uma letra.'
   if (!/[0-9]/.test(pw)) return 'Inclua pelo menos um número.'
   if (COMMON_PASSWORDS.has(pw.toLowerCase())) return 'Senha muito comum. Escolhe outra.'
@@ -53,9 +53,9 @@ export function ResetPasswordForm() {
         name="password"
         type="password"
         required
-        minLength={10}
+        minLength={8}
         autoComplete="new-password"
-        placeholder="Mínimo 10 caracteres com letras e números"
+        placeholder="Mínimo 8 caracteres com letras e números"
         leftIcon={<Lock className="h-4 w-4" />}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -66,7 +66,7 @@ export function ResetPasswordForm() {
         name="confirm"
         type="password"
         required
-        minLength={10}
+        minLength={8}
         autoComplete="new-password"
         placeholder="Repita a senha"
         leftIcon={<Lock className="h-4 w-4" />}
