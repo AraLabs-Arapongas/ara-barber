@@ -27,9 +27,21 @@ export function StaffPushToggle() {
       return
     }
     const perm = currentPermission()
-    if (perm === 'granted') setState('on')
-    else if (perm === 'denied') setState('denied')
-    else setState('off')
+    if (perm === 'denied') {
+      setState('denied')
+      return
+    }
+    if (perm === 'granted') {
+      // Self-heal: permission granted não garante que existe subscription
+      // (pode ter sido limpa por unregister SW, browser cache clear, etc).
+      // requestAndSubscribe é idempotente — se já tem subscription, só re-salva
+      // no DB. Se não tem, cria.
+      void requestAndSubscribe().then((r) => {
+        setState(r.ok ? 'on' : 'off')
+      })
+      return
+    }
+    setState('off')
   }, [])
 
   async function toggle() {
