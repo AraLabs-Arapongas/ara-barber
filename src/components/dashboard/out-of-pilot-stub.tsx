@@ -16,7 +16,7 @@ export function OutOfPilotStub({ section, title, description }: Props) {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
       <Link
-        href="/salon/dashboard/mais"
+        href="/admin/dashboard/mais"
         className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
       >
         <ChevronLeft className="h-3.5 w-3.5" />

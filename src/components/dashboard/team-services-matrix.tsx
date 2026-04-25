@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
-import { toggleProfessionalService } from '@/app/salon/(authenticated)/actions/professional-services'
+import { toggleProfessionalService } from '@/app/admin/(authenticated)/actions/professional-services'
 
 type Pro = { id: string; name: string; displayName: string | null }
 type Svc = { id: string; name: string; isActive: boolean }

@@ -65,7 +65,7 @@ export async function createAppointment(
 
   if (error || !data) return { ok: false, error: 'Falha ao criar reserva.' }
 
-  revalidatePath('/salon/dashboard/agenda')
+  revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/meus-agendamentos')
   return { ok: true, appointmentId: data.id }
 }

@@ -14,7 +14,7 @@ import {
   createService,
   toggleServiceActive,
   updateService,
-} from '@/app/salon/(authenticated)/actions/services'
+} from '@/app/admin/(authenticated)/actions/services'
 
 export type ServiceListItem = {
   id: string

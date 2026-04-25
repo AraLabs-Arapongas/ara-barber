@@ -17,12 +17,12 @@ export type EnsuredCustomer = {
  * Se não existir, insere usando email/nome do auth.users. Retorna a linha.
  * Retorna null se não houver usuário autenticado.
  *
- * Staff (SALON_OWNER/RECEPTIONIST/PROFESSIONAL/PLATFORM_ADMIN) nunca vira customer:
+ * Staff (BUSINESS_OWNER/RECEPTIONIST/PROFESSIONAL/PLATFORM_ADMIN) nunca vira customer:
  * retorna null e o chamador precisa redirecionar pra outra tela.
  */
 const STAFF_ROLES = new Set([
   'PLATFORM_ADMIN',
-  'SALON_OWNER',
+  'BUSINESS_OWNER',
   'RECEPTIONIST',
   'PROFESSIONAL',
 ])

@@ -1,3 +1,5 @@
+> **Nota histórica (2026-04-26):** este doc foi escrito quando o produto se chamava `ara-barber` e a área autenticada era `/salon/*`. Nomes mudaram: `ara-agenda`, `/admin/*`, role `BUSINESS_OWNER`. Conteúdo técnico permanece válido.
+
 # ara-barber — Spec Fase 1 (Core Operável)
 
 **Data:** 2026-04-18

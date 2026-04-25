@@ -72,7 +72,7 @@ export async function sendPushToTenantStaff(tenantId: string, payload: PushPaylo
     .from('user_profiles')
     .select('user_id')
     .eq('tenant_id', tenantId)
-    .in('role', ['SALON_OWNER', 'RECEPTIONIST', 'PROFESSIONAL'])
+    .in('role', ['BUSINESS_OWNER', 'RECEPTIONIST', 'PROFESSIONAL'])
     .eq('is_active', true)
 
   if (!staffProfiles || staffProfiles.length === 0) return { sent: 0, failed: 0 }

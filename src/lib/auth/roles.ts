@@ -2,7 +2,7 @@ import type { Database } from '@/lib/supabase/types'
 
 export type UserRole = Database['public']['Enums']['user_role']
 
-export const STAFF_ROLES = ['SALON_OWNER', 'RECEPTIONIST', 'PROFESSIONAL'] as const
+export const STAFF_ROLES = ['BUSINESS_OWNER', 'RECEPTIONIST', 'PROFESSIONAL'] as const
 export type StaffRole = (typeof STAFF_ROLES)[number]
 
 export function isStaffRole(role: UserRole): role is StaffRole {

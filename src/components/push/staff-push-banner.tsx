@@ -14,7 +14,7 @@ const DISMISS_KEY = 'ara:staff-push-dismissed'
 /**
  * Banner persistente no topo da agenda staff pedindo permissão de push.
  * Some de vez após clicar X (dismiss permanente). Reativável via toggle em
- * /salon/dashboard/mais.
+ * /admin/dashboard/mais.
  */
 export function StaffPushBanner() {
   const [visible, setVisible] = useState(false)

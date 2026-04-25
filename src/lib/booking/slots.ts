@@ -104,8 +104,8 @@ export function weekdayInTenantTZ(dateISO: string, tenantTimezone: string): numb
 }
 
 /**
- * Retorna todos os slots do dia dentro do horário de funcionamento do salão
- * (union das janelas dos profissionais candidatos com as horas do salão),
+ * Retorna todos os slots do dia dentro do horário de funcionamento da empresa
+ * (union das janelas dos profissionais candidatos com as horas de operação),
  * marcando cada um como disponível ou não. Slots no passado são omitidos.
  *
  * Um slot é "disponível" se existe ao menos um profissional candidato:
@@ -117,14 +117,14 @@ export function computeSlots(input: SlotInput): Slot[] {
   const step = input.stepMinutes ?? 30
   const weekday = weekdayInTenantTZ(input.dateISO, input.tenantTimezone)
 
-  const salonHours = input.businessHours.find((h) => h.weekday === weekday)
-  if (!salonHours || !salonHours.isOpen) return []
-  const salonStart = timeToMinutes(salonHours.startTime)
-  const salonEnd = timeToMinutes(salonHours.endTime)
+  const weekdayHours = input.businessHours.find((h) => h.weekday === weekday)
+  if (!weekdayHours || !weekdayHours.isOpen) return []
+  const businessStart = timeToMinutes(weekdayHours.startTime)
+  const businessEnd = timeToMinutes(weekdayHours.endTime)
 
   const results: Slot[] = []
 
-  for (let t = salonStart; t + input.serviceDurationMinutes <= salonEnd; t += step) {
+  for (let t = businessStart; t + input.serviceDurationMinutes <= businessEnd; t += step) {
     const time = minutesToTime(t)
     const slotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
     const slotEnd = new Date(

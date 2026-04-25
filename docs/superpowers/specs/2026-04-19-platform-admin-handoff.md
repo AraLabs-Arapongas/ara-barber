@@ -1,3 +1,5 @@
+> **Nota histórica (2026-04-26):** este doc foi escrito quando o produto se chamava `ara-barber` e a área autenticada era `/salon/*`. Nomes mudaram: `ara-agenda`, `/admin/*`, role `BUSINESS_OWNER`. Conteúdo técnico permanece válido.
+
 # Platform Admin — Hand-off para AraLabs Storefront
 
 **Status:** Decisão tomada em 2026-04-19. O painel administrativo da plataforma sai do repo `ara-barber` e passa a viver dentro do repo da **aralabs storefront** (`aralabs.com.br`), virando um módulo admin compartilhado entre todos os produtos AraLabs (ara-barber hoje, outros produtos amanhã).

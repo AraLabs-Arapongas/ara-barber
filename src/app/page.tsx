@@ -324,7 +324,7 @@ function DevRootIndex() {
       },
       {
         label: `Login staff · ${slug}`,
-        url: `http://${host}/salon/login`,
+        url: `http://${host}/admin/login`,
         hint: `${host} · equipe do negócio`,
       },
       {

@@ -1,6 +1,6 @@
-# ara-barber
+# ara-agenda
 
-SaaS multi-tenant para barbearias e salões — Fase 1 (Core Operável).
+SaaS multi-tenant de agenda online + presença digital pra negócios que vendem tempo por horário (barbearia, salão, estética, clínica, oficina, etc.) — Fase 1 (Core Operável). Beachhead atual: beleza & estética.
 
 ## Setup local
 

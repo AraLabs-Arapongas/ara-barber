@@ -13,11 +13,11 @@ describe('assertStaff', () => {
     vi.mocked(session.getSessionUser).mockResolvedValue({
       id: 'u1',
       email: 'a@b.com',
-      profile: { id: 'p1', name: 'Alice', role: 'SALON_OWNER', tenantId: 't1' },
+      profile: { id: 'p1', name: 'Alice', role: 'BUSINESS_OWNER', tenantId: 't1' },
     })
 
     const result = await assertStaff()
-    expect(result.profile.role).toBe('SALON_OWNER')
+    expect(result.profile.role).toBe('BUSINESS_OWNER')
   })
 
   it('lança AuthError UNAUTHORIZED quando sem sessão', async () => {
@@ -50,7 +50,7 @@ describe('assertStaff', () => {
     vi.mocked(session.getSessionUser).mockResolvedValue({
       id: 'u1',
       email: 'a@b.com',
-      profile: { id: 'p1', name: 'Alice', role: 'SALON_OWNER', tenantId: 't1' },
+      profile: { id: 'p1', name: 'Alice', role: 'BUSINESS_OWNER', tenantId: 't1' },
     })
 
     await expect(assertStaff({ expectedTenantId: 't2' })).rejects.toThrow(AuthError)

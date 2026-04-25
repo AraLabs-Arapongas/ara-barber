@@ -20,7 +20,7 @@ export function renderCancelHtml(d: CancelData): string {
 
   const intro = d.canceledBy === 'CUSTOMER'
     ? `Olá ${escapeHtml(d.customerName)}, recebemos seu cancelamento.`
-    : `Olá ${escapeHtml(d.customerName)}, o salão cancelou sua reserva.`
+    : `Olá ${escapeHtml(d.customerName)}, ${escapeHtml(d.tenantName)} cancelou sua reserva.`
 
   return `<!doctype html>
 <html><body style="margin:0;padding:24px;background:#f5f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f1f1f">

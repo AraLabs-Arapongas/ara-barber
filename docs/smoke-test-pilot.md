@@ -2,7 +2,7 @@
 
 > **Manutenção:** sempre que um fluxo mudar (novas telas, rotas, ações, guards, rules de negócio, seed), atualizar este doc no **mesmo PR**. Foca em *comportamento*, não em copy/cor/layout.
 
-Roteiro manual pra validar o fluxo ponta-a-ponta do piloto antes de soltar pra um salão real.
+Roteiro manual pra validar o fluxo ponta-a-ponta do piloto antes de soltar pra um negócio real.
 Use `barbearia-teste` e `bela-imagem` como tenants de referência.
 
 URLs locais:
@@ -14,7 +14,7 @@ URLs locais:
 
 ## Credenciais de teste
 
-**Staff (login em `/salon/login`):**
+**Staff (login em `/admin/login`):**
 
 | Tenant | Email | Senha | Role |
 | --- | --- | --- | --- |
@@ -74,12 +74,12 @@ URLs locais:
 
 ## 5. Staff — agenda
 
-- [ ] Login em `/salon/login` com staff seeded redireciona pro dashboard.
+- [ ] Login em `/admin/login` com staff seeded redireciona pro dashboard.
 - [ ] Tab bar do staff navega: Início / Agenda / Equipe / Serviços / Mais.
-- [ ] `/salon/dashboard` (home staff) mostra bloco "Precisam confirmar" com count quando há SCHEDULED futuros. Botão inline "Confirmar" transiciona pra CONFIRMED sem abrir detalhe, row some da lista após o refresh.
+- [ ] `/admin/dashboard` (home staff) mostra bloco "Precisam confirmar" com count quando há SCHEDULED futuros. Botão inline "Confirmar" transiciona pra CONFIRMED sem abrir detalhe, row some da lista após o refresh.
 - [ ] Quando não há SCHEDULED pendentes, o bloco "Precisam confirmar" some da home.
 - [ ] MARCADO (SCHEDULED) aparece com badge em tom warning/amber — visualmente distinto de CANCELADO (badge cinza, card opaco + line-through).
-- [ ] `/salon/dashboard/agenda` lista appointments do dia.
+- [ ] `/admin/dashboard/agenda` lista appointments do dia.
 - [ ] `?date=YYYY-MM-DD` navega entre dias.
 - [ ] Detalhe do appointment expõe só transições permitidas por `canTransition`.
 - [ ] Transição persiste status e atualiza a UI sem reload.
@@ -87,11 +87,11 @@ URLs locais:
 
 ## Recuperação de senha (staff)
 
-Validar fluxo self-service de "Esqueci a senha" em `/salon/*`.
+Validar fluxo self-service de "Esqueci a senha" em `/admin/*`.
 
 ### Passos
 
-1. Em `https://<slug>.aralabs.com.br/salon/login`, click "Esqueci a senha"
+1. Em `https://<slug>.aralabs.com.br/admin/login`, click "Esqueci a senha"
 2. Preencher email do staff cadastrado → submit
 3. UI mostra "Se essa conta existe, enviamos um link..."
 4. Verificar email recebido:
@@ -99,40 +99,40 @@ Validar fluxo self-service de "Esqueci a senha" em `/salon/*`.
    - [ ] Subject: `Redefinir senha — <Nome do tenant>`
    - [ ] Body menciona o nome do tenant
 5. Click no botão "Redefinir senha"
-6. Página `/salon/reset-password` carrega com form
+6. Página `/admin/reset-password` carrega com form
 7. Tentar validações (< 8 chars, senhas diferentes) → erros inline
-8. Definir senha válida → redirect `/salon/dashboard` logado
-9. Logout → relogar com nova senha em `/salon/login` → ✓
+8. Definir senha válida → redirect `/admin/dashboard` logado
+9. Logout → relogar com nova senha em `/admin/login` → ✓
 10. Voltar pro link do email → click 2ª vez → "Link expirado ou já usado"
 
 ### Edge cases manuais
 
 - Email não cadastrado: deve retornar mesma msg de sucesso (anti-enumeration)
-- Acesso direto a `/salon/forgot-password` ou `/salon/reset-password` sem subdomain de tenant: redirect pra `/`
+- Acesso direto a `/admin/forgot-password` ou `/admin/reset-password` sem subdomain de tenant: redirect pra `/`
 
 ## 6. Staff — serviços
 
-- [ ] `/salon/dashboard/servicos` cria serviço novo → aparece no wizard.
+- [ ] `/admin/dashboard/servicos` cria serviço novo → aparece no wizard.
 - [ ] Editar serviço → mudanças persistem e aparecem no wizard.
 - [ ] Desativar serviço → some do wizard público.
 
 ## 7. Staff — equipe (detail consolidado)
 
-Toda gestão do profissional vive em `/salon/dashboard/profissionais/[id]`.
+Toda gestão do profissional vive em `/admin/dashboard/profissionais/[id]`.
 
-- [ ] Criar profissional em `/salon/dashboard/profissionais` → aparece na lista.
+- [ ] Criar profissional em `/admin/dashboard/profissionais` → aparece na lista.
 - [ ] Toggle Ativo/Inativo → inativo some do wizard.
 - [ ] Abrir detalhe expõe 4 seções, cada uma persistindo:
   - **Info:** editar nome/apelido/telefone.
   - **Serviços:** toggle chip vincula/desvincula → wizard reflete.
   - **Jornada:** editor semanal; remover segunda → `/book/data` desativa segundas.
   - **Bloqueios:** criar bloqueio (ex.: amanhã 14-17h) → slots no intervalo ficam disabled no wizard. Deletar também funciona.
-- [ ] `/salon/dashboard/disponibilidade` e `/equipe-servicos` redirecionam pra `/profissionais`.
-- [ ] `/salon/dashboard/configuracoes/horarios`: fechar um dia → wizard bloqueia aquele weekday.
+- [ ] `/admin/dashboard/disponibilidade` e `/equipe-servicos` redirecionam pra `/profissionais`.
+- [ ] `/admin/dashboard/configuracoes/horarios`: fechar um dia → wizard bloqueia aquele weekday.
 
 ## 7b. Staff — cadastros auxiliares
 
-- [ ] `/salon/dashboard/clientes` lista o cliente criado no passo 2 (read-only).
+- [ ] `/admin/dashboard/clientes` lista o cliente criado no passo 2 (read-only).
 
 ## 7c. Notificações — confirmação (email + push cliente)
 
@@ -144,14 +144,14 @@ Toda gestão do profissional vive em `/salon/dashboard/profissionais/[id]`.
 ## 7d. Notificações — cancelamento
 
 - [ ] Cliente cancela: email com "recebemos seu cancelamento" + push cliente + push staff.
-- [ ] Staff cancela: email com "o salão cancelou" + pushes equivalentes.
+- [ ] Staff cancela: email com "a empresa cancelou" + pushes equivalentes.
 - [ ] `canceled_by` preenchido em `appointments` (uuid do user que cancelou).
 
 ## 7e. Notificações — staff push
 
-- [ ] Primeiro acesso em `/salon/dashboard/agenda`: banner "Ativar avisos" aparece.
+- [ ] Primeiro acesso em `/admin/dashboard/agenda`: banner "Ativar avisos" aparece.
 - [ ] Ativar registra subscription com tenant_id. Em X: dismiss permanente.
-- [ ] Recuperação via `/salon/dashboard/mais` → Avisos (toggle).
+- [ ] Recuperação via `/admin/dashboard/mais` → Avisos (toggle).
 - [ ] Novo agendamento via cliente → push no staff em <5s.
 
 ## 7f. Notificações — lembretes
@@ -166,7 +166,7 @@ Toda gestão do profissional vive em `/salon/dashboard/profissionais/[id]`.
 - [ ] Chrome/Edge: botão "Instalar" usa dialog nativo.
 - [ ] iOS Safari: instruções manuais.
 - [ ] "Mais tarde" salva `pwa_install_dismissed_at` + localStorage por 30d.
-- [ ] Após instalar: `pwa_installed_at` preenche, badge "📱 Instalado" em `/salon/dashboard/clientes`.
+- [ ] Após instalar: `pwa_installed_at` preenche, badge "📱 Instalado" em `/admin/dashboard/clientes`.
 
 ## 7h. Notificações — auditoria
 
@@ -185,7 +185,7 @@ Toda gestão do profissional vive em `/salon/dashboard/profissionais/[id]`.
 
 ## 9. Fora de escopo — stubs
 
-- [ ] Rotas `/salon/dashboard/operacao`, `/financeiro`, `/relatorios`, `/perfil` (salão) retornam placeholder sem quebrar.
+- [ ] Rotas `/admin/dashboard/operacao`, `/financeiro`, `/relatorios`, `/perfil` (empresa) retornam placeholder sem quebrar.
 - [ ] `/mais` expõe só itens do piloto (Clientes, Horários, Sair).
 
 ## 10. Smoke técnico

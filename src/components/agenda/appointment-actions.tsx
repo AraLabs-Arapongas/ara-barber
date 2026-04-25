@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
-import { transitionAppointmentStatus } from '@/app/salon/(authenticated)/actions/appointment-status'
+import { transitionAppointmentStatus } from '@/app/admin/(authenticated)/actions/appointment-status'
 import { useConfirm } from '@/components/ui/confirm/provider'
 
 type TransitionStatus = 'CONFIRMED' | 'COMPLETED' | 'CANCELED' | 'NO_SHOW'

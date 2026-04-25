@@ -16,43 +16,43 @@ type Tab = {
 
 const TABS: Tab[] = [
   {
-    href: '/salon/dashboard',
+    href: '/admin/dashboard',
     icon: Home,
     label: 'Início',
-    match: (p) => p === '/salon/dashboard',
+    match: (p) => p === '/admin/dashboard',
   },
   {
-    href: '/salon/dashboard/agenda',
+    href: '/admin/dashboard/agenda',
     icon: Calendar,
     label: 'Agenda',
-    match: (p) => p.startsWith('/salon/dashboard/agenda'),
+    match: (p) => p.startsWith('/admin/dashboard/agenda'),
   },
   {
-    href: '/salon/dashboard/profissionais',
+    href: '/admin/dashboard/profissionais',
     icon: Users,
     label: 'Equipe',
-    match: (p) => p.startsWith('/salon/dashboard/profissionais'),
+    match: (p) => p.startsWith('/admin/dashboard/profissionais'),
   },
   {
-    href: '/salon/dashboard/servicos',
+    href: '/admin/dashboard/servicos',
     icon: Tag,
     label: 'Serviços',
-    match: (p) => p.startsWith('/salon/dashboard/servicos'),
+    match: (p) => p.startsWith('/admin/dashboard/servicos'),
   },
   {
-    href: '/salon/dashboard/mais',
+    href: '/admin/dashboard/mais',
     icon: Menu,
     label: 'Mais',
     match: (p) =>
-      p.startsWith('/salon/dashboard/mais') ||
-      p.startsWith('/salon/dashboard/clientes') ||
-      p.startsWith('/salon/dashboard/configuracoes') ||
-      p.startsWith('/salon/dashboard/financeiro') ||
-      p.startsWith('/salon/dashboard/relatorios') ||
-      p.startsWith('/salon/dashboard/disponibilidade') ||
-      p.startsWith('/salon/dashboard/equipe-servicos') ||
-      p.startsWith('/salon/dashboard/perfil') ||
-      p.startsWith('/salon/dashboard/operacao'),
+      p.startsWith('/admin/dashboard/mais') ||
+      p.startsWith('/admin/dashboard/clientes') ||
+      p.startsWith('/admin/dashboard/configuracoes') ||
+      p.startsWith('/admin/dashboard/financeiro') ||
+      p.startsWith('/admin/dashboard/relatorios') ||
+      p.startsWith('/admin/dashboard/disponibilidade') ||
+      p.startsWith('/admin/dashboard/equipe-servicos') ||
+      p.startsWith('/admin/dashboard/perfil') ||
+      p.startsWith('/admin/dashboard/operacao'),
   },
 ]
 

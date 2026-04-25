@@ -34,7 +34,7 @@ export function DaySwitcher({ dateISO, tenantTimezone }: Props) {
 
   function goto(next: string) {
     const qs = next === todayISO(tenantTimezone) ? '' : `?date=${next}`
-    router.push(`/salon/dashboard/agenda${qs}`)
+    router.push(`/admin/dashboard/agenda${qs}`)
   }
 
   const today = todayISO(tenantTimezone)

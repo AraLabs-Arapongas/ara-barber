@@ -11,7 +11,7 @@ import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { InitialsAvatar } from '@/components/ui/initials-avatar'
 import { formatBrPhone } from '@/lib/format'
-import { createProfessional } from '@/app/salon/(authenticated)/actions/professionals'
+import { createProfessional } from '@/app/admin/(authenticated)/actions/professionals'
 
 export type ProfessionalListItem = {
   id: string
@@ -103,7 +103,7 @@ export function ProfessionalsManager({ professionals }: Props) {
           <ul className="space-y-2">
             {professionals.map((p) => (
               <li key={p.id}>
-                <Link href={`/salon/dashboard/profissionais/${p.id}`} className="block">
+                <Link href={`/admin/dashboard/profissionais/${p.id}`} className="block">
                   <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
                     <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
                       <InitialsAvatar name={p.displayName || p.name} size={40} />

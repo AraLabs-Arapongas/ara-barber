@@ -1,3 +1,5 @@
+> **Nota histórica (2026-04-26):** este doc foi escrito quando o produto se chamava `ara-barber` e a área autenticada era `/salon/*`. Nomes mudaram: `ara-agenda`, `/admin/*`, role `BUSINESS_OWNER`. Conteúdo técnico permanece válido.
+
 # Staff password recovery + Resend SMTP migration
 
 **Status:** Design aprovado em 2026-04-25. Próximo passo: writing-plans skill gera plano de implementação.

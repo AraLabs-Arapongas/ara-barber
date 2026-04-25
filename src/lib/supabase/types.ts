@@ -840,7 +840,7 @@ export type Database = {
       transaction_fee_type: "PERCENTAGE" | "FIXED" | "NONE"
       user_role:
         | "PLATFORM_ADMIN"
-        | "SALON_OWNER"
+        | "BUSINESS_OWNER"
         | "RECEPTIONIST"
         | "PROFESSIONAL"
         | "CUSTOMER"
@@ -991,7 +991,7 @@ export const Constants = {
       transaction_fee_type: ["PERCENTAGE", "FIXED", "NONE"],
       user_role: [
         "PLATFORM_ADMIN",
-        "SALON_OWNER",
+        "BUSINESS_OWNER",
         "RECEPTIONIST",
         "PROFESSIONAL",
         "CUSTOMER",

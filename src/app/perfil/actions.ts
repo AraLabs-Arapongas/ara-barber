@@ -10,7 +10,7 @@ export type DeleteAccountResult = { ok: true } | { ok: false; error: string }
 /**
  * Soft-delete LGPD: anonimiza a linha de `customers` do usuário para ESTE tenant,
  * cancela futuros appointments e marca deleted_at. Mantém appointments antigos
- * (com snapshot anonimizado) pra histórico do salão, sem vínculo com identidade.
+ * (com snapshot anonimizado) pra histórico da empresa, sem vínculo com identidade.
  */
 export async function deleteMyAccountForTenant(): Promise<DeleteAccountResult> {
   const tenant = await getCurrentTenantOrNotFound()

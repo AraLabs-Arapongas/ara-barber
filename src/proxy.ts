@@ -1,9 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { parseHostToSlug, resolveTenantIdBySlug } from '@/lib/tenant/resolve'
 
+// Janela de redirect /salon/* → /admin/* pra preservar bookmarks/links externos
+// pós-rebrand (2026-04-26). Remover após 2026-05-26.
+const SALON_REDIRECT_DEADLINE = new Date('2026-05-26T00:00:00Z')
+
 export async function proxy(req: NextRequest) {
   const host = req.headers.get('host') ?? ''
   const parsed = parseHostToSlug(host)
+
+  // Redirect transitório: rotas antigas /salon/* → /admin/*
+  if (
+    Date.now() < SALON_REDIRECT_DEADLINE.getTime() &&
+    req.nextUrl.pathname.startsWith('/salon')
+  ) {
+    const newUrl = req.nextUrl.clone()
+    newUrl.pathname = req.nextUrl.pathname.replace(/^\/salon/, '/admin')
+    return NextResponse.redirect(newUrl, 302)
+  }
 
   const res = NextResponse.next()
   res.headers.set('x-ara-area', parsed.area)

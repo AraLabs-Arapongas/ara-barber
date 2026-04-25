@@ -12,7 +12,7 @@ import {
 const DISMISS_KEY = 'ara:staff-push-dismissed'
 
 /**
- * Toggle pra staff ativar/desativar push. Mora em /salon/dashboard/mais.
+ * Toggle pra staff ativar/desativar push. Mora em /admin/dashboard/mais.
  * Limpa a flag de dismiss do banner pra que o staff possa reativar caso
  * tenha dispensado antes.
  */

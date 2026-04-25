@@ -68,9 +68,9 @@ export default async function BookStepDate({ searchParams }: PageProps) {
 
   const availability = await getProfessionalAvailability(tenant.id, candidateIds)
 
-  const salonOpen = new Set(businessHours.filter((h) => h.isOpen).map((h) => h.weekday))
+  const businessOpen = new Set(businessHours.filter((h) => h.isOpen).map((h) => h.weekday))
   const profDays = new Set(availability.map((a) => a.weekday))
-  const openWeekdays = new Set([...salonOpen].filter((w) => profDays.has(w)))
+  const openWeekdays = new Set([...businessOpen].filter((w) => profDays.has(w)))
 
   const days = Array.from({ length: 14 }, (_, i) => tenantDateISO(tenant.timezone, i))
 

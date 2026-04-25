@@ -14,7 +14,7 @@ import {
   createAvailabilityBlock,
   deleteAvailabilityBlock,
   saveWeeklyAvailability,
-} from '@/app/salon/(authenticated)/actions/availability'
+} from '@/app/admin/(authenticated)/actions/availability'
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const DAYS_LONG = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -159,7 +159,7 @@ export function AvailabilityManager({ professionals, availability, blocks }: Pro
     <>
       <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
         <Link
-          href="/salon/dashboard/mais"
+          href="/admin/dashboard/mais"
           className="mb-4 inline-flex items-center gap-1 text-[0.8125rem] text-fg-muted hover:text-fg"
         >
           <ChevronLeft className="h-3.5 w-3.5" />

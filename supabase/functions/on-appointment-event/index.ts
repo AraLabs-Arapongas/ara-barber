@@ -161,7 +161,7 @@ async function handleInsert(row: AppointmentRow) {
   const staffResult = await sendPushToTenantStaff(row.tenant_id, {
     title: 'Novo agendamento',
     body: `${customer.name ?? 'cliente'} — ${service.name}`,
-    url: `/salon/dashboard/agenda/${row.id}`,
+    url: `/admin/dashboard/agenda/${row.id}`,
     tag: `new-booking-${row.id}`,
   })
   await logPush(row.tenant_id, row.id, 'confirmation', 'staff-fanout', staffResult)
@@ -224,7 +224,7 @@ async function handleStatusChange(oldRow: AppointmentRow, row: AppointmentRow) {
   const staffResult = await sendPushToTenantStaff(row.tenant_id, {
     title: 'Reserva cancelada',
     body: `${customer.name ?? 'cliente'} — ${service.name}`,
-    url: `/salon/dashboard/agenda/${row.id}`,
+    url: `/admin/dashboard/agenda/${row.id}`,
     tag: `cancel-staff-${row.id}`,
   })
   await logPush(row.tenant_id, row.id, 'cancellation', 'staff-fanout', staffResult)

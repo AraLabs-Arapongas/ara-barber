@@ -9,7 +9,7 @@ import {
 
 describe('roles', () => {
   it('isStaffRole identifica papéis de staff', () => {
-    expect(isStaffRole('SALON_OWNER')).toBe(true)
+    expect(isStaffRole('BUSINESS_OWNER')).toBe(true)
     expect(isStaffRole('RECEPTIONIST')).toBe(true)
     expect(isStaffRole('PROFESSIONAL')).toBe(true)
     expect(isStaffRole('PLATFORM_ADMIN')).toBe(false)
@@ -18,16 +18,16 @@ describe('roles', () => {
 
   it('isPlatformAdminRole identifica apenas PLATFORM_ADMIN', () => {
     expect(isPlatformAdminRole('PLATFORM_ADMIN')).toBe(true)
-    expect(isPlatformAdminRole('SALON_OWNER')).toBe(false)
+    expect(isPlatformAdminRole('BUSINESS_OWNER')).toBe(false)
   })
 
   it('isCustomerRole identifica apenas CUSTOMER', () => {
     expect(isCustomerRole('CUSTOMER')).toBe(true)
-    expect(isCustomerRole('SALON_OWNER')).toBe(false)
+    expect(isCustomerRole('BUSINESS_OWNER')).toBe(false)
   })
 
   it('canManageAgenda permite owner/reception/professional', () => {
-    expect(canManageAgenda('SALON_OWNER')).toBe(true)
+    expect(canManageAgenda('BUSINESS_OWNER')).toBe(true)
     expect(canManageAgenda('RECEPTIONIST')).toBe(true)
     expect(canManageAgenda('PROFESSIONAL')).toBe(true)
     expect(canManageAgenda('CUSTOMER')).toBe(false)
@@ -36,6 +36,6 @@ describe('roles', () => {
 
   it('canManageBilling permite apenas platform admin', () => {
     expect(canManageBilling('PLATFORM_ADMIN')).toBe(true)
-    expect(canManageBilling('SALON_OWNER')).toBe(false)
+    expect(canManageBilling('BUSINESS_OWNER')).toBe(false)
   })
 })

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check } from 'lucide-react'
-import { transitionAppointmentStatus } from '@/app/salon/(authenticated)/actions/appointment-status'
+import { transitionAppointmentStatus } from '@/app/admin/(authenticated)/actions/appointment-status'
 
 type Props = {
   appointmentId: string
