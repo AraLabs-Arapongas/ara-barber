@@ -28,11 +28,14 @@ export function RealtimeAgendaRefresh({ tenantId }: Props) {
           table: 'appointments',
           filter: `tenant_id=eq.${tenantId}`,
         },
-        () => {
+        (payload) => {
+          console.log('[realtime] appointments event', payload.eventType, payload)
           router.refresh()
         },
       )
-      .subscribe()
+      .subscribe((status, err) => {
+        console.log('[realtime] channel status', status, err ?? '')
+      })
 
     return () => {
       void supabase.removeChannel(channel)
