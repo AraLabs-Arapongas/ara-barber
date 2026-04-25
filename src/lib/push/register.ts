@@ -30,7 +30,11 @@ export function currentPermission(): NotificationPermission | 'unsupported' {
 export async function ensureServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!isPushSupported()) return null
   try {
-    return await navigator.serviceWorker.register('/sw.js')
+    await navigator.serviceWorker.register('/sw.js')
+    // navigator.serviceWorker.ready resolve apenas quando o SW está em estado
+    // 'activated'. register() resolve antes disso (após fetch do arquivo), e
+    // pushManager.subscribe() pode hang num registration ainda não ativo.
+    return await navigator.serviceWorker.ready
   } catch (err) {
     console.error('SW register failed', err)
     return null
