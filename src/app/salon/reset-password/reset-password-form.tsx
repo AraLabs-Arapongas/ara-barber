@@ -9,17 +9,10 @@ import { resetPasswordAction, type ResetPasswordState } from './actions'
 
 const INITIAL: ResetPasswordState = {}
 
-const COMMON_PASSWORDS = new Set([
-  '12345678', '123456789', '1234567890', 'password', 'senha123',
-  'qwerty123', 'admin123', 'thiago123', 'abc12345', 'password123',
-  'aralabs123', '11111111', '00000000', 'iloveyou', 'welcome123',
-])
-
 function validatePassword(pw: string): string | null {
   if (pw.length < 8) return 'Mínimo 8 caracteres.'
   if (!/[a-zA-Z]/.test(pw)) return 'Inclua pelo menos uma letra.'
   if (!/[0-9]/.test(pw)) return 'Inclua pelo menos um número.'
-  if (COMMON_PASSWORDS.has(pw.toLowerCase())) return 'Senha muito comum. Escolhe outra.'
   return null
 }
 

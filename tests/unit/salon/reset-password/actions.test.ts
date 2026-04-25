@@ -52,10 +52,60 @@ describe('resetPasswordAction', () => {
     expect(update).toHaveBeenCalledWith({ password: 'newpass123' })
   })
 
-  it('retorna error quando updateUser falha', async () => {
+  it('retorna error com message do Supabase quando code é desconhecido', async () => {
     const update = vi.fn().mockResolvedValue({
       data: { user: null },
-      error: { message: 'Session expired' },
+      error: { message: 'Some unmapped error', code: 'unknown_code' },
+    })
+    mockSupabaseAuth(update)
+
+    const result = await resetPasswordAction(INITIAL, makeFormData('newpass123', 'newpass123'))
+
+    expect(result.error).toBe('Some unmapped error')
+  })
+
+  it('traduz code "weak_password" pra mensagem PT-BR', async () => {
+    const update = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Password is too weak', code: 'weak_password' },
+    })
+    mockSupabaseAuth(update)
+
+    const result = await resetPasswordAction(INITIAL, makeFormData('thiago1234', 'thiago1234'))
+
+    expect(result.error).toContain('Senha muito fraca')
+    expect(result.error).toContain('vazamentos conhecidos')
+  })
+
+  it('traduz code "same_password" pra mensagem PT-BR', async () => {
+    const update = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { message: 'New password should be different from the old password', code: 'same_password' },
+    })
+    mockSupabaseAuth(update)
+
+    const result = await resetPasswordAction(INITIAL, makeFormData('newpass123', 'newpass123'))
+
+    expect(result.error).toBe('A nova senha precisa ser diferente da atual.')
+  })
+
+  it('traduz code "session_not_found" pra mensagem que orienta solicitar novo link', async () => {
+    const update = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Session not found', code: 'session_not_found' },
+    })
+    mockSupabaseAuth(update)
+
+    const result = await resetPasswordAction(INITIAL, makeFormData('newpass123', 'newpass123'))
+
+    expect(result.error).toContain('Sessão de recuperação expirou')
+    expect(result.error).toContain('Esqueci a senha')
+  })
+
+  it('fallback genérico quando message vazia e code desconhecido', async () => {
+    const update = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { message: '', code: 'unknown' },
     })
     mockSupabaseAuth(update)
 
