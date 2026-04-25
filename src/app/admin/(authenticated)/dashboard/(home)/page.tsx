@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
 import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
+import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -67,6 +68,7 @@ export default async function DashboardHome() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
+      <RealtimeAgendaRefresh tenantId={tenant.id} />
       <header className="mb-6">
         <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
           Hoje

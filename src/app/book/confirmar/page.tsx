@@ -5,6 +5,7 @@ import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { getProfessionalById, getServiceById } from '@/lib/booking/queries'
 import { dateTimeInTenantTZ } from '@/lib/booking/slots'
 import { ensureCustomerForTenant } from '@/lib/customers/ensure'
+import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { StepIndicator } from '@/components/book/step-indicator'
 import { ConfirmForm } from '@/components/book/confirm-form'
@@ -41,6 +42,15 @@ export default async function BookStepConfirm({ searchParams }: PageProps) {
 
   const customer = await ensureCustomerForTenant(tenant.id)
   if (!customer) {
+    // ensureCustomerForTenant retorna null em 2 casos: (a) user não autenticado
+    // → manda pro login, (b) user autenticado mas é staff → não pode bookar
+    // (RLS bloquearia mesmo) → manda pro próprio dashboard. Sem distinguir os
+    // 2 casos, staff entra em loop confirmar↔login.
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      redirect('/admin/dashboard')
+    }
     redirect(bookHrefWith('/book/login', current))
   }
 
