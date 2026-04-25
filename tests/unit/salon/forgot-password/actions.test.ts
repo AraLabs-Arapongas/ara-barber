@@ -63,8 +63,7 @@ describe('forgotPasswordAction', () => {
   })
 
   it('usa http em dev quando NODE_ENV !== production', async () => {
-    const originalEnv = process.env.NODE_ENV
-    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', configurable: true })
+    vi.stubEnv('NODE_ENV', 'development')
 
     const reset = vi.fn().mockResolvedValue({ error: null })
     mockSupabaseAuth(reset)
@@ -76,6 +75,6 @@ describe('forgotPasswordAction', () => {
       redirectTo: 'http://qa-aralabs.lvh.me:3008/salon/reset-password',
     })
 
-    Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, configurable: true })
+    vi.unstubAllEnvs()
   })
 })
