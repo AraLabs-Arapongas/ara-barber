@@ -39,6 +39,11 @@
 | 23 | Habilitar "Leaked Password Protection" no Supabase Auth + avaliar ListBucket do `tenant-assets` | Advisor security WARN — manual no dashboard | Baixa |
 | 24 | Exibir `tenants.city` (já existe) na home no lugar do `timezone` + UI de edição no perfil | Hoje a home hardcoda "Arapongas"; coluna já existe, só falta popular + renderizar | Baixa |
 | 25 | Home do tenant quando cliente está logado: repensar UX | Hoje mostra "Bem-vindo X" + "Meus agendamentos" acima do CTA, mas bottom nav já tem tab "Meus" — duplicado. Sugestão: mostrar próximo agendamento, ou quick re-booking | Média |
+| 26 | Consertar Supabase Site URL global (Dashboard "Send recovery/magic link" caem em aralabs.com.br/storefront) | Sessão 2026-04-25 staff password recovery | Média (suporte interno) |
+| 27 | Templates de email per-tenant (logo, cores, fonts próprios do salão) — exige custom email sender via Auth Hook + edge function | Sessão 2026-04-25 staff password recovery | Baixa (Fase 2) |
+| 28 | Sync automático `tenants.name → user_metadata.tenant_name` em todos staff users do tenant (trigger SQL on update) | Sessão 2026-04-25 staff password recovery | Baixa |
+| 29 | Migrar `tenant_name` de `user_metadata` (user-writable) pra `app_metadata` (service_role only) — checar se Supabase template syntax suporta `{{ .AppData }}` | Sessão 2026-04-25 staff password recovery | Baixa |
+| 30 | Captcha em `/salon/forgot-password` antes de scale (>100 tenants) | Sessão 2026-04-25 staff password recovery | Baixa |
 
 ---
 

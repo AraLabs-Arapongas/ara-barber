@@ -85,6 +85,31 @@ URLs locais:
 - [ ] Transição persiste status e atualiza a UI sem reload.
 - [ ] Realtime: criar appointment em outra aba → agenda atualiza sozinha em ≤2s.
 
+## Recuperação de senha (staff)
+
+Validar fluxo self-service de "Esqueci a senha" em `/salon/*`.
+
+### Passos
+
+1. Em `https://<slug>.aralabs.com.br/salon/login`, click "Esqueci a senha"
+2. Preencher email do staff cadastrado → submit
+3. UI mostra "Se essa conta existe, enviamos um link..."
+4. Verificar email recebido:
+   - [ ] Sender: `no-reply@aralabs.com.br`
+   - [ ] Subject: `Redefinir senha — <Nome do tenant>`
+   - [ ] Body menciona o nome do tenant
+5. Click no botão "Redefinir senha"
+6. Página `/salon/reset-password` carrega com form
+7. Tentar validações (< 8 chars, senhas diferentes) → erros inline
+8. Definir senha válida → redirect `/salon/dashboard` logado
+9. Logout → relogar com nova senha em `/salon/login` → ✓
+10. Voltar pro link do email → click 2ª vez → "Link expirado ou já usado"
+
+### Edge cases manuais
+
+- Email não cadastrado: deve retornar mesma msg de sucesso (anti-enumeration)
+- Acesso direto a `/salon/forgot-password` ou `/salon/reset-password` sem subdomain de tenant: redirect pra `/`
+
 ## 6. Staff — serviços
 
 - [ ] `/salon/dashboard/servicos` cria serviço novo → aparece no wizard.
