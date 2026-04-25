@@ -32,7 +32,11 @@ export default async function SalonForgotPasswordPage() {
 
         <div className="relative z-10 flex flex-1 flex-col justify-center px-5 py-10 sm:px-6">
           <div className="mx-auto flex w-full max-w-md flex-col">
-            <div className="mb-6 flex flex-col items-center gap-3 text-center">
+            <Link
+              href="/"
+              aria-label={`Página inicial de ${tenant.name}`}
+              className="mb-6 flex flex-col items-center gap-3 text-center transition-opacity hover:opacity-80"
+            >
               <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={72} />
               <div>
                 <h1 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
@@ -42,7 +46,7 @@ export default async function SalonForgotPasswordPage() {
                   Recuperar senha
                 </p>
               </div>
-            </div>
+            </Link>
 
             <Card className="shadow-md">
               <div className="px-6 pt-7 pb-4 sm:px-7 sm:pt-8">

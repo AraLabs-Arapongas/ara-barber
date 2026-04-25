@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { BarberStripeOrnament } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { TenantLogo } from '@/components/branding/tenant-logo'
@@ -42,7 +43,11 @@ export default async function SalonLoginPage() {
         <div className="relative z-10 flex flex-1 flex-col justify-center px-5 py-10 sm:px-6">
           <div className="mx-auto flex w-full max-w-md flex-col">
             {/* Hero: tenant logo + nome centrados */}
-            <div className="mb-6 flex flex-col items-center gap-3 text-center">
+            <Link
+              href="/"
+              aria-label={`Página inicial de ${tenant.name}`}
+              className="mb-6 flex flex-col items-center gap-3 text-center transition-opacity hover:opacity-80"
+            >
               <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={72} />
               <div>
                 <h1 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
@@ -52,7 +57,7 @@ export default async function SalonLoginPage() {
                   Portal da equipe
                 </p>
               </div>
-            </div>
+            </Link>
 
             {/* Card do formulário */}
             <Card className="shadow-md">
