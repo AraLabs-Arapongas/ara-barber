@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell, BellOff, Loader2 } from 'lucide-react'
 import {
   requestAndSubscribe,
   unsubscribe,
@@ -9,17 +9,16 @@ import {
   isPushSupported,
 } from '@/lib/push/register'
 
-const DISMISS_KEY = 'ara:staff-push-dismissed'
+type State = 'on' | 'off' | 'unsupported' | 'denied' | 'loading' | 'pending'
 
 /**
  * Toggle pra staff ativar/desativar push. Mora em /admin/dashboard/mais.
- * Limpa a flag de dismiss do banner pra que o staff possa reativar caso
- * tenha dispensado antes.
+ * Surface de erros: se falhar (SW, VAPID, save no DB, auto-block do Chrome
+ * após 2 dismisses), exibe mensagem em vez de silêncio.
  */
 export function StaffPushToggle() {
-  const [state, setState] = useState<'on' | 'off' | 'unsupported' | 'denied' | 'loading'>(
-    'loading',
-  )
+  const [state, setState] = useState<State>('loading')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isPushSupported()) {
@@ -34,20 +33,32 @@ export function StaffPushToggle() {
   }, [])
 
   async function toggle() {
+    setErrorMsg(null)
     if (state === 'on') {
+      setState('pending')
       await unsubscribe()
       setState('off')
       return
     }
     if (state === 'off') {
-      localStorage.removeItem(DISMISS_KEY)
+      setState('pending')
       const r = await requestAndSubscribe()
-      if (r.ok) setState('on')
-      else if (r.reason === 'denied') setState('denied')
+      // Re-lê permission depois — Chrome pode ter virado pra denied silenciosamente
+      const perm = currentPermission()
+      if (r.ok) {
+        setState('on')
+      } else if (r.reason === 'denied' || perm === 'denied') {
+        setState('denied')
+      } else {
+        setState('off')
+        setErrorMsg(r.error ?? 'Não foi possível ativar. Tente recarregar a página.')
+        console.error('[push] subscribe failed', r)
+      }
     }
   }
 
-  const Icon = state === 'on' ? Bell : BellOff
+  const isPending = state === 'pending'
+  const Icon = state === 'on' ? Bell : isPending ? Loader2 : BellOff
   const label =
     state === 'on'
       ? 'Avisos por push ativos'
@@ -57,31 +68,37 @@ export function StaffPushToggle() {
           ? 'Permissão negada no navegador'
           : state === 'unsupported'
             ? 'Push não suportado neste navegador'
-            : 'Carregando…'
+            : state === 'pending'
+              ? 'Ativando…'
+              : 'Carregando…'
   const hint =
     state === 'on'
       ? 'Toque pra desativar.'
       : state === 'off'
-        ? 'Recebe aviso de novo agendamento.'
+        ? errorMsg ?? 'Recebe aviso de novo agendamento.'
         : state === 'denied'
-          ? 'Habilite nas configurações do navegador.'
+          ? 'Habilite nas configurações do navegador (cadeado/site settings) e recarregue a página.'
           : state === 'unsupported'
             ? 'Tente no Chrome, Edge ou Safari PWA.'
-            : ' '
+            : state === 'pending'
+              ? 'Aguarde…'
+              : ' '
 
   return (
     <button
       type="button"
       onClick={toggle}
-      disabled={state === 'unsupported' || state === 'denied' || state === 'loading'}
+      disabled={state === 'unsupported' || state === 'denied' || state === 'loading' || isPending}
       className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-bg-subtle disabled:opacity-60"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-subtle text-fg-muted">
-        <Icon className="h-4 w-4" aria-hidden="true" />
+        <Icon className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-fg">{label}</p>
-        <p className="truncate text-[0.8125rem] text-fg-muted">{hint}</p>
+        <p className={`truncate text-[0.8125rem] ${errorMsg ? 'text-error' : 'text-fg-muted'}`}>
+          {hint}
+        </p>
       </div>
     </button>
   )
