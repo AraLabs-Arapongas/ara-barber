@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { resetPasswordAction, type ResetPasswordState } from '@/app/salon/reset-password/actions'
 import * as supabaseServer from '@/lib/supabase/server'
 
+type SupabaseClientReturn = Awaited<ReturnType<typeof supabaseServer.createClient>>
+
 vi.mock('@/lib/supabase/server')
 vi.mock('next/navigation', () => ({
   redirect: vi.fn((path: string) => {
@@ -21,7 +23,7 @@ function makeFormData(password: string, confirm: string): FormData {
 function mockSupabaseAuth(updateUser: ReturnType<typeof vi.fn>) {
   vi.mocked(supabaseServer.createClient).mockResolvedValue({
     auth: { updateUser },
-  } as any)
+  } as unknown as SupabaseClientReturn)
 }
 
 describe('resetPasswordAction', () => {

@@ -8,6 +8,9 @@ vi.mock('next/headers')
 
 const INITIAL: ForgotPasswordState = {}
 
+type SupabaseClientReturn = Awaited<ReturnType<typeof supabaseServer.createClient>>
+type HeadersReturn = Awaited<ReturnType<typeof nextHeaders.headers>>
+
 function makeFormData(email: string): FormData {
   const fd = new FormData()
   fd.set('email', email)
@@ -17,13 +20,13 @@ function makeFormData(email: string): FormData {
 function mockSupabaseAuth(resetPasswordForEmail: ReturnType<typeof vi.fn>) {
   vi.mocked(supabaseServer.createClient).mockResolvedValue({
     auth: { resetPasswordForEmail },
-  } as any)
+  } as unknown as SupabaseClientReturn)
 }
 
 function mockHeaders(host: string) {
   vi.mocked(nextHeaders.headers).mockResolvedValue({
     get: (key: string) => (key === 'x-ara-host' ? host : null),
-  } as any)
+  } as unknown as HeadersReturn)
 }
 
 describe('forgotPasswordAction', () => {
@@ -85,7 +88,7 @@ describe('forgotPasswordAction', () => {
     mockSupabaseAuth(reset)
     vi.mocked(nextHeaders.headers).mockResolvedValue({
       get: () => null,
-    } as any)
+    } as unknown as HeadersReturn)
 
     const result = await forgotPasswordAction(INITIAL, makeFormData('user@example.com'))
 
