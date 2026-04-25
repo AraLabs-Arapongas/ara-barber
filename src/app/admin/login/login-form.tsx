@@ -10,6 +10,7 @@ import { loginStaffAction, type LoginState } from './actions'
 
 const INITIAL: LoginState = {}
 const STORAGE_KEY = 'ara-agenda:admin-login:last-email'
+const LEGACY_STORAGE_KEY = 'ara-barber:salon-login:last-email'
 
 export function AdminLoginForm() {
   const [state, formAction, pending] = useActionState(loginStaffAction, INITIAL)
@@ -19,8 +20,17 @@ export function AdminLoginForm() {
 
   // Lê e-mail salvo só no client, depois da hidratação. Evita mismatch
   // server vs client (que quebra seleção e gera warning de controlled).
+  // Migra do key legado (pré-rebrand 2026-04-26) pro novo, one-shot.
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY)
+    let saved = window.localStorage.getItem(STORAGE_KEY)
+    if (!saved) {
+      const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+      if (legacy) {
+        saved = legacy
+        window.localStorage.setItem(STORAGE_KEY, legacy)
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+      }
+    }
     if (saved) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail(saved)

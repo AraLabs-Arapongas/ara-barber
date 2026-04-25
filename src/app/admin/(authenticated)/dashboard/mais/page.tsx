@@ -90,7 +90,7 @@ export default function MaisPage() {
 
         <Card className="shadow-xs">
           <CardContent className="p-0">
-            <form action="/auth/logout" method="post">
+            <form action="/auth/logout?next=/admin/login" method="post">
               <button
                 type="submit"
                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-error transition-colors hover:bg-error-bg"
