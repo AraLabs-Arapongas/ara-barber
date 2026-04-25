@@ -38,8 +38,8 @@ export async function resetPasswordAction(
   if (error) {
     // Loga pra observability ops; mensagem genérica pro client.
     console.error('[reset-password] updateUser failed', {
-      code: (error as any).code,
-      status: (error as any).status,
+      code: error.code,
+      status: error.status,
     })
     return { error: 'Erro ao atualizar senha. Tente novamente.' }
   }
