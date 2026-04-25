@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { BarberStripeOrnament } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { TenantLogo } from '@/components/branding/tenant-logo'
@@ -68,6 +69,16 @@ function ResetShell({ tenant, body }: { tenant: TenantContext; body: React.React
 
               <div className="px-6 pb-6 sm:px-7 sm:pb-7">{body}</div>
             </Card>
+
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="/salon/login"
+                className="inline-flex items-center gap-1.5 text-[0.8125rem] text-fg-muted underline-offset-4 hover:text-fg hover:underline"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                Voltar pro login
+              </Link>
+            </div>
           </div>
         </div>
 
