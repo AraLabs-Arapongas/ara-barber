@@ -36,7 +36,7 @@ describe('forgotPasswordAction', () => {
     expect(result.error).toBe('E-mail inválido.')
   })
 
-  it('chama resetPasswordForEmail com redirectTo dinâmico baseado em x-ara-host', async () => {
+  it('chama resetPasswordForEmail com redirectTo dinâmico (https por default)', async () => {
     const reset = vi.fn().mockResolvedValue({ error: null })
     mockSupabaseAuth(reset)
     mockHeaders('qa-aralabs.aralabs.com.br')
@@ -74,6 +74,23 @@ describe('forgotPasswordAction', () => {
     expect(reset).toHaveBeenCalledWith('user@example.com', {
       redirectTo: 'http://qa-aralabs.lvh.me:3008/salon/reset-password',
     })
+
+    vi.unstubAllEnvs()
+  })
+
+  it('em production sem x-ara-host, retorna erro e NÃO chama Supabase', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+
+    const reset = vi.fn().mockResolvedValue({ error: null })
+    mockSupabaseAuth(reset)
+    vi.mocked(nextHeaders.headers).mockResolvedValue({
+      get: () => null,
+    } as any)
+
+    const result = await forgotPasswordAction(INITIAL, makeFormData('user@example.com'))
+
+    expect(result.error).toBeDefined()
+    expect(reset).not.toHaveBeenCalled()
 
     vi.unstubAllEnvs()
   })
