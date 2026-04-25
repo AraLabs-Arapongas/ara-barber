@@ -52,6 +52,10 @@ export interface CustomerLoginFormProps {
 
 type Stage = 'email' | 'code'
 
+// Comprimento do OTP enviado pelo Supabase. Supabase Cloud envia 8 dígitos por
+// padrão no template de magic link / email OTP. Mantém em sync com o template.
+const OTP_LENGTH = 8
+
 export function CustomerLoginForm({
   redirectTo = '/meus-agendamentos',
   autoFocusEmail = false,
@@ -62,7 +66,8 @@ export function CustomerLoginForm({
   const [stage, setStage] = useState<Stage>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  const [pending, setPending] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState(false)
+  const [pendingGoogle, setPendingGoogle] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleEmail(e: FormEvent<HTMLFormElement>) {
@@ -72,9 +77,9 @@ export function CustomerLoginForm({
       setError('Informe um e-mail válido.')
       return
     }
-    setPending(true)
+    setPendingEmail(true)
     const { error: otpError } = await sendCustomerOtp(value)
-    setPending(false)
+    setPendingEmail(false)
     if (otpError) {
       setError(otpError)
       return
@@ -87,13 +92,13 @@ export function CustomerLoginForm({
   async function handleCode(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const token = code.trim()
-    if (token.length < 6) {
-      setError('Digite os 6 dígitos recebidos.')
+    if (token.length < OTP_LENGTH) {
+      setError(`Digite os ${OTP_LENGTH} dígitos recebidos.`)
       return
     }
-    setPending(true)
+    setPendingEmail(true)
     const { error: verifyError } = await verifyCustomerOtp(email, token)
-    setPending(false)
+    setPendingEmail(false)
     if (verifyError) {
       setError(verifyError)
       return
@@ -102,16 +107,16 @@ export function CustomerLoginForm({
   }
 
   async function handleGoogle() {
-    setPending(true)
+    setPendingGoogle(true)
     try {
       const { error: googleError } = await signInCustomerGoogle(redirectTo)
       if (googleError) {
         setError(googleError)
-        setPending(false)
+        setPendingGoogle(false)
       }
     } catch (e) {
       setError(String(e))
-      setPending(false)
+      setPendingGoogle(false)
     }
   }
 
@@ -133,8 +138,9 @@ export function CustomerLoginForm({
           </button>
         </div>
         <OtpInput
-          ariaLabel="Código de 6 dígitos"
+          ariaLabel={`Código de ${OTP_LENGTH} dígitos`}
           name="code"
+          length={OTP_LENGTH}
           autoFocus
           error={Boolean(error)}
           value={code}
@@ -145,7 +151,7 @@ export function CustomerLoginForm({
           type="submit"
           size="lg"
           fullWidth
-          loading={pending}
+          loading={pendingEmail}
           loadingText="Verificando..."
         >
           Entrar
@@ -171,7 +177,7 @@ export function CustomerLoginForm({
           rightSlot={
             <button
               type="submit"
-              disabled={!emailIsValid || pending}
+              disabled={!emailIsValid || pendingEmail || pendingGoogle}
               aria-label="Enviar código"
               className={cn(
                 'flex h-8 w-8 items-center justify-center rounded-md',
@@ -181,7 +187,7 @@ export function CustomerLoginForm({
                 'disabled:cursor-not-allowed disabled:opacity-30',
               )}
             >
-              {pending ? (
+              {pendingEmail ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <ArrowRight className="h-4 w-4" />
@@ -199,7 +205,9 @@ export function CustomerLoginForm({
         size="lg"
         fullWidth
         onClick={handleGoogle}
-        loading={pending}
+        loading={pendingGoogle}
+        loadingText="Abrindo Google..."
+        disabled={pendingEmail || pendingGoogle}
       >
         <GoogleIcon className="h-4 w-4" />
         Continuar com Google
