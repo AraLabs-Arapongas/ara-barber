@@ -175,7 +175,7 @@ Aplica em:
 | RLS policy quebra | Baixa (Postgres resolve enum por OID) | Verificar `get_advisors({type: 'security'})` pós-migration |
 | URL antiga `/salon/*` em bookmark/email | Certa | Proxy redirect 302 por 30 dias |
 | Email recovery já enviado com link `/salon/reset-password` | Possível durante deploy | Mesmo redirect resolve. Links expiram em 1h |
-| Supabase Auth redirect URLs allowlist | Provável | Adicionar `/admin/reset-password` ANTES, remover `/salon/reset-password` 30 dias depois |
+| Supabase Auth redirect URLs allowlist | Nenhum | URL real enviado é `/auth/callback?next=...` — não muda. Query params não vão pra allowlist |
 
 ## 8. Rollback
 
@@ -187,7 +187,6 @@ Aplica em:
 **Cenário B — deployou e quebrou em prod:**
 - Vercel rollback pro deploy anterior (1 click)
 - Reverter migration (mesmo comando)
-- Re-adicionar `/salon/reset-password` no Supabase allowlist
 - ETA: <5 min
 
 **Cenário C — DB renomeado mas TS antigo:**
@@ -215,8 +214,6 @@ Aplica em:
 
 ## 10. Ações manuais necessárias
 
-- **Supabase dashboard** (manual): Authentication → URL Configuration → Redirect URLs allowlist
-  - Adicionar `https://*.aralabs.com.br/admin/reset-password` (e equivalente em `lvh.me` dev) **antes** do deploy
-  - Remover `https://*.aralabs.com.br/salon/reset-password` **30 dias depois**
+- **Supabase dashboard:** nada. URL enviado pelo `resetPasswordForEmail` é `/auth/callback?next=/admin/reset-password` — a base `/auth/callback` já está na allowlist e o `next` é query param (não vai pra allowlist).
 - **Vercel:** nada — rebuild automático no push (quando user autorizar)
 - **DNS:** nada
