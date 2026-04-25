@@ -18,26 +18,29 @@ function validatePassword(pw: string): string | null {
 
 export function ResetPasswordForm() {
   const [state, formAction, pending] = useActionState(resetPasswordAction, INITIAL)
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [submitAttempted, setSubmitAttempted] = useState(false)
-
-  const passwordError = password ? validatePassword(password) : null
-  const matchError = confirm && password !== confirm ? 'Senhas não conferem.' : null
-  const isValid = !passwordError && !matchError && password.length > 0 && confirm.length > 0
-  const showPasswordError = submitAttempted && passwordError
-  const showMatchError = (submitAttempted || confirm.length > 0) && matchError
+  const [clientError, setClientError] = useState<string | null>(null)
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    setSubmitAttempted(true)
-    if (!isValid) {
+    const fd = new FormData(e.currentTarget)
+    const password = String(fd.get('password') ?? '')
+    const confirm = String(fd.get('confirm') ?? '')
+
+    const pwErr = validatePassword(password)
+    if (pwErr) {
       e.preventDefault()
+      setClientError(pwErr)
+      return
     }
+    if (password !== confirm) {
+      e.preventDefault()
+      setClientError('Senhas não conferem.')
+      return
+    }
+    setClientError(null)
   }
 
-  // Server error (vinda da action) tem precedência só se não há erro client-side ativo
-  const serverError = state.error && !showPasswordError && !showMatchError ? state.error : null
-  const visibleError = showPasswordError || showMatchError || serverError
+  // Server error (vinda da action) tem precedência só se não há client error ativo
+  const visibleError = clientError ?? state.error ?? null
 
   return (
     <form action={formAction} onSubmit={handleSubmit} className="space-y-3">
@@ -50,8 +53,7 @@ export function ResetPasswordForm() {
         autoComplete="new-password"
         placeholder="Mínimo 8 caracteres com letras e números"
         leftIcon={<Lock className="h-4 w-4" />}
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={() => clientError && setClientError(null)}
       />
 
       <Input
@@ -63,25 +65,16 @@ export function ResetPasswordForm() {
         autoComplete="new-password"
         placeholder="Repita a senha"
         leftIcon={<Lock className="h-4 w-4" />}
-        value={confirm}
-        onChange={(e) => setConfirm(e.target.value)}
+        onChange={() => clientError && setClientError(null)}
       />
 
       {visibleError ? (
         <Alert variant="error" title="Não foi possível atualizar">
-          {showPasswordError ? passwordError : showMatchError ? matchError : serverError}
+          {visibleError}
         </Alert>
       ) : null}
 
-      <Button
-        type="submit"
-        size="lg"
-        fullWidth
-        loading={pending}
-        loadingText="Atualizando..."
-        disabled={!isValid && submitAttempted}
-        className="mt-3"
-      >
+      <Button type="submit" size="lg" fullWidth loading={pending} loadingText="Atualizando..." className="mt-3">
         Definir nova senha
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Button>

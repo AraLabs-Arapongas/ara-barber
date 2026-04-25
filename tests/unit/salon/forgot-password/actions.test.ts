@@ -47,7 +47,7 @@ describe('forgotPasswordAction', () => {
     const result = await forgotPasswordAction(INITIAL, makeFormData('user@example.com'))
 
     expect(reset).toHaveBeenCalledWith('user@example.com', {
-      redirectTo: 'https://qa-aralabs.aralabs.com.br/salon/reset-password',
+      redirectTo: 'https://qa-aralabs.aralabs.com.br/auth/callback?next=/salon/reset-password',
     })
     expect(result.ok).toBe(true)
   })
@@ -75,7 +75,7 @@ describe('forgotPasswordAction', () => {
     await forgotPasswordAction(INITIAL, makeFormData('user@example.com'))
 
     expect(reset).toHaveBeenCalledWith('user@example.com', {
-      redirectTo: 'http://qa-aralabs.lvh.me:3008/salon/reset-password',
+      redirectTo: 'http://qa-aralabs.lvh.me:3008/auth/callback?next=/salon/reset-password',
     })
 
     vi.unstubAllEnvs()

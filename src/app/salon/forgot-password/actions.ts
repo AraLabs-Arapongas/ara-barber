@@ -39,7 +39,11 @@ export async function forgotPasswordAction(
   // Inverted check (vs naive `=== 'production' ? https : http`): vitest roda
   // com NODE_ENV='test', queremos https no test runner; só dev usa http.
   const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
-  const redirectTo = `${protocol}://${safeHost}/salon/reset-password`
+  // Roteia via /auth/callback (route handler que persiste cookies da
+  // session de recovery). Server components de page.tsx não conseguem
+  // setar cookies em Next 16, então exchange direto na page faz com que
+  // o action depois receba "Auth session missing!".
+  const redirectTo = `${protocol}://${safeHost}/auth/callback?next=/salon/reset-password`
 
   const supabase = await createClient()
   // Anti-enumeration: ignoramos o resultado. Sempre retornamos sucesso pra não

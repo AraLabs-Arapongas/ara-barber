@@ -7,33 +7,22 @@ import { ThemeInjector } from '@/components/branding/theme-injector'
 import { Card } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
 import { buttonVariants } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/auth/session'
 import { getCurrentArea, getCurrentTenantOrNotFound, type TenantContext } from '@/lib/tenant/context'
 import { ResetPasswordForm } from './reset-password-form'
 
-type SearchParams = Promise<{ code?: string }>
-
-export default async function SalonResetPasswordPage({
-  searchParams,
-}: {
-  searchParams: SearchParams
-}) {
+export default async function SalonResetPasswordPage() {
   const area = await getCurrentArea()
   if (area !== 'tenant') redirect('/')
 
   const tenant = await getCurrentTenantOrNotFound()
-  const params = await searchParams
-  const code = params.code
 
-  if (!code) {
-    return <ResetShell tenant={tenant} body={<InvalidLinkMessage reason="missing" />} />
-  }
-
-  const supabase = await createClient()
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-  if (error) {
-    return <ResetShell tenant={tenant} body={<InvalidLinkMessage reason="expired" />} />
+  // O code exchange é feito por /auth/callback (route handler que persiste
+  // cookies). Quando o user chega aqui via email, callback já setou a session
+  // de recovery. Se não houver session, link expirou ou nunca passou.
+  const user = await getSessionUser()
+  if (!user) {
+    return <ResetShell tenant={tenant} body={<InvalidLinkMessage />} />
   }
 
   return <ResetShell tenant={tenant} body={<ResetPasswordForm />} />
@@ -90,17 +79,11 @@ function ResetShell({ tenant, body }: { tenant: TenantContext; body: React.React
   )
 }
 
-function InvalidLinkMessage({ reason }: { reason: 'missing' | 'expired' }) {
-  const title = reason === 'expired' ? 'Link expirado ou já usado' : 'Link inválido'
-  const description =
-    reason === 'expired'
-      ? 'Esse link de recuperação não é mais válido. Solicite um novo email.'
-      : 'O link parece estar incompleto. Solicite um novo email.'
-
+function InvalidLinkMessage() {
   return (
     <div className="space-y-3">
-      <Alert variant="warning" title={title}>
-        {description}
+      <Alert variant="warning" title="Link inválido ou expirado">
+        Esse link de recuperação não é mais válido. Solicite um novo email.
       </Alert>
       <Link
         href="/salon/forgot-password"
