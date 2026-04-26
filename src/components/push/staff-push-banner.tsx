@@ -23,6 +23,10 @@ export function StaffPushBanner() {
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
+    // Tudo aqui depende de browser APIs (Notification.permission, navigator).
+    // O setState síncrono é intencional — refletimos estado de uma "external
+    // store" (browser API) imediatamente após mount. eslint-disable cobre isso.
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (!isPushSupported()) {
       setStatus('unsupported')
       return
@@ -40,6 +44,7 @@ export function StaffPushBanner() {
     if (perm === 'denied') setStatus('denied')
     else if (perm === 'unsupported') setStatus('unsupported')
     else setStatus('default')
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [])
 
   async function enable() {
