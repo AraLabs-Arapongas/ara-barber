@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatCentsToBrl } from '@/lib/money'
 import { MASK, useMoneyHidden } from '@/lib/money-visibility'
@@ -27,11 +28,21 @@ export type WeekDay = {
  * - `onDayClickHref` opcional: quando passado, cada dia vira um Link.
  *   Quando ausente, é só visualização.
  */
+export type WeekNav = {
+  rangeLabel: string
+  prevHref: string
+  nextHref: string
+  todayHref: string
+  /** Quando true, botão "Hoje" fica desabilitado (já estamos na semana de hoje). */
+  isCurrentWeek: boolean
+}
+
 export function WeekAgendaStrip({
   days,
   todayISO,
   selectedDateISO,
   onDayClickHref,
+  weekNav,
 }: {
   days: WeekDay[]
   todayISO: string
@@ -39,6 +50,8 @@ export function WeekAgendaStrip({
   selectedDateISO?: string
   /** Função que recebe a dateISO e devolve o href de navegação. Se ausente, sem click. */
   onDayClickHref?: (dateISO: string) => string
+  /** Navegação entre semanas (Path II — strip vira o seletor de dia da Agenda). */
+  weekNav?: WeekNav
 }) {
   const [mode, setMode] = useState<'count' | 'revenue'>('count')
   const { hidden: moneyHidden } = useMoneyHidden()
@@ -93,7 +106,37 @@ export function WeekAgendaStrip({
 
       <Card>
         <CardContent className="py-3">
-          <p className="mb-3 text-sm text-fg-muted">{totalLabel}</p>
+          {weekNav ? (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <Link
+                href={weekNav.prevHref}
+                aria-label="Semana anterior"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Link>
+              <div className="flex flex-1 items-center justify-center gap-3">
+                <p className="text-sm font-medium text-fg">{weekNav.rangeLabel}</p>
+                {!weekNav.isCurrentWeek ? (
+                  <Link
+                    href={weekNav.todayHref}
+                    className="rounded-full border border-border px-2 py-0.5 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-muted hover:bg-bg-subtle hover:text-fg"
+                  >
+                    Hoje
+                  </Link>
+                ) : null}
+              </div>
+              <Link
+                href={weekNav.nextHref}
+                aria-label="Próxima semana"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          ) : (
+            <p className="mb-3 text-sm text-fg-muted">{totalLabel}</p>
+          )}
 
           <div className="flex h-20 items-end justify-between gap-1.5">
             {days.map((day, i) => {
@@ -158,6 +201,8 @@ export function WeekAgendaStrip({
               )
             })}
           </div>
+
+          {weekNav ? <p className="mt-3 text-center text-sm text-fg-muted">{totalLabel}</p> : null}
         </CardContent>
       </Card>
     </section>

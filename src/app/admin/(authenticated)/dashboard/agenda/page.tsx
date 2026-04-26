@@ -4,12 +4,15 @@ import { getTenantBookingUrl } from '@/lib/tenant/public-url'
 import { getAgendaForDay } from '@/lib/appointments/queries'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { Card, CardContent } from '@/components/ui/card'
-import { DaySwitcher } from '@/components/agenda/day-switcher'
 import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
 import { StaffPushBanner } from '@/components/push/staff-push-banner'
 import { AgendaFilters } from '@/components/agenda/agenda-filters'
 import { DaySummary } from '@/components/agenda/day-summary'
 import { AgendaEmptyState } from '@/components/agenda/empty-state'
+import { AgendaHeaderActions } from '@/components/agenda/agenda-header-actions'
+import { WeekAgendaStrip, type WeekDay } from '@/components/home/week-agenda-strip'
+import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
+import { dateTimeInTenantTZ } from '@/lib/booking/slots'
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/supabase/types'
 
@@ -50,11 +53,52 @@ function timeLabel(iso: string, tenantTimezone: string): string {
   }).format(new Date(iso))
 }
 
+function addDaysISO(dateISO: string, days: number): string {
+  const [y, m, d] = dateISO.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m - 1, d))
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+function sundayOfWeekISO(dateISO: string): string {
+  const [y, m, d] = dateISO.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m - 1, d))
+  return addDaysISO(dateISO, -date.getUTCDay())
+}
+
+function formatDayHeader(dateISO: string, todayISOStr: string, tenantTimezone: string): string {
+  const tomorrow = addDaysISO(todayISOStr, 1)
+  const yesterday = addDaysISO(todayISOStr, -1)
+  if (dateISO === todayISOStr) return 'Hoje'
+  if (dateISO === tomorrow) return 'Amanhã'
+  if (dateISO === yesterday) return 'Ontem'
+  const [y, m, d] = dateISO.split('-').map(Number)
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenantTimezone,
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  }).format(new Date(Date.UTC(y, m - 1, d, 12)))
+}
+
+function formatWeekRange(weekStartISO: string, weekEndISO: string): string {
+  const [, , sd] = weekStartISO.split('-').map(Number)
+  const [, em, ed] = weekEndISO.split('-').map(Number)
+  const monthFmt = new Intl.DateTimeFormat('pt-BR', { month: 'short' })
+  const startMonth = monthFmt.format(new Date(`${weekStartISO}T12:00:00Z`)).replace('.', '')
+  const endMonth = monthFmt.format(new Date(`${weekEndISO}T12:00:00Z`)).replace('.', '')
+  if (weekStartISO.slice(0, 7) === weekEndISO.slice(0, 7)) {
+    return `${sd}–${ed} ${endMonth}`
+  }
+  return `${sd} ${startMonth} – ${ed} ${endMonth}`
+}
+
 export default async function AgendaPage({ searchParams }: PageProps) {
   const tenant = await getCurrentTenantOrNotFound()
   const sp = await searchParams
   const rawDate = typeof sp.date === 'string' ? sp.date : undefined
   const dateISO = validISOOrToday(rawDate, tenant.timezone)
+  const todayISOStr = todayISO(tenant.timezone)
   const profFilter = typeof sp.professional === 'string' ? sp.professional : null
   const statusRaw = typeof sp.status === 'string' ? sp.status : null
   const statusFilter =
@@ -62,8 +106,14 @@ export default async function AgendaPage({ searchParams }: PageProps) {
       ? (statusRaw as AppointmentStatus)
       : null
 
+  // Semana do dia selecionado (Dom→Sáb)
+  const weekStartISO = sundayOfWeekISO(dateISO)
+  const weekDateISOs = Array.from({ length: 7 }, (_, i) => addDaysISO(weekStartISO, i))
+  const weekStartUTC = dateTimeInTenantTZ(weekStartISO, '00:00', tenant.timezone).toISOString()
+  const weekEndUTC = dateTimeInTenantTZ(weekDateISOs[6], '23:59', tenant.timezone).toISOString()
+
   const supabase = await createClient()
-  const [appointments, profsRes, svcRes] = await Promise.all([
+  const [appointments, profsRes, svcRes, weekApptsRes] = await Promise.all([
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
     supabase
       .from('professionals')
@@ -72,9 +122,37 @@ export default async function AgendaPage({ searchParams }: PageProps) {
       .eq('is_active', true)
       .order('name'),
     supabase.from('services').select('id, price_cents').eq('tenant_id', tenant.id),
+    supabase
+      .from('appointments')
+      .select('start_at, service_id, price_cents_snapshot')
+      .eq('tenant_id', tenant.id)
+      .not('status', 'in', '(CANCELED,NO_SHOW)')
+      .gte('start_at', weekStartUTC)
+      .lte('start_at', weekEndUTC),
   ])
   const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
   const professionals = (profsRes.data ?? []).map((p) => ({ id: p.id, name: p.name }))
+
+  // Agrupa agendamentos da semana por data em TZ do tenant.
+  const weekFmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tenant.timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const weekByDate = new Map<string, { count: number; revenueCents: number }>()
+  for (const date of weekDateISOs) weekByDate.set(date, { count: 0, revenueCents: 0 })
+  for (const a of weekApptsRes.data ?? []) {
+    const dateInTZ = weekFmt.format(new Date(a.start_at))
+    const entry = weekByDate.get(dateInTZ)
+    if (!entry) continue
+    entry.count += 1
+    entry.revenueCents += a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
+  }
+  const weekDays: WeekDay[] = weekDateISOs.map((d) => {
+    const entry = weekByDate.get(d) ?? { count: 0, revenueCents: 0 }
+    return { dateISO: d, count: entry.count, revenueCents: entry.revenueCents }
+  })
 
   const filtered = appointments.filter((a) => {
     if (profFilter && a.professionalId !== profFilter) return false
@@ -86,19 +164,57 @@ export default async function AgendaPage({ searchParams }: PageProps) {
   const hasAnyToday = appointments.length > 0
   const isFiltering = Boolean(profFilter || statusFilter)
 
+  // Path II: navegação entre semanas via prev/next; "Hoje" volta pra dateISO atual.
+  const todaysWeekStart = sundayOfWeekISO(todayISOStr)
+  const isCurrentWeek = weekStartISO === todaysWeekStart
+  const prevWeekDateISO = addDaysISO(weekStartISO, -7)
+  const nextWeekDateISO = addDaysISO(weekStartISO, 7)
+  const buildAgendaHref = (d: string) => {
+    const params = new URLSearchParams()
+    params.set('date', d)
+    if (profFilter) params.set('professional', profFilter)
+    if (statusRaw && (VALID_STATUSES as string[]).includes(statusRaw))
+      params.set('status', statusRaw)
+    return `/admin/dashboard/agenda?${params.toString()}`
+  }
+
+  const dayHeader = formatDayHeader(dateISO, todayISOStr, tenant.timezone)
+
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
-      <header className="mb-4">
-        <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-          Operação
-        </p>
-        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          Agenda
-        </h1>
+      <header className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
+            Operação
+          </p>
+          <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
+            Agenda
+          </h1>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <AgendaHeaderActions publicUrl={publicUrl} />
+          <MoneyVisibilityToggle />
+        </div>
       </header>
 
       <StaffPushBanner />
-      <DaySwitcher dateISO={dateISO} tenantTimezone={tenant.timezone} />
+
+      <WeekAgendaStrip
+        days={weekDays}
+        todayISO={todayISOStr}
+        selectedDateISO={dateISO}
+        onDayClickHref={buildAgendaHref}
+        weekNav={{
+          rangeLabel: formatWeekRange(weekStartISO, weekDateISOs[6]),
+          prevHref: buildAgendaHref(prevWeekDateISO),
+          nextHref: buildAgendaHref(nextWeekDateISO),
+          todayHref: buildAgendaHref(todayISOStr),
+          isCurrentWeek,
+        }}
+      />
+
+      <p className="mb-3 mt-1 text-center text-[0.8125rem] text-fg-muted">{dayHeader}</p>
+
       <RealtimeAgendaRefresh tenantId={tenant.id} />
 
       <AgendaFilters professionals={professionals} />
@@ -166,7 +282,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
       ) : (
-        <AgendaEmptyState publicUrl={publicUrl} />
+        <AgendaEmptyState />
       )}
     </main>
   )
