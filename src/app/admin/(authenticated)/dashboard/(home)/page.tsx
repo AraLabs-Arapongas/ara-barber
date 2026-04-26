@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { BellRing, Calendar, CheckCircle2, Clock, TrendingUp } from 'lucide-react'
+import { BellRing, Calendar, CheckCircle2, Clock } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
-import { getTenantPublicUrl } from '@/lib/tenant/public-url'
+import { getTenantBookingUrl } from '@/lib/tenant/public-url'
 import {
   getAgendaForDay,
   getPendingConfirmations,
@@ -15,6 +15,7 @@ import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appoint
 import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
 import { QuickActions } from '@/components/home/quick-actions'
 import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
+import { MoneyStatCard } from '@/components/home/money-stat-card'
 import { hasNoSchedule, isLate, lateMinutes } from '@/lib/admin/derivations'
 
 function todayISO(tenantTimezone: string): string {
@@ -98,7 +99,7 @@ export default async function DashboardHome() {
     }))
 
   const attentionItems: AttentionItem[] = [...lateItems, ...noScheduleItems]
-  const publicUrl = await getTenantPublicUrl(tenant)
+  const publicUrl = await getTenantBookingUrl(tenant)
 
   const headerDate = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenant.timezone,
@@ -145,8 +146,7 @@ export default async function DashboardHome() {
           value={String(active.length)}
           hint={`${completed} ${completed === 1 ? 'concluído' : 'concluídos'}`}
         />
-        <StatCard
-          icon={<TrendingUp className="h-4 w-4" />}
+        <MoneyStatCard
           label="Previsto"
           value={formatCentsToBrl(todayRevenueCents)}
           hint={`${formatCentsToBrl(completedRevenueCents)} já feito`}
