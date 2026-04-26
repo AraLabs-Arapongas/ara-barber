@@ -2,18 +2,21 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 
-import { ProfileForm } from '@/components/dashboard/profile-form'
+import { BrandEditor } from '@/components/dashboard/brand-editor'
 import { createSecretClient } from '@/lib/supabase/secret'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 
-export default async function PerfilPage() {
+export default async function MarcaPage() {
   const tenant = await getCurrentTenantOrNotFound()
 
+  // Lê direto da tabela pra evitar o fallback "convencional" de logo
+  // (`/logos/<slug>.<ext>`) aplicado pelo getCurrentTenantOrNotFound — esse
+  // path só faz sentido pra render, não pra edição.
   const supabase = createSecretClient()
   const { data } = await supabase
     .from('tenants')
     .select(
-      'name, contact_phone, whatsapp, email, address_line1, address_line2, city, state, postal_code',
+      'primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent',
     )
     .eq('id', tenant.id)
     .maybeSingle()
@@ -35,24 +38,22 @@ export default async function PerfilPage() {
           Meu negócio
         </p>
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          Perfil público
+          Marca e aparência
         </h1>
         <p className="mt-1 text-sm text-fg-muted">
-          Essas informações aparecem na sua página pública.
+          Personalize cores, logo e mensagens da sua página pública.
         </p>
       </header>
 
-      <ProfileForm
+      <BrandEditor
         initial={{
-          name: data.name,
-          contact_phone: data.contact_phone ?? '',
-          whatsapp: data.whatsapp ?? '',
-          email: data.email ?? '',
-          address_line1: data.address_line1 ?? '',
-          address_line2: data.address_line2 ?? '',
-          city: data.city ?? '',
-          state: data.state ?? '',
-          postal_code: data.postal_code ?? '',
+          primary_color: data.primary_color ?? '',
+          secondary_color: data.secondary_color ?? '',
+          accent_color: data.accent_color ?? '',
+          logo_url: data.logo_url ?? '',
+          favicon_url: data.favicon_url ?? '',
+          home_headline_top: data.home_headline_top ?? '',
+          home_headline_accent: data.home_headline_accent ?? '',
         }}
       />
     </main>

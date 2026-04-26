@@ -251,10 +251,40 @@ Toda gestão do profissional vive em `/admin/dashboard/profissionais/[id]`.
   - Sessão expira.
 - [ ] Novo login com mesmo email cria **novo** customer row; o apagado permanece isolado.
 
+## 8b. Mais — reorg + Meu negócio (revamp 2026-04-26)
+
+Acessar `/admin/dashboard/mais` autenticado como staff.
+
+- [ ] Página exibe 5 seções (Meu negócio, Agenda, Gestão, Comunicação, Conta) + cartão "Sair".
+- [ ] Cada item linka pra rota correta; itens não-implementados nesta fase abrem placeholder "Em construção" (Regras, Bloqueios, E-mails, WhatsApp, Notificações, Usuários, Plano, Segurança).
+
+Perfil público (`/admin/dashboard/perfil`):
+
+- [ ] Form pré-preenchido com dados atuais do tenant.
+- [ ] Editar nome, contato, WhatsApp, e-mail, endereço, cidade, UF e CEP.
+- [ ] "Salvar" mostra "Salvo!"; recarregar a página confirma persistência.
+- [ ] Apagar e-mail (campo vazio) salva sem erro e mantém vazio depois do reload (string vazia → NULL no banco).
+
+Link de agendamento (`/admin/dashboard/link`):
+
+- [ ] URL exibida usa o host correto (lvh.me em dev, aralabs.com.br em prod).
+- [ ] "Copiar link" copia pra clipboard e botão vira "Copiado!" por 2s.
+- [ ] "Abrir página pública" abre a home do tenant em nova aba.
+- [ ] QR code SVG renderizado embaixo.
+- [ ] "Baixar QR Code" baixa arquivo `qr-<slug>.svg`.
+- [ ] "Compartilhar no WhatsApp" abre `wa.me/?text=...` com mensagem default contendo o link.
+
+Marca e aparência (`/admin/dashboard/marca`):
+
+- [ ] Form pré-preenchido com cores/headlines atuais.
+- [ ] Trocar cor primária (color picker ou hex no input) → "Salvar" → recarregar home pública (`http://<slug>.lvh.me:3008/`) e confirmar `--brand-primary` mudou.
+- [ ] Apagar URL do logo (campo vazio) salva sem erro; cores vazias também (NULL → reset pro tema default).
+- [ ] Hex inválido (`#zzz`) bloqueia salvar com mensagem de erro inline.
+
 ## 9. Fora de escopo — stubs
 
-- [ ] Rotas `/admin/dashboard/operacao`, `/financeiro`, `/relatorios`, `/perfil` (empresa) retornam placeholder sem quebrar.
-- [ ] `/mais` expõe só itens do piloto (Clientes, Horários, Sair).
+- [ ] Rotas `/admin/dashboard/operacao`, `/financeiro`, `/relatorios` retornam placeholder sem quebrar.
+- [ ] Itens "Em construção" da Mais (Regras, Bloqueios, Comunicação, Conta) levam a placeholder com botão "Voltar".
 
 ## 10. Smoke técnico
 
