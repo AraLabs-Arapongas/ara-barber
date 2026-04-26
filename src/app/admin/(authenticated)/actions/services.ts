@@ -19,9 +19,7 @@ const ToggleInput = z.object({
 
 export type ServiceResult = { ok: true } | { ok: false; error: string }
 
-export async function createService(
-  raw: z.infer<typeof CreateInput>,
-): Promise<ServiceResult> {
+export async function createService(raw: z.infer<typeof CreateInput>): Promise<ServiceResult> {
   const parsed = CreateInput.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 
@@ -58,9 +56,7 @@ const UpdateInput = z.object({
   priceCents: z.number().int().nonnegative(),
 })
 
-export async function updateService(
-  raw: z.infer<typeof UpdateInput>,
-): Promise<ServiceResult> {
+export async function updateService(raw: z.infer<typeof UpdateInput>): Promise<ServiceResult> {
   const parsed = UpdateInput.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 

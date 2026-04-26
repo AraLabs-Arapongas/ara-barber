@@ -1,9 +1,6 @@
 'use client'
 
-import {
-  savePushSubscription,
-  deleteMyPushSubscription,
-} from '@/app/actions/push-subscriptions'
+import { savePushSubscription, deleteMyPushSubscription } from '@/app/actions/push-subscriptions'
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ''
 
@@ -49,9 +46,7 @@ export async function requestAndSubscribe(): Promise<SubscribeResult> {
   if (!isPushSupported()) return { ok: false, reason: 'unsupported' }
 
   const permission =
-    Notification.permission === 'granted'
-      ? 'granted'
-      : await Notification.requestPermission()
+    Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission()
 
   if (permission !== 'granted') return { ok: false, reason: 'denied' }
 

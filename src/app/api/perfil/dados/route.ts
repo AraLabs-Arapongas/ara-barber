@@ -18,7 +18,9 @@ export async function GET() {
 
   const { data: customer } = await supabase
     .from('customers')
-    .select('id, tenant_id, name, email, phone, whatsapp, birth_date, notes, consent_given_at, is_active, created_at, updated_at')
+    .select(
+      'id, tenant_id, name, email, phone, whatsapp, birth_date, notes, consent_given_at, is_active, created_at, updated_at',
+    )
     .eq('tenant_id', tenant.id)
     .eq('user_id', user.id)
     .maybeSingle()
@@ -52,9 +54,7 @@ export async function GET() {
     appointments: appointments ?? [],
   }
 
-  const filename = `meus-dados-${tenant.slug}-${new Date()
-    .toISOString()
-    .slice(0, 10)}.json`
+  const filename = `meus-dados-${tenant.slug}-${new Date().toISOString().slice(0, 10)}.json`
 
   return new NextResponse(JSON.stringify(payload, null, 2), {
     status: 200,

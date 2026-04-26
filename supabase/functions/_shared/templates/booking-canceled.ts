@@ -10,6 +10,17 @@ export type CancelData = {
   tenantLogoUrl: string | null
   canceledBy: 'CUSTOMER' | 'STAFF'
   bookAgainUrl: string
+  /**
+   * Texto de intro customizável vindo de `tenant_message_templates.body`
+   * (placeholders já substituídos). Quando ausente, usa default que varia
+   * conforme `canceledBy`.
+   */
+  introText?: string | null
+  /**
+   * Subject customizado vindo de `tenant_message_templates.subject`
+   * (placeholders já substituídos). Quando ausente, usa o default.
+   */
+  subjectOverride?: string | null
 }
 
 export function renderCancelHtml(d: CancelData): string {
@@ -18,9 +29,12 @@ export function renderCancelHtml(d: CancelData): string {
     ? `<img src="${d.tenantLogoUrl}" alt="${escapeHtml(d.tenantName)}" style="max-height:48px;margin-bottom:12px" />`
     : `<div style="font-weight:600;font-size:18px;color:${color};margin-bottom:12px">${escapeHtml(d.tenantName)}</div>`
 
-  const intro = d.canceledBy === 'CUSTOMER'
-    ? `Olá ${escapeHtml(d.customerName)}, recebemos seu cancelamento.`
-    : `Olá ${escapeHtml(d.customerName)}, ${escapeHtml(d.tenantName)} cancelou sua reserva.`
+  const intro =
+    d.introText && d.introText.trim()
+      ? d.introText
+      : d.canceledBy === 'CUSTOMER'
+        ? `Olá ${d.customerName}, recebemos seu cancelamento.`
+        : `Olá ${d.customerName}, ${d.tenantName} cancelou sua reserva.`
 
   return `<!doctype html>
 <html><body style="margin:0;padding:24px;background:#f5f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f1f1f">
@@ -28,7 +42,7 @@ export function renderCancelHtml(d: CancelData): string {
     <tr><td style="padding:32px 32px 16px">${logo}</td></tr>
     <tr><td style="padding:0 32px 24px">
       <h1 style="margin:0 0 8px;font-size:22px">Reserva cancelada</h1>
-      <p style="margin:0 0 16px;color:#555">${intro}</p>
+      <p style="margin:0 0 16px;color:#555">${escapeHtml(intro)}</p>
       <div style="padding:16px;background:#f5f0e8;border-radius:8px;margin-bottom:24px">
         <p style="margin:0 0 4px;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:0.08em">Era em</p>
         <p style="margin:0 0 12px;font-size:16px;font-weight:600;text-decoration:line-through">${formatDateTime(d.startAtISO)}</p>
@@ -45,15 +59,22 @@ export function renderCancelHtml(d: CancelData): string {
 }
 
 export function cancelSubject(d: CancelData): string {
+  if (d.subjectOverride && d.subjectOverride.trim()) {
+    return d.subjectOverride
+  }
   return `Reserva cancelada — ${formatDateTime(d.startAtISO)}`
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[c]!))
+  return s.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[c]!,
+  )
 }

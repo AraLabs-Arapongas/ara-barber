@@ -135,10 +135,7 @@ export async function deleteAvailabilityBlock(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('availability_blocks')
-    .delete()
-    .eq('id', parsed.data.id)
+  const { error } = await supabase.from('availability_blocks').delete().eq('id', parsed.data.id)
 
   if (error) return { ok: false, error: 'Falha ao remover.' }
 

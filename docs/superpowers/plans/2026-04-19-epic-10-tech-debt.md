@@ -46,6 +46,8 @@
 | 28 | Sync automático `tenants.name → user_metadata.tenant_name` em todos staff users do tenant (trigger SQL on update) | Sessão 2026-04-25 staff password recovery | Baixa |
 | 29 | Migrar `tenant_name` de `user_metadata` (user-writable) pra `app_metadata` (service_role only) — checar se Supabase template syntax suporta `{{ .AppData }}` | Sessão 2026-04-25 staff password recovery | Baixa |
 | 30 | Captcha em `/salon/forgot-password` antes de scale (>100 tenants) | Sessão 2026-04-25 staff password recovery | Baixa |
+| 31 | Status enum operacional + modo recepção (ARRIVED, IN_PROGRESS) | Sessão 2026-04-26 admin revamp / decisão #2 | Média |
+| 32 | Categoria de serviço (agrupamento na tela Serviços e booking público) | Sessão 2026-04-26 admin revamp / decisão #4 | Baixa |
 
 ---
 
@@ -653,6 +655,41 @@ Os valores literais foram omitidos deste plano de propósito para não aparecere
 - [ ] **Step 4:** Backfill via `mcp__supabase__execute_sql` — UPDATE com city pros 3 tenants antigos.
 
 **Prioridade:** Baixa — afeta só estética do header.
+
+---
+
+## Task 31: Status enum operacional + modo recepção
+
+**Origem:** Decisão #2 do revamp 2026-04-26.
+
+Adicionar `ARRIVED` e `IN_PROGRESS` ao enum `appointment_status`. Permite distinguir "cliente chegou na recepção" de "atendimento em andamento" e habilita o "Modo recepção/painel" descrito na seção 6.7 do spec funcional do revamp.
+
+**Steps:**
+- [ ] Migration: `ALTER TYPE appointment_status ADD VALUE 'ARRIVED'`; mesma pra `'IN_PROGRESS'`. Aplicar via MCP.
+- [ ] Regenerar types TS via `mcp__supabase__generate_typescript_types`.
+- [ ] Em `src/lib/appointments/labels.ts`: adicionar `ARRIVED: 'Chegou'` e `IN_PROGRESS: 'Em atendimento'` em `STATUS_LABELS` + tones em `STATUS_TONE`.
+- [ ] Em `src/lib/appointments/queries.ts` (e similares): atualizar filtros `status NOT IN (CANCELED, NO_SHOW)` que excluem cancelados — agora ARRIVED/IN_PROGRESS devem entrar como ativos.
+- [ ] No detalhe do appointment (`/admin/dashboard/agenda/[id]`): adicionar botões "Marcar como chegou" (CONFIRMED → ARRIVED), "Iniciar atendimento" (ARRIVED → IN_PROGRESS), "Concluir" (IN_PROGRESS → COMPLETED).
+- [ ] Modo recepção: nova rota `/admin/dashboard/painel` com layout maximizado (Agora/Próximos/Livres) pra exibição em tablet/PC durante expediente.
+
+**Aceite:** staff consegue trackear o ciclo "marcou → confirmou → chegou → atendendo → concluído"; tela painel renderiza em tempo real os 3 buckets.
+
+---
+
+## Task 32: Categoria de serviço
+
+**Origem:** Decisão #4 do revamp 2026-04-26.
+
+Permitir agrupar serviços por categoria (Cabelo, Barba, Unhas, Estética, Pacotes, etc) na tela Serviços e no booking público. Categoria é free-text por enquanto (sem FK) pra não bloquear lançamento; promover pra tabela própria se taxonomy crescer.
+
+**Steps:**
+- [ ] Migration: `ALTER TABLE services ADD COLUMN category text` (free-text, sem FK). Aplicar via MCP.
+- [ ] Regenerar types TS.
+- [ ] No editor de serviço (em `services-manager.tsx`): adicionar input com autocomplete a partir das categorias já existentes do tenant.
+- [ ] Na tela Serviços (`/admin/dashboard/servicos`): agrupar cards por categoria com header dobrável; categoria vazia/null → grupo "Outros".
+- [ ] No booking público (`/book`): mesmo agrupamento.
+
+**Aceite:** staff cria serviço com categoria; tela Serviços e `/book` mostram agrupado; serviço sem categoria cai em "Outros" sem regredir UX dos tenants existentes.
 
 ---
 

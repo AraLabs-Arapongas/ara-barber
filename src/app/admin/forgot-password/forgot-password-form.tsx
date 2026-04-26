@@ -15,7 +15,8 @@ export function ForgotPasswordForm() {
   if (state.ok) {
     return (
       <Alert variant="success" title="E-mail enviado">
-        Se essa conta existe, enviamos um link pra redefinir a senha. Confira sua caixa de entrada (e o spam).
+        Se essa conta existe, enviamos um link pra redefinir a senha. Confira sua caixa de entrada
+        (e o spam).
       </Alert>
     )
   }
@@ -38,7 +39,14 @@ export function ForgotPasswordForm() {
         </Alert>
       ) : null}
 
-      <Button type="submit" size="lg" fullWidth loading={pending} loadingText="Enviando..." className="mt-3">
+      <Button
+        type="submit"
+        size="lg"
+        fullWidth
+        loading={pending}
+        loadingText="Enviando..."
+        className="mt-3"
+      >
         Enviar link de recuperação
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Button>

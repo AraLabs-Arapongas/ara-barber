@@ -87,7 +87,7 @@ export function StaffPushToggle() {
     state === 'on'
       ? 'Toque pra desativar.'
       : state === 'off'
-        ? errorMsg ?? 'Recebe aviso de novo agendamento.'
+        ? (errorMsg ?? 'Recebe aviso de novo agendamento.')
         : state === 'denied'
           ? 'Habilite nas configurações do navegador (cadeado/site settings) e recarregue a página.'
           : state === 'unsupported'

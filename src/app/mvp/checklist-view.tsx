@@ -111,18 +111,13 @@ export function MvpChecklistView({ sections }: Props) {
         return (
           <section
             key={section.id}
-            className={cn(
-              'rounded-xl border p-4 shadow-xs sm:p-5',
-              TONE_CLASSES[section.tone],
-            )}
+            className={cn('rounded-xl border p-4 shadow-xs sm:p-5', TONE_CLASSES[section.tone])}
           >
             <header className="mb-3">
               <h2 className="font-display text-[1.125rem] font-semibold leading-tight tracking-tight text-fg sm:text-[1.25rem]">
                 {section.title}
               </h2>
-              <p className="mt-0.5 text-[0.8125rem] text-fg-muted">
-                {section.subtitle}
-              </p>
+              <p className="mt-0.5 text-[0.8125rem] text-fg-muted">{section.subtitle}</p>
               <p className="mt-1 text-[0.6875rem] text-fg-subtle">
                 {sectionDone} de {section.items.length}
               </p>
@@ -169,9 +164,7 @@ export function MvpChecklistView({ sections }: Props) {
                           {item.title}
                         </p>
                         {item.detail ? (
-                          <p className="mt-0.5 text-[0.8125rem] text-fg-muted">
-                            {item.detail}
-                          </p>
+                          <p className="mt-0.5 text-[0.8125rem] text-fg-muted">{item.detail}</p>
                         ) : null}
                       </div>
                     </button>

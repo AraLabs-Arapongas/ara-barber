@@ -18,9 +18,7 @@ export default async function MeusAgendamentosPage() {
       <main className="mx-auto w-full max-w-xl px-5 pt-8 pb-16 sm:px-6">
         <Card className="shadow-xs">
           <CardContent className="py-10 text-center">
-            <p className="text-[0.9375rem] text-fg-muted">
-              Entre pra ver suas reservas.
-            </p>
+            <p className="text-[0.9375rem] text-fg-muted">Entre pra ver suas reservas.</p>
             <Link
               href="/book/login"
               className="mt-4 inline-block text-[0.875rem] font-medium text-brand-primary hover:underline"

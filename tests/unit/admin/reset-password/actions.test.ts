@@ -80,7 +80,10 @@ describe('resetPasswordAction', () => {
   it('traduz code "same_password" pra mensagem PT-BR', async () => {
     const update = vi.fn().mockResolvedValue({
       data: { user: null },
-      error: { message: 'New password should be different from the old password', code: 'same_password' },
+      error: {
+        message: 'New password should be different from the old password',
+        code: 'same_password',
+      },
     })
     mockSupabaseAuth(update)
 

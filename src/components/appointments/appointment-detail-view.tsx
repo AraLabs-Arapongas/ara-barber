@@ -46,8 +46,7 @@ export function AppointmentDetailView({ id }: Props) {
   const endMs = new Date(appt.endAt).getTime()
   const cutoffMs = startMs - cancellationWindowHours * 60 * 60 * 1000
   const canCancel =
-    (appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED') &&
-    nowMs <= cutoffMs
+    (appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED') && nowMs <= cutoffMs
 
   const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenantTimezone,

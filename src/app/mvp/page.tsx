@@ -28,9 +28,9 @@ export default async function MvpPage() {
           Launch checklist do MVP
         </h1>
         <p className="mt-2 max-w-2xl text-[0.9375rem] text-fg-muted">
-          O que falta pra soltar o primeiro tenant piloto em produção. Blockers em
-          vermelho, decisões suas em amarelo, limitações pra alinhar com o cliente
-          em azul, nice-to-haves em verde, ordem sugerida em roxo.
+          O que falta pra soltar o primeiro tenant piloto em produção. Blockers em vermelho,
+          decisões suas em amarelo, limitações pra alinhar com o cliente em azul, nice-to-haves em
+          verde, ordem sugerida em roxo.
         </p>
       </header>
 

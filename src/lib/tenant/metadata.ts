@@ -22,12 +22,13 @@ export function buildTenantMetadata(
   const appleIcon = tenant.logoUrl ?? tenant.faviconUrl ?? null
   const iconHref = tenant.faviconUrl ?? tenant.logoUrl ?? null
 
-  const icons = iconHref || appleIcon
-    ? {
-        ...(iconHref ? { icon: iconHref } : {}),
-        ...(appleIcon ? { apple: appleIcon } : {}),
-      }
-    : undefined
+  const icons =
+    iconHref || appleIcon
+      ? {
+          ...(iconHref ? { icon: iconHref } : {}),
+          ...(appleIcon ? { apple: appleIcon } : {}),
+        }
+      : undefined
 
   const ogImages = tenant.logoUrl ? [{ url: tenant.logoUrl }] : undefined
 

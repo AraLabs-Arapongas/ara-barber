@@ -2,10 +2,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeft, Clock, Tag, User } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { getTenantPublicUrl } from '@/lib/tenant/public-url'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { AppointmentActions } from '@/components/agenda/appointment-actions'
+import { WhatsappButton } from '@/components/dashboard/whatsapp-button'
 import { canTransition, type AppointmentStatus } from '@/lib/appointments/status-rules'
 import { formatCentsToBrl } from '@/lib/money'
 
@@ -46,9 +48,7 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
   const { id } = await params
   const sp = await searchParams
   const fromDate = typeof sp.from === 'string' ? sp.from : undefined
-  const backHref = fromDate
-    ? `/admin/dashboard/agenda?date=${fromDate}`
-    : '/admin/dashboard/agenda'
+  const backHref = fromDate ? `/admin/dashboard/agenda?date=${fromDate}` : '/admin/dashboard/agenda'
 
   const supabase = await createClient()
   const { data: appt } = await supabase
@@ -71,6 +71,17 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
     .eq('id', tenant.id)
     .maybeSingle()
   const cancellationWindowHours = tenantRow?.cancellation_window_hours ?? 2
+
+  // Template WhatsApp pra "Enviar pelo WhatsApp" — só renderizamos o botão
+  // quando o template está habilitado (staff pode ter desativado em
+  // /admin/dashboard/comunicacao/whatsapp).
+  const { data: whatsappTemplate } = await supabase
+    .from('tenant_message_templates')
+    .select('body, enabled')
+    .eq('tenant_id', tenant.id)
+    .eq('channel', 'WHATSAPP')
+    .eq('event', 'BOOKING_CONFIRMATION')
+    .maybeSingle()
 
   const ctx = {
     actor: 'staff' as const,
@@ -100,6 +111,16 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
 
   const customerName = row.customer?.name ?? row.customer_name_snapshot ?? 'Cliente'
   const customerPhone = row.customer?.phone ?? null
+
+  const publicUrl = await getTenantPublicUrl(tenant)
+  const whatsappVars = {
+    nome: customerName,
+    servico: row.service?.name ?? '',
+    horario: dateTimeFmt.format(new Date(row.start_at)),
+    profissional: row.professional?.display_name || row.professional?.name || '',
+    link: publicUrl,
+  }
+  const showWhatsappButton = whatsappTemplate?.enabled === true && whatsappTemplate.body
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -150,6 +171,15 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
             value={customerName}
             sub={customerPhone ?? undefined}
           />
+          {showWhatsappButton ? (
+            <div className="pl-11">
+              <WhatsappButton
+                phone={customerPhone}
+                template={whatsappTemplate.body}
+                vars={whatsappVars}
+              />
+            </div>
+          ) : null}
           <InfoRow
             icon={<Clock className="h-4 w-4" />}
             label="Horário"

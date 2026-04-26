@@ -25,9 +25,7 @@ export default async function BookStepService({ searchParams }: PageProps) {
       <h1 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-fg">
         O que você quer fazer?
       </h1>
-      <p className="mt-1 mb-5 text-[0.9375rem] text-fg-muted">
-        Escolha o serviço pra começar.
-      </p>
+      <p className="mt-1 mb-5 text-[0.9375rem] text-fg-muted">Escolha o serviço pra começar.</p>
 
       {services.length === 0 ? (
         <div className="rounded-xl border border-border bg-surface p-6 text-center text-[0.875rem] text-fg-muted">

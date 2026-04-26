@@ -8,7 +8,7 @@ Tempo estimado: 20-30 minutos.
 
 Gera par de chaves localmente:
 
-```bash
+````bash
 npx -y web-push generate-vapid-keys --json
 
 
@@ -20,7 +20,7 @@ Saída será algo como:
   "publicKey": "BNxx...",
   "privateKey": "abc..."
 }
-```
+````
 
 **Guardar:**
 
@@ -56,15 +56,6 @@ No Supabase dashboard (Edge Function Secrets):
 
 - `CRON_SECRET` → valor gerado (**guarda esse valor** — vai precisar literalmente no passo 5 pra injetar no cron SQL)
 - `TENANT_ROOT_DOMAIN` → em dev: `lvh.me:3008`. Em produção: `aralabs.com.br`
-
-
-
-
-
-
-
-
-
 
 > ⚠️ **Edge Function Secrets não são visíveis do Postgres.** O `CRON_SECRET` aqui é validado dentro da edge function. O pg_cron roda em Postgres (outro ambiente) e precisa do mesmo valor literalmente na SQL que agenda o job — ver passo 5.
 >

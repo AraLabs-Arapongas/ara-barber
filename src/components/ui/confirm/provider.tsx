@@ -45,9 +45,7 @@ type DialogState =
   | ({ kind: 'typed' } & TypedConfirmOptions)
   | null
 
-type Resolver =
-  | ((value: boolean) => void)
-  | ((value: string | null) => void)
+type Resolver = ((value: boolean) => void) | ((value: string | null) => void)
 
 type ConfirmCtx = {
   openConfirm: (opts: ConfirmOptions) => Promise<boolean>
@@ -116,8 +114,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     else close(true)
   }
 
-  const destructive =
-    state && 'destructive' in state ? Boolean(state.destructive) : false
+  const destructive = state && 'destructive' in state ? Boolean(state.destructive) : false
   const confirmLabel = state?.confirmLabel ?? (state?.kind === 'prompt' ? 'OK' : 'Confirmar')
   const cancelLabel = state?.cancelLabel ?? 'Cancelar'
   const canConfirm =
@@ -161,12 +158,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             ) : null}
 
             <div className="flex gap-2 pt-1">
-              <Button
-                type="button"
-                variant="secondary"
-                fullWidth
-                onClick={dismiss}
-              >
+              <Button type="button" variant="secondary" fullWidth onClick={dismiss}>
                 {cancelLabel}
               </Button>
               <Button

@@ -130,9 +130,7 @@ export async function getPendingConfirmations(
  * Busca appointments do cliente atual. Quando `tenantId` for passado, filtra.
  * RLS já limita ao próprio customer via customers.user_id = auth.uid().
  */
-export async function getMyCustomerAppointments(
-  tenantId?: string,
-): Promise<AgendaAppointment[]> {
+export async function getMyCustomerAppointments(tenantId?: string): Promise<AgendaAppointment[]> {
   const supabase = await createClient()
   let query = supabase
     .from('appointments')

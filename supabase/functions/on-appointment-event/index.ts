@@ -11,6 +11,8 @@ import {
   cancelSubject,
   type CancelData,
 } from '../_shared/templates/booking-canceled.ts'
+import { applyTemplate, loadTemplate } from '../_shared/message-templates.ts'
+import { formatDateTime } from '../_shared/format.ts'
 
 type AppointmentRow = {
   id: string
@@ -55,13 +57,15 @@ async function loadEnrichedData(appointmentId: string): Promise<EnrichedData | n
   const client = createAdminClient()
   const { data } = await client
     .from('appointments')
-    .select(`
+    .select(
+      `
       id, tenant_id, start_at, status, canceled_by,
       service:services(id, name),
       professional:professionals(id, name, display_name),
       customer:customers(id, user_id, name, email),
       tenant:tenants(id, name, slug, primary_color, logo_url, contact_phone, email)
-    `)
+    `,
+    )
     .eq('id', appointmentId)
     .maybeSingle()
   return (data as unknown as EnrichedData) ?? null
@@ -69,9 +73,7 @@ async function loadEnrichedData(appointmentId: string): Promise<EnrichedData | n
 
 function tenantRoot(): { protocol: 'http' | 'https'; host: string } {
   const host = Deno.env.get('TENANT_ROOT_DOMAIN') ?? 'aralabs.com.br'
-  const protocol = host.includes('lvh.me') || host.startsWith('localhost')
-    ? 'http'
-    : 'https'
+  const protocol = host.includes('lvh.me') || host.startsWith('localhost') ? 'http' : 'https'
   return { protocol, host }
 }
 
@@ -126,26 +128,42 @@ async function handleInsert(row: AppointmentRow) {
   const proLabel = professional.display_name ?? professional.name
 
   if (customer.email) {
-    const confirmData: ConfirmationData = {
-      customerName: customer.name ?? 'cliente',
-      serviceName: service.name,
-      professionalName: proLabel,
-      startAtISO: row.start_at,
-      tenantName: tenant.name,
-      tenantPrimaryColor: tenant.primary_color,
-      tenantLogoUrl: tenant.logo_url,
-      tenantPhone: tenant.contact_phone,
-      appointmentUrl: tenantAppointmentUrl(tenant.slug, row.id),
+    const tpl = await loadTemplate(row.tenant_id, 'EMAIL', 'BOOKING_CONFIRMATION')
+    if (!tpl.enabled) {
+      console.warn(
+        `Template EMAIL/BOOKING_CONFIRMATION desativado pro tenant ${row.tenant_id}; skip e-mail.`,
+      )
+    } else {
+      const vars = {
+        nome: customer.name ?? 'cliente',
+        servico: service.name,
+        profissional: proLabel,
+        horario: formatDateTime(row.start_at),
+        link: tenantAppointmentUrl(tenant.slug, row.id),
+      }
+      const confirmData: ConfirmationData = {
+        customerName: customer.name ?? 'cliente',
+        serviceName: service.name,
+        professionalName: proLabel,
+        startAtISO: row.start_at,
+        tenantName: tenant.name,
+        tenantPrimaryColor: tenant.primary_color,
+        tenantLogoUrl: tenant.logo_url,
+        tenantPhone: tenant.contact_phone,
+        appointmentUrl: tenantAppointmentUrl(tenant.slug, row.id),
+        introText: applyTemplate(tpl.body, vars),
+        subjectOverride: tpl.subject ? applyTemplate(tpl.subject, vars) : null,
+      }
+      await sendEmail({
+        to: customer.email,
+        subject: confirmationSubject(confirmData),
+        html: renderConfirmationHtml(confirmData),
+        replyTo: tenant.email,
+        tenantId: row.tenant_id,
+        appointmentId: row.id,
+        event: 'confirmation',
+      })
     }
-    await sendEmail({
-      to: customer.email,
-      subject: confirmationSubject(confirmData),
-      html: renderConfirmationHtml(confirmData),
-      replyTo: tenant.email,
-      tenantId: row.tenant_id,
-      appointmentId: row.id,
-      event: 'confirmation',
-    })
   }
 
   if (customer.user_id) {
@@ -189,26 +207,42 @@ async function handleStatusChange(oldRow: AppointmentRow, row: AppointmentRow) {
       : 'STAFF'
 
   if (customer.email) {
-    const cancelData: CancelData = {
-      customerName: customer.name ?? 'cliente',
-      serviceName: service.name,
-      professionalName: proLabel,
-      startAtISO: row.start_at,
-      tenantName: tenant.name,
-      tenantPrimaryColor: tenant.primary_color,
-      tenantLogoUrl: tenant.logo_url,
-      canceledBy,
-      bookAgainUrl: tenantBookAgainUrl(tenant.slug),
+    const tpl = await loadTemplate(row.tenant_id, 'EMAIL', 'BOOKING_CANCELLATION')
+    if (!tpl.enabled) {
+      console.warn(
+        `Template EMAIL/BOOKING_CANCELLATION desativado pro tenant ${row.tenant_id}; skip e-mail.`,
+      )
+    } else {
+      const vars = {
+        nome: customer.name ?? 'cliente',
+        servico: service.name,
+        profissional: proLabel,
+        horario: formatDateTime(row.start_at),
+        link: tenantBookAgainUrl(tenant.slug),
+      }
+      const cancelData: CancelData = {
+        customerName: customer.name ?? 'cliente',
+        serviceName: service.name,
+        professionalName: proLabel,
+        startAtISO: row.start_at,
+        tenantName: tenant.name,
+        tenantPrimaryColor: tenant.primary_color,
+        tenantLogoUrl: tenant.logo_url,
+        canceledBy,
+        bookAgainUrl: tenantBookAgainUrl(tenant.slug),
+        introText: applyTemplate(tpl.body, vars),
+        subjectOverride: tpl.subject ? applyTemplate(tpl.subject, vars) : null,
+      }
+      await sendEmail({
+        to: customer.email,
+        subject: cancelSubject(cancelData),
+        html: renderCancelHtml(cancelData),
+        replyTo: tenant.email,
+        tenantId: row.tenant_id,
+        appointmentId: row.id,
+        event: 'cancellation',
+      })
     }
-    await sendEmail({
-      to: customer.email,
-      subject: cancelSubject(cancelData),
-      html: renderCancelHtml(cancelData),
-      replyTo: tenant.email,
-      tenantId: row.tenant_id,
-      appointmentId: row.id,
-      event: 'cancellation',
-    })
   }
 
   if (customer.user_id) {

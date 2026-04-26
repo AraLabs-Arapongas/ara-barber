@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  useRef,
-  useState,
-  type ChangeEvent,
-  type MouseEvent,
-  type SyntheticEvent,
-} from 'react'
+import { useRef, useState, type ChangeEvent, type MouseEvent, type SyntheticEvent } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface OtpInputProps {
@@ -127,11 +121,7 @@ export function OtpInput({
             'relative flex aspect-square w-full min-w-0 max-w-14 flex-1 cursor-text items-center justify-center',
             'rounded-lg border bg-surface-raised',
             'transition-[border-color] duration-200 ease-out',
-            isError
-              ? 'border-error'
-              : activeIndex === i
-                ? 'border-brand-primary'
-                : 'border-border',
+            isError ? 'border-error' : activeIndex === i ? 'border-brand-primary' : 'border-border',
             disabled && 'cursor-not-allowed opacity-60',
           )}
         >

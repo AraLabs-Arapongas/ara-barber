@@ -37,9 +37,7 @@ export function OutOfPilotStub({ section, title, description }: Props) {
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
             <Sparkles className="h-5 w-5" aria-hidden="true" />
           </span>
-          <h2 className="font-display text-[1.125rem] font-semibold text-fg">
-            Em breve
-          </h2>
+          <h2 className="font-display text-[1.125rem] font-semibold text-fg">Em breve</h2>
           <p className="max-w-sm text-[0.875rem] text-fg-muted">{description}</p>
         </CardContent>
       </Card>

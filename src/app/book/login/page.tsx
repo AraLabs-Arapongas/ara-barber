@@ -17,9 +17,7 @@ export default async function BookStepLogin({ searchParams }: PageProps) {
   const hasWizardParams = Boolean(
     current.serviceId && current.date && current.time && current.professionalId,
   )
-  const nextHref = hasWizardParams
-    ? bookHrefWith('/book/confirmar', current)
-    : '/meus-agendamentos'
+  const nextHref = hasWizardParams ? bookHrefWith('/book/confirmar', current) : '/meus-agendamentos'
 
   const supabase = await createClient()
   const {

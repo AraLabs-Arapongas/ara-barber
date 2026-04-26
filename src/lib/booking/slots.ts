@@ -111,7 +111,8 @@ export function weekdayInTenantTZ(dateISO: string, tenantTimezone: string): numb
  * Um slot é "disponível" se existe ao menos um profissional candidato:
  * - cuja jornada semanal cobre aquele horário inteiro,
  * - sem conflito com appointments ativos,
- * - sem bloqueio em availability_blocks.
+ * - sem bloqueio em availability_blocks (próprios do profissional ou tenant-wide
+ *   com `professional_id IS NULL`).
  */
 export function computeSlots(input: SlotInput): Slot[] {
   const step = input.stepMinutes ?? 30
@@ -127,9 +128,7 @@ export function computeSlots(input: SlotInput): Slot[] {
   for (let t = businessStart; t + input.serviceDurationMinutes <= businessEnd; t += step) {
     const time = minutesToTime(t)
     const slotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
-    const slotEnd = new Date(
-      slotStart.getTime() + input.serviceDurationMinutes * 60_000,
-    )
+    const slotEnd = new Date(slotStart.getTime() + input.serviceDurationMinutes * 60_000)
 
     if (slotStart.getTime() < input.now.getTime()) continue
 
@@ -146,7 +145,7 @@ export function computeSlots(input: SlotInput): Slot[] {
 
       const blocked = input.blocks.some(
         (b) =>
-          b.professionalId === profId &&
+          (b.professionalId === profId || b.professionalId === null) &&
           new Date(b.startAt).getTime() < slotEnd.getTime() &&
           new Date(b.endAt).getTime() > slotStart.getTime(),
       )

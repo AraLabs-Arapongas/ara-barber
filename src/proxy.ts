@@ -10,10 +10,7 @@ export async function proxy(req: NextRequest) {
   const parsed = parseHostToSlug(host)
 
   // Redirect transitório: rotas antigas /salon/* → /admin/*
-  if (
-    Date.now() < SALON_REDIRECT_DEADLINE.getTime() &&
-    req.nextUrl.pathname.startsWith('/salon')
-  ) {
+  if (Date.now() < SALON_REDIRECT_DEADLINE.getTime() && req.nextUrl.pathname.startsWith('/salon')) {
     const newUrl = req.nextUrl.clone()
     newUrl.pathname = req.nextUrl.pathname.replace(/^\/salon/, '/admin')
     return NextResponse.redirect(newUrl, 302)

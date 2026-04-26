@@ -20,16 +20,9 @@ export type EnsuredCustomer = {
  * Staff (BUSINESS_OWNER/RECEPTIONIST/PROFESSIONAL/PLATFORM_ADMIN) nunca vira customer:
  * retorna null e o chamador precisa redirecionar pra outra tela.
  */
-const STAFF_ROLES = new Set([
-  'PLATFORM_ADMIN',
-  'BUSINESS_OWNER',
-  'RECEPTIONIST',
-  'PROFESSIONAL',
-])
+const STAFF_ROLES = new Set(['PLATFORM_ADMIN', 'BUSINESS_OWNER', 'RECEPTIONIST', 'PROFESSIONAL'])
 
-export async function ensureCustomerForTenant(
-  tenantId: string,
-): Promise<EnsuredCustomer | null> {
+export async function ensureCustomerForTenant(tenantId: string): Promise<EnsuredCustomer | null> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -95,9 +88,7 @@ export async function ensureCustomerForTenant(
   }
 }
 
-export async function getCustomerForTenant(
-  tenantId: string,
-): Promise<EnsuredCustomer | null> {
+export async function getCustomerForTenant(tenantId: string): Promise<EnsuredCustomer | null> {
   const supabase = await createClient()
   const {
     data: { user },

@@ -15,7 +15,9 @@ export function StepIndicator({ current, total, labels }: Props) {
         <span>
           Passo {current} de {total}
         </span>
-        {labels?.[current - 1] ? <span className="text-fg-muted">{labels[current - 1]}</span> : null}
+        {labels?.[current - 1] ? (
+          <span className="text-fg-muted">{labels[current - 1]}</span>
+        ) : null}
       </div>
       <div className="flex gap-1">
         {Array.from({ length: total }).map((_, i) => (

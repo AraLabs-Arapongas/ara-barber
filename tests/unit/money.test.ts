@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  parseBrlToCents,
-  formatCentsToBrl,
-  parsePercentToBasisPoints,
-} from '@/lib/money'
+import { parseBrlToCents, formatCentsToBrl, parsePercentToBasisPoints } from '@/lib/money'
 
 describe('parseBrlToCents', () => {
   it.each([

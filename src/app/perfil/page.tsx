@@ -36,8 +36,7 @@ export default async function PerfilPage() {
 
   const customer = await getCustomerForTenant(tenant.id)
   const email = customer?.email ?? user.email ?? ''
-  const displayName =
-    customer?.name?.trim() || (email ? email.split('@')[0] : null) || 'Cliente'
+  const displayName = customer?.name?.trim() || (email ? email.split('@')[0] : null) || 'Cliente'
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 py-8 sm:px-6">

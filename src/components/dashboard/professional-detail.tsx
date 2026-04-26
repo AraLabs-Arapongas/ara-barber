@@ -3,42 +3,20 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition, type FormEvent } from 'react'
-import {
-  CalendarX,
-  ChevronLeft,
-  Phone,
-  Plus,
-  Power,
-  Trash2,
-  User,
-} from 'lucide-react'
+import { CalendarX, ChevronLeft, Phone, Power, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
-import { BottomSheet } from '@/components/ui/bottom-sheet'
-import { useConfirm } from '@/components/ui/confirm/provider'
 import { formatBrPhone } from '@/lib/format'
 import {
   toggleProfessionalActive,
   updateProfessional,
 } from '@/app/admin/(authenticated)/actions/professionals'
 import { toggleProfessionalService } from '@/app/admin/(authenticated)/actions/professional-services'
-import {
-  createAvailabilityBlock,
-  deleteAvailabilityBlock,
-  saveWeeklyAvailability,
-} from '@/app/admin/(authenticated)/actions/availability'
+import { saveWeeklyAvailability } from '@/app/admin/(authenticated)/actions/availability'
 
-const DAYS_LONG = [
-  'Domingo',
-  'Segunda',
-  'Terça',
-  'Quarta',
-  'Quinta',
-  'Sexta',
-  'Sábado',
-]
+const DAYS_LONG = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 export type DetailPro = {
   id: string
@@ -69,28 +47,6 @@ type Props = {
   linkedServiceIds: string[]
   availability: DetailAvailability[]
   blocks: DetailBlock[]
-}
-
-function pad(n: number): string {
-  return String(n).padStart(2, '0')
-}
-
-function toDateTimeInput(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function formatRange(startAt: string, endAt: string): string {
-  const a = new Date(startAt)
-  const b = new Date(endAt)
-  const dateFmt: Intl.DateTimeFormatOptions = {
-    day: '2-digit',
-    month: 'short',
-  }
-  const timeFmt: Intl.DateTimeFormatOptions = {
-    hour: '2-digit',
-    minute: '2-digit',
-  }
-  return `${a.toLocaleDateString('pt-BR', dateFmt)} ${a.toLocaleTimeString('pt-BR', timeFmt)} → ${b.toLocaleDateString('pt-BR', dateFmt)} ${b.toLocaleTimeString('pt-BR', timeFmt)}`
 }
 
 export function ProfessionalDetail({
@@ -124,15 +80,43 @@ export function ProfessionalDetail({
 
       <div className="space-y-8">
         <InfoSection pro={pro} />
-        <ServicesSection
-          proId={pro.id}
-          services={services}
-          linkedServiceIds={linkedServiceIds}
-        />
+        <ServicesSection proId={pro.id} services={services} linkedServiceIds={linkedServiceIds} />
         <JourneySection proId={pro.id} entries={availability} />
-        <BlocksSection proId={pro.id} blocks={blocks} />
+        <BlocksLinkSection proId={pro.id} count={blocks.length} />
       </div>
     </main>
+  )
+}
+
+function BlocksLinkSection({ proId, count }: { proId: string; count: number }) {
+  return (
+    <section>
+      <SectionTitle>Bloqueios</SectionTitle>
+      <Card className="shadow-xs">
+        <CardContent className="flex items-center justify-between gap-3 py-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning-bg text-warning">
+              <CalendarX className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="font-medium text-fg">
+                {count > 0
+                  ? `${count} bloqueio${count === 1 ? '' : 's'} futuro${count === 1 ? '' : 's'}`
+                  : 'Nenhum bloqueio futuro'}
+              </p>
+              <p className="text-[0.8125rem] text-fg-muted">
+                Folgas, férias e ausências são geridas na tela central de bloqueios.
+              </p>
+            </div>
+          </div>
+          <Link href={`/admin/dashboard/bloqueios?professional=${proId}`} className="shrink-0">
+            <Button type="button" variant="secondary" size="sm">
+              Ver bloqueios deste profissional
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    </section>
   )
 }
 
@@ -257,9 +241,7 @@ function ServicesSection({
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [optimistic, setOptimistic] = useState<Set<string>>(
-    () => new Set(linkedServiceIds),
-  )
+  const [optimistic, setOptimistic] = useState<Set<string>>(() => new Set(linkedServiceIds))
   const [error, setError] = useState<string | null>(null)
 
   const active = useMemo(() => services.filter((s) => s.isActive), [services])
@@ -340,13 +322,7 @@ function ServicesSection({
   )
 }
 
-function JourneySection({
-  proId,
-  entries,
-}: {
-  proId: string
-  entries: DetailAvailability[]
-}) {
+function JourneySection({ proId, entries }: { proId: string; entries: DetailAvailability[] }) {
   type Draft = {
     weekday: number
     startTime: string
@@ -374,11 +350,7 @@ function JourneySection({
       drafts.some((d, i) => {
         const ref = initial[i]
         if (!ref) return true
-        return (
-          d.active !== ref.active ||
-          d.startTime !== ref.startTime ||
-          d.endTime !== ref.endTime
-        )
+        return d.active !== ref.active || d.startTime !== ref.startTime || d.endTime !== ref.endTime
       }),
     [drafts, initial],
   )
@@ -418,10 +390,7 @@ function JourneySection({
       <Card className="shadow-xs">
         <CardContent className="space-y-2 py-4">
           {drafts.map((d, i) => (
-            <div
-              key={d.weekday}
-              className="rounded-lg bg-bg-subtle/50 px-3 py-2"
-            >
+            <div key={d.weekday} className="rounded-lg bg-bg-subtle/50 px-3 py-2">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-fg">{DAYS_LONG[d.weekday]}</span>
                 <input
@@ -465,188 +434,7 @@ function JourneySection({
   )
 }
 
-function BlocksSection({
-  proId,
-  blocks,
-}: {
-  proId: string
-  blocks: DetailBlock[]
-}) {
-  const router = useRouter()
-  const confirm = useConfirm()
-  const [pending, startTransition] = useTransition()
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [defaultStart] = useState(() => toDateTimeInput(new Date()))
-  const [defaultEnd] = useState(() =>
-    toDateTimeInput(new Date(Date.now() + 2 * 86400000)),
-  )
-
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const form = e.currentTarget
-    const fd = new FormData(form)
-    const startAtStr = String(fd.get('startAt') ?? '')
-    const endAtStr = String(fd.get('endAt') ?? '')
-    const reason = String(fd.get('reason') ?? '').trim() || undefined
-
-    if (!startAtStr || !endAtStr) {
-      setError('Preencha período.')
-      return
-    }
-    if (new Date(startAtStr) >= new Date(endAtStr)) {
-      setError('Início deve ser antes do fim.')
-      return
-    }
-
-    startTransition(async () => {
-      const result = await createAvailabilityBlock({
-        professionalId: proId,
-        startAt: new Date(startAtStr).toISOString(),
-        endAt: new Date(endAtStr).toISOString(),
-        reason,
-      })
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      setSheetOpen(false)
-      setError(null)
-      form.reset()
-      router.refresh()
-    })
-  }
-
-  async function remove(id: string) {
-    const ok = await confirm({
-      title: 'Remover este bloqueio?',
-      description: 'O profissional volta a aceitar reservas no período.',
-      confirmLabel: 'Remover',
-      destructive: true,
-    })
-    if (!ok) return
-    startTransition(async () => {
-      await deleteAvailabilityBlock({ id })
-      router.refresh()
-    })
-  }
-
-  return (
-    <section>
-      <div className="mb-2 flex items-center justify-between px-1">
-        <SectionTitle noMargin>Bloqueios futuros</SectionTitle>
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => {
-            setError(null)
-            setSheetOpen(true)
-          }}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Novo bloqueio
-        </Button>
-      </div>
-      <Card className="shadow-xs">
-        <CardContent className="py-4">
-          {blocks.length === 0 ? (
-            <p className="text-[0.875rem] text-fg-muted">
-              Nenhum bloqueio agendado.
-            </p>
-          ) : (
-            <ul className="space-y-1.5">
-              {blocks.map((b) => (
-                <li
-                  key={b.id}
-                  className="flex items-center justify-between gap-2 rounded-md bg-bg-subtle px-3 py-2 text-[0.8125rem]"
-                >
-                  <span className="inline-flex min-w-0 items-center gap-2">
-                    <CalendarX className="h-3.5 w-3.5 shrink-0 text-warning" />
-                    <span className="truncate">
-                      <strong className="font-medium text-fg">
-                        {b.reason ?? 'Bloqueio'}
-                      </strong>{' '}
-                      <span className="text-fg-muted">
-                        · {formatRange(b.startAt, b.endAt)}
-                      </span>
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => remove(b.id)}
-                    disabled={pending}
-                    className="shrink-0 rounded-md p-1 text-fg-subtle hover:bg-error-bg hover:text-error disabled:opacity-50"
-                    aria-label="Remover bloqueio"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <BottomSheet
-        open={sheetOpen}
-        onClose={() => {
-          setSheetOpen(false)
-          setError(null)
-        }}
-        title="Novo bloqueio"
-        description="Folga, férias, consulta etc."
-      >
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <Input
-            label="Início"
-            name="startAt"
-            type="datetime-local"
-            defaultValue={defaultStart}
-            required
-          />
-          <Input
-            label="Fim"
-            name="endAt"
-            type="datetime-local"
-            defaultValue={defaultEnd}
-            required
-          />
-          <Input
-            label="Motivo"
-            name="reason"
-            placeholder="Férias, médico, ..."
-            maxLength={200}
-          />
-          {error ? <Alert variant="error">{error}</Alert> : null}
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                setSheetOpen(false)
-                setError(null)
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" fullWidth loading={pending}>
-              Adicionar
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-    </section>
-  )
-}
-
-function SectionTitle({
-  children,
-  noMargin,
-}: {
-  children: React.ReactNode
-  noMargin?: boolean
-}) {
+function SectionTitle({ children, noMargin }: { children: React.ReactNode; noMargin?: boolean }) {
   return (
     <h2
       className={`${noMargin ? '' : 'mb-2'} px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle`}

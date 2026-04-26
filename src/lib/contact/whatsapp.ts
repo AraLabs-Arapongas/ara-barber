@@ -28,3 +28,36 @@ export function buildTelUrl(phone: string | null | undefined): string | null {
   if (!digits) return null
   return `tel:+${digits}`
 }
+
+/**
+ * Substitui placeholders {chave} no body por valores. Placeholders sem valor
+ * (undefined, null, string vazia) permanecem literais — não viram "undefined"
+ * nem string vazia, pra ficar visível ao staff que falta dado.
+ *
+ * Exemplo:
+ *   applyTemplate("Oi {nome}, {servico} às {horario}", { nome: "Ana", servico: "Corte", horario: "14h" })
+ *   → "Oi Ana, Corte às 14h"
+ */
+export function applyTemplate(
+  body: string,
+  vars: Record<string, string | undefined | null>,
+): string {
+  return body.replace(/\{(\w+)\}/g, (match, key) => {
+    const v = Object.prototype.hasOwnProperty.call(vars, key) ? vars[key] : undefined
+    return v == null || v === '' ? match : v
+  })
+}
+
+/**
+ * Conveniência: gera URL `wa.me/<phone>?text=<msg>` aplicando template +
+ * percent-encoding (delegado a `buildWhatsappUrl`). Retorna null se o telefone
+ * for inválido.
+ */
+export function buildWhatsappFromTemplate(
+  phone: string | null | undefined,
+  template: string,
+  vars: Record<string, string | undefined | null>,
+): string | null {
+  const body = applyTemplate(template, vars)
+  return buildWhatsappUrl(phone, body)
+}

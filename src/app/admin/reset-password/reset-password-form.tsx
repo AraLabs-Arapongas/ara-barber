@@ -74,7 +74,14 @@ export function ResetPasswordForm() {
         </Alert>
       ) : null}
 
-      <Button type="submit" size="lg" fullWidth loading={pending} loadingText="Atualizando..." className="mt-3">
+      <Button
+        type="submit"
+        size="lg"
+        fullWidth
+        loading={pending}
+        loadingText="Atualizando..."
+        className="mt-3"
+      >
         Definir nova senha
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Button>

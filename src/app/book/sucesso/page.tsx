@@ -21,7 +21,11 @@ export default async function BookSuccess({ searchParams }: PageProps) {
   const tenant = await getCurrentTenantOrNotFound()
   const sp = await searchParams
   const appointmentId =
-    typeof sp.appointmentId === 'string' ? sp.appointmentId : Array.isArray(sp.appointmentId) ? sp.appointmentId[0] : ''
+    typeof sp.appointmentId === 'string'
+      ? sp.appointmentId
+      : Array.isArray(sp.appointmentId)
+        ? sp.appointmentId[0]
+        : ''
 
   let appt: BookingRow | null = null
   if (appointmentId) {
@@ -59,8 +63,8 @@ export default async function BookSuccess({ searchParams }: PageProps) {
         Agendado!
       </h1>
       <p className="mt-2 max-w-sm text-[0.9375rem] text-fg-muted">
-        Você vai receber uma confirmação por e-mail. Se precisar reagendar, entre em
-        &ldquo;Minhas reservas&rdquo;.
+        Você vai receber uma confirmação por e-mail. Se precisar reagendar, entre em &ldquo;Minhas
+        reservas&rdquo;.
       </p>
 
       {appt ? (
@@ -70,8 +74,7 @@ export default async function BookSuccess({ searchParams }: PageProps) {
               {appt.service?.name ?? 'Serviço'}
             </p>
             <p className="text-[0.875rem] text-fg-muted">
-              com {appt.professional?.display_name || appt.professional?.name} ·{' '}
-              {dateTimeLabel}
+              com {appt.professional?.display_name || appt.professional?.name} · {dateTimeLabel}
             </p>
           </CardContent>
         </Card>

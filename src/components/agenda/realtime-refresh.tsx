@@ -31,11 +31,11 @@ export function RealtimeAgendaRefresh({ tenantId }: Props) {
       const token = data.session?.access_token
       if (cancelled) return
       if (!token) {
-        console.log('[realtime] sem session, abortando subscribe')
+        console.warn('[realtime] sem session, abortando subscribe')
         return
       }
       supabase.realtime.setAuth(token)
-      console.log('[realtime] setAuth ok, subscribendo channel')
+      console.warn('[realtime] setAuth ok, subscribendo channel')
 
       channel = supabase
         .channel(`agenda:${tenantId}`)
@@ -48,12 +48,12 @@ export function RealtimeAgendaRefresh({ tenantId }: Props) {
             filter: `tenant_id=eq.${tenantId}`,
           },
           (payload) => {
-            console.log('[realtime] appointments event', payload.eventType, payload)
+            console.warn('[realtime] appointments event', payload.eventType, payload)
             router.refresh()
           },
         )
         .subscribe((status, err) => {
-          console.log('[realtime] channel status', status, err ?? '')
+          console.warn('[realtime] channel status', status, err ?? '')
         })
     })()
 
