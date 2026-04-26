@@ -111,6 +111,12 @@ export async function updateStaffRole(raw: UpdateStaffRoleInput): Promise<Action
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Input inválido.' }
   }
 
+  // Defense em profundidade: UI já bloqueia, mas request direto poderia rebaixar
+  // o próprio dono e perder acesso à área de Usuários (lock-out).
+  if (parsed.data.userProfileId === user.profile.id) {
+    return { ok: false, error: 'Você não pode alterar a sua própria permissão.' }
+  }
+
   const admin = createSecretClient()
   const { data, error } = await admin
     .from('user_profiles')
