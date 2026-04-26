@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatCentsToBrl } from '@/lib/money'
-
-const MONEY_HIDDEN_KEY = 'ara:money-hidden'
+import { MASK, useMoneyHidden } from '@/lib/money-visibility'
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
@@ -21,35 +20,28 @@ export type WeekDay = {
  * agendamentos ou R$ previsto por dia, em barras de altura proporcional.
  *
  * - Toggle Count / R$ no header da seção.
- * - Em modo R$, valor é mascarado (R$ ••••) por default; eye toggle ao lado
- *   sincroniza com o card "Previsto" (mesmo localStorage key).
- * - Hoje destacado em brand-primary.
- * - Sem click — visualização pura. Navegação pra dias específicos fica via
- *   /admin/dashboard/agenda?date=… acessada por outros caminhos.
+ * - R$ respeita o estado global de visibilidade (`useMoneyHidden`) — toggle
+ *   no header da página esconde/mostra.
+ * - Hoje destacado com ring; dia selecionado em brand-primary (quando
+ *   `selectedDateISO` ≠ `todayISO`).
+ * - `onDayClickHref` opcional: quando passado, cada dia vira um Link.
+ *   Quando ausente, é só visualização.
  */
-export function WeekAgendaStrip({ days, todayISO }: { days: WeekDay[]; todayISO: string }) {
+export function WeekAgendaStrip({
+  days,
+  todayISO,
+  selectedDateISO,
+  onDayClickHref,
+}: {
+  days: WeekDay[]
+  todayISO: string
+  /** Dia destacado em brand-primary. Quando ausente, só `todayISO` é destacado. */
+  selectedDateISO?: string
+  /** Função que recebe a dateISO e devolve o href de navegação. Se ausente, sem click. */
+  onDayClickHref?: (dateISO: string) => string
+}) {
   const [mode, setMode] = useState<'count' | 'revenue'>('count')
-  const [moneyHidden, setMoneyHidden] = useState(true)
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(MONEY_HIDDEN_KEY)
-    if (stored !== null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMoneyHidden(stored === '1')
-    }
-  }, [])
-
-  function toggleMoney() {
-    setMoneyHidden((h) => {
-      const next = !h
-      try {
-        window.localStorage.setItem(MONEY_HIDDEN_KEY, next ? '1' : '0')
-      } catch {
-        // localStorage pode falhar em modo privado; tudo bem.
-      }
-      return next
-    })
-  }
+  const { hidden: moneyHidden } = useMoneyHidden()
 
   const totalCount = days.reduce((s, d) => s + d.count, 0)
   const totalRevenue = days.reduce((s, d) => s + d.revenueCents, 0)
@@ -62,7 +54,7 @@ export function WeekAgendaStrip({ days, todayISO }: { days: WeekDay[]; todayISO:
     mode === 'count'
       ? `${totalCount} ${totalCount === 1 ? 'agendamento' : 'agendamentos'}`
       : moneyHidden
-        ? 'R$ ••••'
+        ? MASK
         : `${formatCentsToBrl(totalRevenue)} previsto`
 
   return (
@@ -71,7 +63,7 @@ export function WeekAgendaStrip({ days, todayISO }: { days: WeekDay[]; todayISO:
         <h2 className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
           Esta semana
         </h2>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setMode('count')}
@@ -96,21 +88,6 @@ export function WeekAgendaStrip({ days, todayISO }: { days: WeekDay[]; todayISO:
           >
             R$
           </button>
-          {mode === 'revenue' ? (
-            <button
-              type="button"
-              onClick={toggleMoney}
-              className="-m-1 ml-0.5 rounded p-1 text-fg-subtle transition-colors hover:bg-bg-subtle hover:text-fg-muted"
-              aria-label={moneyHidden ? 'Mostrar valores' : 'Ocultar valores'}
-              aria-pressed={moneyHidden}
-            >
-              {moneyHidden ? (
-                <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-              ) : (
-                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-              )}
-            </button>
-          ) : null}
         </div>
       </header>
 
@@ -123,36 +100,60 @@ export function WeekAgendaStrip({ days, todayISO }: { days: WeekDay[]; todayISO:
               const value = mode === 'count' ? day.count : day.revenueCents
               const heightPct = value === 0 ? 0 : Math.max(8, (value / maxValue) * 100)
               const isToday = day.dateISO === todayISO
+              const isSelected = selectedDateISO ? day.dateISO === selectedDateISO : isToday
               const label = DAY_LABELS[i]
+              const dateNumber = day.dateISO.slice(8, 10)
               const valueDescription =
                 mode === 'count'
                   ? `${day.count} ${day.count === 1 ? 'agendamento' : 'agendamentos'}`
                   : moneyHidden
                     ? 'valor oculto'
                     : formatCentsToBrl(day.revenueCents)
-              return (
-                <div
-                  key={day.dateISO}
-                  className="flex flex-1 flex-col items-center gap-1"
-                  title={`${label} · ${valueDescription}`}
-                >
+
+              const barClass = `w-full rounded-t ${
+                isSelected ? 'bg-brand-primary' : 'bg-fg-muted/50'
+              }`
+              const labelClass = `text-[0.6875rem] tabular-nums ${
+                isSelected ? 'font-semibold text-brand-primary' : 'text-fg-subtle'
+              }`
+              const dateClass = `text-[0.625rem] tabular-nums ${
+                isToday && !isSelected
+                  ? 'rounded bg-brand-primary/10 px-1 text-brand-primary'
+                  : isSelected
+                    ? 'text-brand-primary'
+                    : 'text-fg-subtle'
+              }`
+
+              const inner = (
+                <>
                   <div className="relative flex w-full flex-1 items-end justify-center">
                     {value > 0 ? (
-                      <div
-                        className={`w-full rounded-t ${
-                          isToday ? 'bg-brand-primary' : 'bg-fg-muted/50'
-                        }`}
-                        style={{ height: `${heightPct}%` }}
-                      />
+                      <div className={barClass} style={{ height: `${heightPct}%` }} />
                     ) : null}
                   </div>
-                  <span
-                    className={`text-[0.6875rem] tabular-nums ${
-                      isToday ? 'font-semibold text-brand-primary' : 'text-fg-subtle'
-                    }`}
+                  <span className={labelClass}>{label}</span>
+                  <span className={dateClass}>{dateNumber}</span>
+                </>
+              )
+
+              const wrapperBase = 'flex flex-1 flex-col items-center gap-0.5'
+              const titleAttr = `${label} ${dateNumber} · ${valueDescription}`
+
+              if (onDayClickHref) {
+                return (
+                  <Link
+                    key={day.dateISO}
+                    href={onDayClickHref(day.dateISO)}
+                    className={`${wrapperBase} group transition-opacity hover:opacity-80`}
+                    title={titleAttr}
                   >
-                    {label}
-                  </span>
+                    {inner}
+                  </Link>
+                )
+              }
+              return (
+                <div key={day.dateISO} className={wrapperBase} title={titleAttr}>
+                  {inner}
                 </div>
               )
             })}

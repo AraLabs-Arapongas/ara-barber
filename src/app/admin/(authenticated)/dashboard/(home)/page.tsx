@@ -17,6 +17,7 @@ import { QuickActions } from '@/components/home/quick-actions'
 import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
 import { MoneyStatCard } from '@/components/home/money-stat-card'
 import { WeekAgendaStrip, type WeekDay } from '@/components/home/week-agenda-strip'
+import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
 import { hasNoSchedule, isLate, lateMinutes } from '@/lib/admin/derivations'
 import { dateTimeInTenantTZ } from '@/lib/booking/slots'
 
@@ -158,13 +159,16 @@ export default async function DashboardHome() {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
       <RealtimeAgendaRefresh tenantId={tenant.id} />
-      <header className="mb-6">
-        <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-          Hoje
-        </p>
-        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          {headerDate}
-        </h1>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
+            Hoje
+          </p>
+          <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
+            {headerDate}
+          </h1>
+        </div>
+        <MoneyVisibilityToggle className="mt-1" />
       </header>
 
       {next ? (
