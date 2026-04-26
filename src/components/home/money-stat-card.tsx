@@ -23,14 +23,17 @@ export function MoneyStatCard({
   value: string
   hint: string
 }) {
-  const [hidden, setHidden] = useState(false)
+  // Default hidden por segurança — staff pode estar com cliente do lado.
+  // Revelar é uma ação consciente. Quando o user revelar/ocultar, salva
+  // a escolha no localStorage e respeita nas próximas sessões.
+  const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
-    // Sincroniza com localStorage no mount. setState síncrono é o pattern certo
-    // pra refletir external state (browser API) — não é loop infinito porque
-    // dep array é estável.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHidden(window.localStorage.getItem(STORAGE_KEY) === '1')
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (stored !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHidden(stored === '1')
+    }
   }, [])
 
   function toggle() {
