@@ -19,3 +19,16 @@ export async function getTenantPublicUrl(
   }
   return `https://${tenant.subdomain}.aralabs.com.br`
 }
+
+/**
+ * URL pra compartilhar com clientes que vai DIRETO no wizard de booking,
+ * pulando a home pública. Usar quando o intent é "link pra cliente agendar"
+ * (ex: empty state da agenda, quick action "Copiar link", tela Link de
+ * agendamento, template WhatsApp SHARE_LINK). Pra "página pública do negócio"
+ * (presença digital), usar `getTenantPublicUrl`.
+ */
+export async function getTenantBookingUrl(
+  tenant: Pick<TenantContext, 'slug' | 'subdomain'>,
+): Promise<string> {
+  return `${await getTenantPublicUrl(tenant)}/book`
+}

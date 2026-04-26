@@ -3,11 +3,11 @@ import { ChevronLeft } from 'lucide-react'
 
 import { LinkSharePanel } from '@/components/dashboard/link-share-panel'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
-import { getTenantPublicUrl } from '@/lib/tenant/public-url'
+import { getTenantBookingUrl } from '@/lib/tenant/public-url'
 
 export default async function LinkPage() {
   const tenant = await getCurrentTenantOrNotFound()
-  const publicUrl = await getTenantPublicUrl(tenant)
+  const publicUrl = await getTenantBookingUrl(tenant)
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
