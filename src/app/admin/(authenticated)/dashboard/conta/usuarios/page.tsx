@@ -48,9 +48,7 @@ export default async function UsuariosPage() {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Usuários e permissões
         </h1>
-        <p className="mt-1 text-sm text-fg-muted">
-          Quem tem acesso ao painel do seu negócio.
-        </p>
+        <p className="mt-1 text-sm text-fg-muted">Quem tem acesso ao painel do seu negócio.</p>
       </header>
       <UsersManager users={rows} canManage={canManage} />
     </main>

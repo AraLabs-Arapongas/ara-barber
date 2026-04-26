@@ -32,12 +32,7 @@ export function ConfirmStep({
   onSubmit: () => void
   pending: boolean
 }) {
-  if (
-    !state.customer ||
-    !state.serviceId ||
-    !state.professionalId ||
-    !state.startAtISO
-  ) {
+  if (!state.customer || !state.serviceId || !state.professionalId || !state.startAtISO) {
     return null
   }
 

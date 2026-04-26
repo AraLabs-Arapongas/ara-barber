@@ -2,7 +2,10 @@
 
 import { Fragment, useState, useTransition } from 'react'
 
-import { upsertTemplate, type UpsertTemplateInput } from '@/app/admin/(authenticated)/actions/templates'
+import {
+  upsertTemplate,
+  type UpsertTemplateInput,
+} from '@/app/admin/(authenticated)/actions/templates'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -46,9 +49,7 @@ export function TemplatesEditor({
         {PLACEHOLDERS.map((p, idx) => (
           <Fragment key={p}>
             {idx > 0 ? ' ' : null}
-            <code className="rounded bg-bg-subtle px-1.5 py-0.5 font-mono text-[0.75rem]">
-              {p}
-            </code>
+            <code className="rounded bg-bg-subtle px-1.5 py-0.5 font-mono text-[0.75rem]">{p}</code>
           </Fragment>
         ))}
       </p>
@@ -94,9 +95,7 @@ function TemplateCard({
     <Card className="shadow-xs">
       <CardContent className="space-y-3 py-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-medium text-fg">
-            {EVENT_LABELS[initial.event] ?? initial.event}
-          </h3>
+          <h3 className="font-medium text-fg">{EVENT_LABELS[initial.event] ?? initial.event}</h3>
           <label className="flex shrink-0 items-center gap-2 text-[0.8125rem] text-fg-muted">
             <input
               type="checkbox"

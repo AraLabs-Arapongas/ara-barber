@@ -3,13 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition, type FormEvent } from 'react'
-import {
-  CalendarX,
-  ChevronLeft,
-  Phone,
-  Power,
-  User,
-} from 'lucide-react'
+import { CalendarX, ChevronLeft, Phone, Power, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -22,15 +16,7 @@ import {
 import { toggleProfessionalService } from '@/app/admin/(authenticated)/actions/professional-services'
 import { saveWeeklyAvailability } from '@/app/admin/(authenticated)/actions/availability'
 
-const DAYS_LONG = [
-  'Domingo',
-  'Segunda',
-  'Terça',
-  'Quarta',
-  'Quinta',
-  'Sexta',
-  'Sábado',
-]
+const DAYS_LONG = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 export type DetailPro = {
   id: string
@@ -94,11 +80,7 @@ export function ProfessionalDetail({
 
       <div className="space-y-8">
         <InfoSection pro={pro} />
-        <ServicesSection
-          proId={pro.id}
-          services={services}
-          linkedServiceIds={linkedServiceIds}
-        />
+        <ServicesSection proId={pro.id} services={services} linkedServiceIds={linkedServiceIds} />
         <JourneySection proId={pro.id} entries={availability} />
         <BlocksLinkSection proId={pro.id} count={blocks.length} />
       </div>
@@ -127,10 +109,7 @@ function BlocksLinkSection({ proId, count }: { proId: string; count: number }) {
               </p>
             </div>
           </div>
-          <Link
-            href={`/admin/dashboard/bloqueios?professional=${proId}`}
-            className="shrink-0"
-          >
+          <Link href={`/admin/dashboard/bloqueios?professional=${proId}`} className="shrink-0">
             <Button type="button" variant="secondary" size="sm">
               Ver bloqueios deste profissional
             </Button>
@@ -262,9 +241,7 @@ function ServicesSection({
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [optimistic, setOptimistic] = useState<Set<string>>(
-    () => new Set(linkedServiceIds),
-  )
+  const [optimistic, setOptimistic] = useState<Set<string>>(() => new Set(linkedServiceIds))
   const [error, setError] = useState<string | null>(null)
 
   const active = useMemo(() => services.filter((s) => s.isActive), [services])
@@ -345,13 +322,7 @@ function ServicesSection({
   )
 }
 
-function JourneySection({
-  proId,
-  entries,
-}: {
-  proId: string
-  entries: DetailAvailability[]
-}) {
+function JourneySection({ proId, entries }: { proId: string; entries: DetailAvailability[] }) {
   type Draft = {
     weekday: number
     startTime: string
@@ -379,11 +350,7 @@ function JourneySection({
       drafts.some((d, i) => {
         const ref = initial[i]
         if (!ref) return true
-        return (
-          d.active !== ref.active ||
-          d.startTime !== ref.startTime ||
-          d.endTime !== ref.endTime
-        )
+        return d.active !== ref.active || d.startTime !== ref.startTime || d.endTime !== ref.endTime
       }),
     [drafts, initial],
   )
@@ -423,10 +390,7 @@ function JourneySection({
       <Card className="shadow-xs">
         <CardContent className="space-y-2 py-4">
           {drafts.map((d, i) => (
-            <div
-              key={d.weekday}
-              className="rounded-lg bg-bg-subtle/50 px-3 py-2"
-            >
+            <div key={d.weekday} className="rounded-lg bg-bg-subtle/50 px-3 py-2">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-fg">{DAYS_LONG[d.weekday]}</span>
                 <input
@@ -470,13 +434,7 @@ function JourneySection({
   )
 }
 
-function SectionTitle({
-  children,
-  noMargin,
-}: {
-  children: React.ReactNode
-  noMargin?: boolean
-}) {
+function SectionTitle({ children, noMargin }: { children: React.ReactNode; noMargin?: boolean }) {
   return (
     <h2
       className={`${noMargin ? '' : 'mb-2'} px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle`}

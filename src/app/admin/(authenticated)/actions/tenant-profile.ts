@@ -32,9 +32,7 @@ const ProfileInput = z.object({
 
 export type UpdateTenantProfileInput = z.infer<typeof ProfileInput>
 
-export type UpdateTenantProfileResult =
-  | { ok: true }
-  | { ok: false; error: string }
+export type UpdateTenantProfileResult = { ok: true } | { ok: false; error: string }
 
 /**
  * Atualiza o perfil público do tenant (nome, contato, endereço).
@@ -115,9 +113,7 @@ const BrandInput = z.object({
 
 export type UpdateTenantBrandInput = z.infer<typeof BrandInput>
 
-export type UpdateTenantBrandResult =
-  | { ok: true }
-  | { ok: false; error: string }
+export type UpdateTenantBrandResult = { ok: true } | { ok: false; error: string }
 
 /**
  * Atualiza branding (cores, logo, favicon, headlines) do tenant.

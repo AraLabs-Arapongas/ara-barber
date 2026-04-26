@@ -83,9 +83,7 @@ export type CancelResult = { ok: true } | { ok: false; error: string }
  * RLS em appointments_customer_update garante que o customer só pode mudar
  * os próprios appointments.
  */
-export async function cancelCustomerAppointment(
-  raw: CancelByCustomerInput,
-): Promise<CancelResult> {
+export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Promise<CancelResult> {
   const parsed = CancelByCustomerInput.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 

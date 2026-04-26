@@ -87,9 +87,7 @@ export default async function BookStepProfessional({ searchParams }: PageProps) 
                     <User className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-fg">
-                      {p.displayName || p.name}
-                    </p>
+                    <p className="truncate font-medium text-fg">{p.displayName || p.name}</p>
                     {p.phone ? (
                       <p className="truncate text-[0.8125rem] text-fg-muted">{p.phone}</p>
                     ) : null}

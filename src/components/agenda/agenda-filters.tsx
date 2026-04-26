@@ -4,11 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 type Professional = { id: string; name: string }
 
-export function AgendaFilters({
-  professionals,
-}: {
-  professionals: Professional[]
-}) {
+export function AgendaFilters({ professionals }: { professionals: Professional[] }) {
   const router = useRouter()
   const pathname = usePathname()
   const sp = useSearchParams()

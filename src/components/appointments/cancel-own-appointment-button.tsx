@@ -13,10 +13,7 @@ type Props = {
   cancellationWindowHours: number
 }
 
-export function CancelOwnAppointmentButton({
-  appointmentId,
-  cancellationWindowHours,
-}: Props) {
+export function CancelOwnAppointmentButton({ appointmentId, cancellationWindowHours }: Props) {
   const router = useRouter()
   const confirm = useConfirm()
   const [pending, startTransition] = useTransition()

@@ -18,9 +18,7 @@ function isStandalone(): boolean {
   if (typeof window === 'undefined') return false
   // iOS legacy
   const nav = navigator as Navigator & { standalone?: boolean }
-  return (
-    window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true
-  )
+  return window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true
 }
 
 function isIOS(): boolean {

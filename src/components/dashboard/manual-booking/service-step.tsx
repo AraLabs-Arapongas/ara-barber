@@ -37,9 +37,7 @@ export function ServiceStep({
                 >
                   <Card
                     className={`shadow-xs transition-colors ${
-                      selected
-                        ? 'border-brand-primary bg-brand-primary/5'
-                        : 'hover:bg-bg-subtle'
+                      selected ? 'border-brand-primary bg-brand-primary/5' : 'hover:bg-bg-subtle'
                     }`}
                   >
                     <CardContent className="flex items-center justify-between py-3">

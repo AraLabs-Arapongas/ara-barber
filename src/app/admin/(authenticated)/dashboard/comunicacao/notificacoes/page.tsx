@@ -12,8 +12,8 @@ export default function NotificacoesPage() {
           Notificações da equipe
         </h1>
         <p className="mt-1 text-[0.9375rem] text-fg-muted">
-          Receba avisos de novos agendamentos neste dispositivo. Funciona
-          mesmo com o navegador fechado quando o app PWA está instalado.
+          Receba avisos de novos agendamentos neste dispositivo. Funciona mesmo com o navegador
+          fechado quando o app PWA está instalado.
         </p>
       </header>
       <Card className="shadow-xs">
@@ -22,8 +22,8 @@ export default function NotificacoesPage() {
         </CardContent>
       </Card>
       <p className="mt-3 px-1 text-[0.8125rem] text-fg-muted">
-        Cada dispositivo precisa ativar individualmente. Em iOS, instale o app
-        na tela inicial antes de ativar.
+        Cada dispositivo precisa ativar individualmente. Em iOS, instale o app na tela inicial antes
+        de ativar.
       </p>
     </main>
   )

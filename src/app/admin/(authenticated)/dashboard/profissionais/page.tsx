@@ -54,18 +54,12 @@ export default async function ProfessionalsPage() {
 
   const profServicesByPro = new Map<string, number>()
   for (const ps of profServicesRes.data ?? []) {
-    profServicesByPro.set(
-      ps.professional_id,
-      (profServicesByPro.get(ps.professional_id) ?? 0) + 1,
-    )
+    profServicesByPro.set(ps.professional_id, (profServicesByPro.get(ps.professional_id) ?? 0) + 1)
   }
 
   const professionals: ProfessionalListItem[] = (profsRes.data ?? []).map((p) => {
     const apptsForPro = todayAppts.filter(
-      (a) =>
-        a.professionalId === p.id &&
-        a.status !== 'CANCELED' &&
-        a.status !== 'NO_SHOW',
+      (a) => a.professionalId === p.id && a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
     )
     return {
       id: p.id,

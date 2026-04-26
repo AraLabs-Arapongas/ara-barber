@@ -67,8 +67,8 @@ export default async function EmailsPage() {
           E-mails automáticos
         </h1>
         <p className="mt-1 text-[0.9375rem] text-fg-muted">
-          Mensagens que vão por e-mail pros seus clientes. Edite o conteúdo ou desligue o
-          envio individualmente.
+          Mensagens que vão por e-mail pros seus clientes. Edite o conteúdo ou desligue o envio
+          individualmente.
         </p>
       </header>
       <TemplatesEditor channel="EMAIL" templates={templates} />

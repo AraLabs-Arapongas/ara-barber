@@ -111,9 +111,7 @@ export function ProfessionalsManager({ professionals }: Props) {
           {professionals.length > 0 ? (
             <p className="mt-2 text-[0.8125rem] text-fg-muted">
               {workingToday} {workingToday === 1 ? 'trabalhando' : 'trabalhando'} hoje
-              {withoutSchedule > 0
-                ? ` · ${withoutSchedule} sem horário configurado`
-                : ''}
+              {withoutSchedule > 0 ? ` · ${withoutSchedule} sem horário configurado` : ''}
             </p>
           ) : null}
           <Button type="button" size="sm" onClick={openCreate} className="mt-3">
@@ -151,10 +149,7 @@ export function ProfessionalsManager({ professionals }: Props) {
                               >
                                 {p.isActive ? 'Ativo' : 'Inativo'}
                               </span>
-                              <ChevronRight
-                                className="h-4 w-4 text-fg-subtle"
-                                aria-hidden="true"
-                              />
+                              <ChevronRight className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
                             </div>
                           </div>
                           <p
@@ -166,20 +161,13 @@ export function ProfessionalsManager({ professionals }: Props) {
                           </p>
                           <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">
                             {p.appointmentsToday}{' '}
-                            {p.appointmentsToday === 1
-                              ? 'agendamento hoje'
-                              : 'agendamentos hoje'}{' '}
-                            · {formatCentsToBrl(p.revenueTodayCents)} previsto
+                            {p.appointmentsToday === 1 ? 'agendamento hoje' : 'agendamentos hoje'} ·{' '}
+                            {formatCentsToBrl(p.revenueTodayCents)} previsto
                           </p>
                           <p className="mt-0.5 truncate text-[0.8125rem] text-fg-subtle">
                             {p.servicesCount}{' '}
-                            {p.servicesCount === 1
-                              ? 'serviço vinculado'
-                              : 'serviços vinculados'}{' '}
-                            ·{' '}
-                            {p.hasUserAccess
-                              ? 'Acesso ao painel'
-                              : 'Sem acesso ao painel'}
+                            {p.servicesCount === 1 ? 'serviço vinculado' : 'serviços vinculados'} ·{' '}
+                            {p.hasUserAccess ? 'Acesso ao painel' : 'Sem acesso ao painel'}
                           </p>
                         </div>
                       </div>
@@ -192,9 +180,7 @@ export function ProfessionalsManager({ professionals }: Props) {
         ) : (
           <Card className="shadow-xs">
             <CardContent className="py-10 text-center">
-              <p className="text-[0.9375rem] text-fg-muted">
-                Nenhum profissional ainda.
-              </p>
+              <p className="text-[0.9375rem] text-fg-muted">Nenhum profissional ainda.</p>
               <Button className="mt-4" onClick={openCreate}>
                 Adicionar profissional
               </Button>

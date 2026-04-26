@@ -43,11 +43,10 @@ export default async function PlanoPage() {
   const billingStatus = tenantBilling?.billing_status ?? tenant.billingStatus
   const trialDays = daysUntil(tenantBilling?.trial_ends_at ?? null)
   const subDays = daysUntil(tenantBilling?.subscription_ends_at ?? null)
-  const effectivePriceCents = tenantBilling?.monthly_price_cents ?? plan?.monthly_price_cents ?? null
+  const effectivePriceCents =
+    tenantBilling?.monthly_price_cents ?? plan?.monthly_price_cents ?? null
 
-  const supportHref = `https://wa.me/${SUPPORT_PHONE}?text=${encodeURIComponent(
-    SUPPORT_MESSAGE,
-  )}`
+  const supportHref = `https://wa.me/${SUPPORT_PHONE}?text=${encodeURIComponent(SUPPORT_MESSAGE)}`
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -89,7 +88,9 @@ export default async function PlanoPage() {
               {plan?.name ?? 'Sem plano'}
             </p>
             <p className="mt-1 text-sm text-fg-muted">
-              {effectivePriceCents !== null ? `${formatCentsToBrl(effectivePriceCents)} / mês` : '—'}
+              {effectivePriceCents !== null
+                ? `${formatCentsToBrl(effectivePriceCents)} / mês`
+                : '—'}
             </p>
           </CardContent>
         </Card>
@@ -97,8 +98,8 @@ export default async function PlanoPage() {
         <Card>
           <CardContent className="py-4">
             <p className="text-sm text-fg">
-              Para alterar plano, atualizar forma de pagamento ou ver histórico de cobranças,
-              entre em contato com o suporte da AraLabs.
+              Para alterar plano, atualizar forma de pagamento ou ver histórico de cobranças, entre
+              em contato com o suporte da AraLabs.
             </p>
             <a
               href={supportHref}

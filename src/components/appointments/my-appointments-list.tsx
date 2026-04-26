@@ -142,9 +142,7 @@ export function MyAppointmentsList({ appointments }: Props) {
         <Card className="shadow-xs">
           <CardContent className="py-10 text-center">
             <p className="text-[0.9375rem] text-fg-muted">
-              {tab === 'futuros'
-                ? 'Nenhuma reserva marcada.'
-                : 'Sem histórico ainda.'}
+              {tab === 'futuros' ? 'Nenhuma reserva marcada.' : 'Sem histórico ainda.'}
             </p>
           </CardContent>
         </Card>

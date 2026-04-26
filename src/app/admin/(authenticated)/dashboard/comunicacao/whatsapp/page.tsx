@@ -58,8 +58,8 @@ export default async function WhatsappPage() {
           WhatsApp
         </h1>
         <p className="mt-1 text-[0.9375rem] text-fg-muted">
-          Mensagens prontas pra você enviar pelo seu WhatsApp pessoal. Não enviamos
-          automaticamente — você revisa antes.
+          Mensagens prontas pra você enviar pelo seu WhatsApp pessoal. Não enviamos automaticamente
+          — você revisa antes.
         </p>
       </header>
       <TemplatesEditor channel="WHATSAPP" templates={templates} />

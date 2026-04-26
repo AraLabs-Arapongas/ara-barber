@@ -70,41 +70,39 @@ export async function getCurrentArea(): Promise<'platform' | 'tenant' | 'root'> 
  * React.cache() dedupa por request: layout e page compartilham o resultado
  * em vez de refazer o SELECT em cada um.
  */
-export const getCurrentTenantOrNotFound = cache(
-  async (): Promise<TenantContext> => {
-    const tenantId = await getCurrentTenantId()
-    if (!tenantId) notFound()
+export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext> => {
+  const tenantId = await getCurrentTenantId()
+  if (!tenantId) notFound()
 
-    const supabase = createSecretClient()
-    const { data } = await supabase
-      .from('tenants')
-      .select(
-        'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel',
-      )
-      .eq('id', tenantId)
-      .maybeSingle()
+  const supabase = createSecretClient()
+  const { data } = await supabase
+    .from('tenants')
+    .select(
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel',
+    )
+    .eq('id', tenantId)
+    .maybeSingle()
 
-    if (!data) notFound()
+  if (!data) notFound()
 
-    return {
-      id: data.id,
-      slug: data.slug,
-      subdomain: data.subdomain,
-      name: data.name,
-      timezone: data.timezone,
-      primaryColor: data.primary_color,
-      secondaryColor: data.secondary_color,
-      accentColor: data.accent_color,
-      logoUrl: data.logo_url ?? resolveConventionalLogoUrl(data.slug),
-      faviconUrl: data.favicon_url,
-      homeHeadlineTop: data.home_headline_top,
-      homeHeadlineAccent: data.home_headline_accent,
-      status: data.status,
-      billingStatus: data.billing_status,
-      cancellationWindowHours: data.cancellation_window_hours ?? 2,
-      minAdvanceHours: data.min_advance_hours ?? 0,
-      slotIntervalMinutes: data.slot_interval_minutes ?? 15,
-      customerCanCancel: data.customer_can_cancel ?? true,
-    }
-  },
-)
+  return {
+    id: data.id,
+    slug: data.slug,
+    subdomain: data.subdomain,
+    name: data.name,
+    timezone: data.timezone,
+    primaryColor: data.primary_color,
+    secondaryColor: data.secondary_color,
+    accentColor: data.accent_color,
+    logoUrl: data.logo_url ?? resolveConventionalLogoUrl(data.slug),
+    faviconUrl: data.favicon_url,
+    homeHeadlineTop: data.home_headline_top,
+    homeHeadlineAccent: data.home_headline_accent,
+    status: data.status,
+    billingStatus: data.billing_status,
+    cancellationWindowHours: data.cancellation_window_hours ?? 2,
+    minAdvanceHours: data.min_advance_hours ?? 0,
+    slotIntervalMinutes: data.slot_interval_minutes ?? 15,
+    customerCanCancel: data.customer_can_cancel ?? true,
+  }
+})

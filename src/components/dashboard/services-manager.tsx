@@ -253,7 +253,8 @@ export function ServicesManager({ services }: Props) {
           <Card className="shadow-xs">
             <CardContent className="py-10 text-center">
               <p className="text-[0.9375rem] text-fg-muted">
-                Nenhum serviço ainda. Toque em <strong>+</strong> para começar ou use o botão abaixo.
+                Nenhum serviço ainda. Toque em <strong>+</strong> para começar ou use o botão
+                abaixo.
               </p>
               <Button className="mt-4" onClick={openCreate}>
                 Adicionar serviço
@@ -268,16 +269,10 @@ export function ServicesManager({ services }: Props) {
         onClose={closeSheet}
         title={editing ? 'Editar serviço' : 'Novo serviço'}
         description={
-          editing
-            ? 'Ajuste nome, duração, preço ou descrição.'
-            : 'Adicione um item ao catálogo.'
+          editing ? 'Ajuste nome, duração, preço ou descrição.' : 'Adicione um item ao catálogo.'
         }
       >
-        <form
-          key={editing?.id ?? 'new'}
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
+        <form key={editing?.id ?? 'new'} onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Nome"
             name="name"

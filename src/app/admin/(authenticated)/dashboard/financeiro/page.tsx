@@ -1,9 +1,6 @@
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
-import {
-  FinancialSummary,
-  type FinAppt,
-} from '@/components/dashboard/financial-summary'
+import { FinancialSummary, type FinAppt } from '@/components/dashboard/financial-summary'
 import { rangeFromPreset, type RangePreset } from '@/lib/reports/range'
 
 type PageProps = {
@@ -32,14 +29,8 @@ export default async function FinanceiroPage({ searchParams }: PageProps) {
       .gte('start_at', range.from)
       .lte('start_at', range.to)
       .order('start_at', { ascending: false }),
-    supabase
-      .from('services')
-      .select('id, name, price_cents')
-      .eq('tenant_id', tenant.id),
-    supabase
-      .from('professionals')
-      .select('id, name, display_name')
-      .eq('tenant_id', tenant.id),
+    supabase.from('services').select('id, name, price_cents').eq('tenant_id', tenant.id),
+    supabase.from('professionals').select('id, name, display_name').eq('tenant_id', tenant.id),
   ])
 
   const appointments: FinAppt[] = (apptsRes.data ?? []).map((a) => ({

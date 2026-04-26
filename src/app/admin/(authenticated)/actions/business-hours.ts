@@ -22,9 +22,7 @@ export type BusinessHoursResult = { ok: true } | { ok: false; error: string }
  * Upserta as 7 linhas de business_hours do tenant. PK composta (tenant_id, weekday)
  * permite onConflict=tenant_id,weekday, e setamos merge via upsert.
  */
-export async function saveBusinessHours(
-  raw: z.infer<typeof Input>,
-): Promise<BusinessHoursResult> {
+export async function saveBusinessHours(raw: z.infer<typeof Input>): Promise<BusinessHoursResult> {
   const parsed = Input.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 

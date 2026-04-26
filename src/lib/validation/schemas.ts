@@ -19,7 +19,12 @@ const optionalEmail = z
 export const professionalSchema = z.object({
   name: nonEmptyString,
   displayName: optionalString(100),
-  photoUrl: z.string().trim().url().nullish().transform((v) => (v ? v : null)),
+  photoUrl: z
+    .string()
+    .trim()
+    .url()
+    .nullish()
+    .transform((v) => (v ? v : null)),
   phone: optionalString(30),
   isActive: z.boolean().default(true),
 })
@@ -50,10 +55,9 @@ export const serviceSchema = z
     depositPercentage: z.number().int().min(0).max(10000).nullish(),
     isActive: z.boolean().default(true),
   })
-  .refine(
-    (v) => !v.depositRequired || (v.depositType !== null && v.depositType !== undefined),
-    { message: 'Depósito exigido sem tipo definido' },
-  )
+  .refine((v) => !v.depositRequired || (v.depositType !== null && v.depositType !== undefined), {
+    message: 'Depósito exigido sem tipo definido',
+  })
 
 export const professionalServiceLinkSchema = z.object({
   professionalId: uuid,

@@ -29,15 +29,18 @@ export function AttentionSection({ items }: { items: AttentionItem[] }) {
       </h2>
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item.kind === 'late' ? `late-${item.appointmentId}` : `no-schedule-${item.professionalId}`}>
+          <li
+            key={
+              item.kind === 'late'
+                ? `late-${item.appointmentId}`
+                : `no-schedule-${item.professionalId}`
+            }
+          >
             {item.kind === 'late' ? (
               <Link href={`/admin/dashboard/agenda/${item.appointmentId}`} className="block">
                 <Card className="shadow-xs transition-colors hover:bg-warning-bg/40">
                   <CardContent className="flex items-center gap-3 py-3">
-                    <AlertTriangle
-                      className="h-4 w-4 shrink-0 text-warning"
-                      aria-hidden="true"
-                    />
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
                     <p className="text-[0.875rem] text-fg">
                       <span className="font-medium">{item.customerName}</span> está atrasado
                       {item.minutes > 0 ? ` há ${item.minutes} min` : ''}.
@@ -52,13 +55,10 @@ export function AttentionSection({ items }: { items: AttentionItem[] }) {
               >
                 <Card className="shadow-xs transition-colors hover:bg-warning-bg/40">
                   <CardContent className="flex items-center gap-3 py-3">
-                    <CalendarOff
-                      className="h-4 w-4 shrink-0 text-warning"
-                      aria-hidden="true"
-                    />
+                    <CalendarOff className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
                     <p className="text-[0.875rem] text-fg">
-                      <span className="font-medium">{item.professionalName}</span> está sem
-                      horário configurado.
+                      <span className="font-medium">{item.professionalName}</span> está sem horário
+                      configurado.
                     </p>
                   </CardContent>
                 </Card>

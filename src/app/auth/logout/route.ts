@@ -8,9 +8,8 @@ export async function POST(request: NextRequest) {
   // Permitir caller indicar onde voltar (ex: staff → /admin/login,
   // customer → /). Restringe a paths relativos pra evitar open redirect.
   const nextParam = request.nextUrl.searchParams.get('next')
-  const safeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
-    ? nextParam
-    : '/'
+  const safeNext =
+    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/'
 
   // Redirect relativo: o browser resolve contra o origin atual, preservando
   // o subdomínio do tenant (qa-aralabs.aralabs.com.br etc.). Usar absolute aqui

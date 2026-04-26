@@ -57,13 +57,15 @@ async function loadEnrichedData(appointmentId: string): Promise<EnrichedData | n
   const client = createAdminClient()
   const { data } = await client
     .from('appointments')
-    .select(`
+    .select(
+      `
       id, tenant_id, start_at, status, canceled_by,
       service:services(id, name),
       professional:professionals(id, name, display_name),
       customer:customers(id, user_id, name, email),
       tenant:tenants(id, name, slug, primary_color, logo_url, contact_phone, email)
-    `)
+    `,
+    )
     .eq('id', appointmentId)
     .maybeSingle()
   return (data as unknown as EnrichedData) ?? null
@@ -71,9 +73,7 @@ async function loadEnrichedData(appointmentId: string): Promise<EnrichedData | n
 
 function tenantRoot(): { protocol: 'http' | 'https'; host: string } {
   const host = Deno.env.get('TENANT_ROOT_DOMAIN') ?? 'aralabs.com.br'
-  const protocol = host.includes('lvh.me') || host.startsWith('localhost')
-    ? 'http'
-    : 'https'
+  const protocol = host.includes('lvh.me') || host.startsWith('localhost') ? 'http' : 'https'
   return { protocol, host }
 }
 

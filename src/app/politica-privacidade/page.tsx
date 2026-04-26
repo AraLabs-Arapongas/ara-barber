@@ -21,11 +21,7 @@ export default async function PrivacyPolicyPage() {
         <CustomerShell>
           <header className="border-b border-border bg-surface/80 backdrop-blur">
             <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-3 sm:px-6">
-              <Link
-                href="/"
-                aria-label="Home"
-                className="flex min-w-0 items-center gap-3"
-              >
+              <Link href="/" aria-label="Home" className="flex min-w-0 items-center gap-3">
                 <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={40} />
                 <div className="min-w-0">
                   <p className="truncate font-display text-[1rem] font-semibold leading-tight tracking-tight text-fg">
@@ -53,8 +49,8 @@ export default async function PrivacyPolicyPage() {
                 Política de privacidade
               </h1>
               <p className="text-fg-muted">
-                Esta é a política de privacidade do <strong>{tenant.name}</strong>,
-                operado pela plataforma AraLabs. Resumo em linguagem direta.
+                Esta é a política de privacidade do <strong>{tenant.name}</strong>, operado pela
+                plataforma AraLabs. Resumo em linguagem direta.
               </p>
 
               <section>
@@ -75,8 +71,8 @@ export default async function PrivacyPolicyPage() {
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
                   <li>Confirmar e lembrar de horários agendados.</li>
                   <li>
-                    Avisar quando o estabelecimento precisar mudar algo (profissional
-                    indisponível, reagendamento).
+                    Avisar quando o estabelecimento precisar mudar algo (profissional indisponível,
+                    reagendamento).
                   </li>
                   <li>Mostrar ao estabelecimento quem chegou e o histórico de atendimentos.</li>
                 </ul>
@@ -87,9 +83,9 @@ export default async function PrivacyPolicyPage() {
                   Com quem compartilhamos
                 </h2>
                 <p className="mt-2 text-fg-muted">
-                  Seus dados ficam visíveis apenas para a equipe deste estabelecimento e
-                  para a AraLabs (operadora da plataforma). Não vendemos nem compartilhamos
-                  com terceiros para marketing.
+                  Seus dados ficam visíveis apenas para a equipe deste estabelecimento e para a
+                  AraLabs (operadora da plataforma). Não vendemos nem compartilhamos com terceiros
+                  para marketing.
                 </p>
               </section>
 
@@ -99,25 +95,23 @@ export default async function PrivacyPolicyPage() {
                 </h2>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
                   <li>
-                    <strong className="text-fg">Acessar:</strong> na tela de perfil você
-                    baixa uma cópia completa dos seus dados neste estabelecimento em JSON.
+                    <strong className="text-fg">Acessar:</strong> na tela de perfil você baixa uma
+                    cópia completa dos seus dados neste estabelecimento em JSON.
                   </li>
                   <li>
-                    <strong className="text-fg">Corrigir:</strong> você pode atualizar
-                    nome e telefone a qualquer momento.
+                    <strong className="text-fg">Corrigir:</strong> você pode atualizar nome e
+                    telefone a qualquer momento.
                   </li>
                   <li>
-                    <strong className="text-fg">Apagar:</strong> na tela de perfil você
-                    apaga seu cadastro deste estabelecimento — as reservas futuras são
-                    canceladas e o histórico fica anonimizado.
+                    <strong className="text-fg">Apagar:</strong> na tela de perfil você apaga seu
+                    cadastro deste estabelecimento — as reservas futuras são canceladas e o
+                    histórico fica anonimizado.
                   </li>
                 </ul>
               </section>
 
               <section>
-                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
-                  Contato
-                </h2>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">Contato</h2>
                 <p className="mt-2 text-fg-muted">
                   Fale diretamente com o estabelecimento para dúvidas sobre o atendimento, ou com a
                   AraLabs em{' '}
@@ -131,9 +125,7 @@ export default async function PrivacyPolicyPage() {
                 </p>
               </section>
 
-              <p className="mt-8 text-[0.75rem] text-fg-subtle">
-                Última atualização: 2026-04-19.
-              </p>
+              <p className="mt-8 text-[0.75rem] text-fg-subtle">Última atualização: 2026-04-19.</p>
             </article>
           </main>
         </CustomerShell>

@@ -10,9 +10,7 @@ export function parseBrlToCents(input: string | null | undefined): number | null
   const cleaned = trimmed.replace(/[^\d,.-]/g, '')
   if (!cleaned) return null
 
-  const normalized = cleaned.includes(',')
-    ? cleaned.replace(/\./g, '').replace(',', '.')
-    : cleaned
+  const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned
 
   const parsed = Number.parseFloat(normalized)
   if (!Number.isFinite(parsed) || parsed < 0) return null
@@ -39,9 +37,7 @@ export function parsePercentToBasisPoints(input: string | null | undefined): num
   const cleaned = trimmed.replace(/[^\d,.-]/g, '')
   if (!cleaned) return null
 
-  const normalized = cleaned.includes(',')
-    ? cleaned.replace(/\./g, '').replace(',', '.')
-    : cleaned
+  const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned
 
   const parsed = Number.parseFloat(normalized)
   if (!Number.isFinite(parsed) || parsed < 0) return null

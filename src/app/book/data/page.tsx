@@ -62,9 +62,7 @@ export default async function BookStepDate({ searchParams }: PageProps) {
   ])
 
   const candidateIds =
-    current.professionalId === 'any'
-      ? eligiblePros.map((p) => p.id)
-      : [current.professionalId]
+    current.professionalId === 'any' ? eligiblePros.map((p) => p.id) : [current.professionalId]
 
   const availability = await getProfessionalAvailability(tenant.id, candidateIds)
 
@@ -102,9 +100,10 @@ export default async function BookStepDate({ searchParams }: PageProps) {
           const weekday = weekdayInTenantTZ(dateISO, tenant.timezone)
           const [, monthStr, dayStr] = dateISO.split('-')
           const dayNum = Number(dayStr)
-          const monthShort = new Date(
-            Date.UTC(2020, Number(monthStr) - 1, 1),
-          ).toLocaleDateString('pt-BR', { month: 'short' })
+          const monthShort = new Date(Date.UTC(2020, Number(monthStr) - 1, 1)).toLocaleDateString(
+            'pt-BR',
+            { month: 'short' },
+          )
           const available = openWeekdays.has(weekday)
           const selected = current.date === dateISO
           const content = (

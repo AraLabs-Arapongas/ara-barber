@@ -79,12 +79,7 @@ export function ManualBookingWizard({
   }
 
   function submit() {
-    if (
-      !state.customer ||
-      !state.serviceId ||
-      !state.professionalId ||
-      !state.startAtISO
-    ) {
+    if (!state.customer || !state.serviceId || !state.professionalId || !state.startAtISO) {
       return
     }
     setError(null)
@@ -204,20 +199,12 @@ function Stepper({ step }: { step: Step }) {
         return (
           <li
             key={label}
-            className={
-              active
-                ? 'text-brand-primary'
-                : done
-                  ? 'text-fg-muted'
-                  : 'text-fg-subtle'
-            }
+            className={active ? 'text-brand-primary' : done ? 'text-fg-muted' : 'text-fg-subtle'}
           >
             <span>
               {n}. {label}
             </span>
-            {n < STEP_LABELS.length ? (
-              <span className="mx-1 text-fg-subtle">·</span>
-            ) : null}
+            {n < STEP_LABELS.length ? <span className="mx-1 text-fg-subtle">·</span> : null}
           </li>
         )
       })}

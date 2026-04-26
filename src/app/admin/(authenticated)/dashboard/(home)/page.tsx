@@ -1,11 +1,5 @@
 import Link from 'next/link'
-import {
-  BellRing,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-} from 'lucide-react'
+import { BellRing, Calendar, CheckCircle2, Clock, TrendingUp } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { getTenantPublicUrl } from '@/lib/tenant/public-url'
 import {
@@ -20,10 +14,7 @@ import { formatCentsToBrl } from '@/lib/money'
 import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
 import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
 import { QuickActions } from '@/components/home/quick-actions'
-import {
-  AttentionSection,
-  type AttentionItem,
-} from '@/components/home/attention-section'
+import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
 import { hasNoSchedule, isLate, lateMinutes } from '@/lib/admin/derivations'
 
 function todayISO(tenantTimezone: string): string {
@@ -69,9 +60,7 @@ export default async function DashboardHome() {
   // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const now = Date.now()
   const nowDate = new Date(now)
-  const active = today.filter(
-    (a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
-  )
+  const active = today.filter((a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW')
   const next = active
     .filter((a) => new Date(a.startAt).getTime() >= now - 30 * 60000)
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())[0]
@@ -84,12 +73,8 @@ export default async function DashboardHome() {
     .filter((a) => a.status === 'COMPLETED')
     .reduce((sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0), 0)
   const completed = today.filter((a) => a.status === 'COMPLETED').length
-  const canceled = today.filter(
-    (a) => a.status === 'CANCELED' || a.status === 'NO_SHOW',
-  ).length
-  const pendingActive = active.filter(
-    (a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED',
-  )
+  const canceled = today.filter((a) => a.status === 'CANCELED' || a.status === 'NO_SHOW').length
+  const pendingActive = active.filter((a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED')
   const lateAppointments = active.filter((a) =>
     isLate({ status: a.status, startAt: a.startAt }, nowDate),
   )
@@ -147,8 +132,7 @@ export default async function DashboardHome() {
               {next.serviceName ?? 'Serviço'}
             </p>
             <p className="mt-0.5 text-[0.875rem] text-fg-muted">
-              com {next.professionalName ?? 'profissional'} ·{' '}
-              {next.customerName ?? 'cliente'}
+              com {next.professionalName ?? 'profissional'} · {next.customerName ?? 'cliente'}
             </p>
           </CardContent>
         </Card>
@@ -187,10 +171,7 @@ export default async function DashboardHome() {
 
       <QuickActions publicUrl={publicUrl} />
 
-      <PendingConfirmations
-        appointments={pending}
-        tenantTimezone={tenant.timezone}
-      />
+      <PendingConfirmations appointments={pending} tenantTimezone={tenant.timezone} />
 
       <AttentionSection items={attentionItems} />
 
@@ -232,12 +213,9 @@ function PendingConfirmations({
           {appointments.map((a) => (
             <li key={a.id} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-fg">
-                  {a.serviceName ?? 'Serviço'}
-                </p>
+                <p className="truncate font-medium text-fg">{a.serviceName ?? 'Serviço'}</p>
                 <p className="truncate text-[0.8125rem] text-fg-muted">
-                  {dateTimeFmt.format(new Date(a.startAt))} ·{' '}
-                  {a.customerName ?? 'cliente'}
+                  {dateTimeFmt.format(new Date(a.startAt))} · {a.customerName ?? 'cliente'}
                   {a.professionalName ? ` · ${a.professionalName}` : ''}
                 </p>
               </div>
@@ -275,9 +253,7 @@ function StatCard({
       <CardContent className="py-4">
         <div className="mb-2 flex items-center gap-2 text-fg-muted">
           {icon}
-          <span className="text-[0.75rem] font-medium uppercase tracking-[0.14em]">
-            {label}
-          </span>
+          <span className="text-[0.75rem] font-medium uppercase tracking-[0.14em]">{label}</span>
         </div>
         <p className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
           {value}
@@ -302,10 +278,7 @@ function AgendaPreview({
         <h2 className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
           Próximos
         </h2>
-        <Link
-          href="/admin/dashboard/agenda"
-          className="text-[0.75rem] text-fg-muted hover:text-fg"
-        >
+        <Link href="/admin/dashboard/agenda" className="text-[0.75rem] text-fg-muted hover:text-fg">
           Ver agenda
         </Link>
       </div>
@@ -319,9 +292,7 @@ function AgendaPreview({
                 </span>
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-fg">
-                  {a.serviceName ?? 'Serviço'}
-                </p>
+                <p className="truncate font-medium text-fg">{a.serviceName ?? 'Serviço'}</p>
                 <p className="truncate text-[0.8125rem] text-fg-muted">
                   {a.professionalName ?? 'profissional'} · {a.customerName ?? 'cliente'}
                 </p>

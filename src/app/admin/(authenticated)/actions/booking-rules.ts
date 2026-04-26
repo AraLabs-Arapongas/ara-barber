@@ -31,9 +31,7 @@ const Input = z.object({
 
 export type UpdateBookingRulesInput = z.infer<typeof Input>
 
-export type UpdateBookingRulesResult =
-  | { ok: true }
-  | { ok: false; error: string }
+export type UpdateBookingRulesResult = { ok: true } | { ok: false; error: string }
 
 /**
  * Atualiza as regras de agendamento do tenant.

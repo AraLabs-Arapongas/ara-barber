@@ -15,9 +15,7 @@ const CreateInput = z.object({
 })
 
 export type CreateBlockInput = z.infer<typeof CreateInput>
-export type CreateBlockResult =
-  | { ok: true; id: string }
-  | { ok: false; error: string }
+export type CreateBlockResult = { ok: true; id: string } | { ok: false; error: string }
 
 /**
  * Cria um bloqueio de disponibilidade. `scope = TENANT` salva

@@ -29,11 +29,12 @@ export function renderCancelHtml(d: CancelData): string {
     ? `<img src="${d.tenantLogoUrl}" alt="${escapeHtml(d.tenantName)}" style="max-height:48px;margin-bottom:12px" />`
     : `<div style="font-weight:600;font-size:18px;color:${color};margin-bottom:12px">${escapeHtml(d.tenantName)}</div>`
 
-  const intro = d.introText && d.introText.trim()
-    ? d.introText
-    : d.canceledBy === 'CUSTOMER'
-      ? `Olá ${d.customerName}, recebemos seu cancelamento.`
-      : `Olá ${d.customerName}, ${d.tenantName} cancelou sua reserva.`
+  const intro =
+    d.introText && d.introText.trim()
+      ? d.introText
+      : d.canceledBy === 'CUSTOMER'
+        ? `Olá ${d.customerName}, recebemos seu cancelamento.`
+        : `Olá ${d.customerName}, ${d.tenantName} cancelou sua reserva.`
 
   return `<!doctype html>
 <html><body style="margin:0;padding:24px;background:#f5f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f1f1f">
@@ -65,11 +66,15 @@ export function cancelSubject(d: CancelData): string {
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[c]!))
+  return s.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[c]!,
+  )
 }

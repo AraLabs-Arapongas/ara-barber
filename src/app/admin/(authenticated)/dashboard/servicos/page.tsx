@@ -1,9 +1,6 @@
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
-import {
-  ServicesManager,
-  type ServiceListItem,
-} from '@/components/dashboard/services-manager'
+import { ServicesManager, type ServiceListItem } from '@/components/dashboard/services-manager'
 
 export default async function ServicesPage() {
   const tenant = await getCurrentTenantOrNotFound()
@@ -26,9 +23,7 @@ export default async function ServicesPage() {
       .eq('is_active', true),
   ])
 
-  const profById = new Map(
-    (profsRes.data ?? []).map((p) => [p.id, p.display_name ?? p.name]),
-  )
+  const profById = new Map((profsRes.data ?? []).map((p) => [p.id, p.display_name ?? p.name]))
 
   const namesByService = new Map<string, string[]>()
   for (const ps of profServicesRes.data ?? []) {

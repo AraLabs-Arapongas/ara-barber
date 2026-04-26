@@ -50,13 +50,9 @@ export function BlocksManager({
   const [scope, setScope] = useState<'TENANT' | 'PROFESSIONAL'>(
     initialProfessional ? 'PROFESSIONAL' : 'TENANT',
   )
-  const [professionalId, setProfessionalId] = useState<string>(
-    initialProfessional ?? '',
-  )
+  const [professionalId, setProfessionalId] = useState<string>(initialProfessional ?? '')
   const [defaultStart] = useState(() => toLocalInput(new Date()))
-  const [defaultEnd] = useState(() =>
-    toLocalInput(new Date(Date.now() + 2 * 86400000)),
-  )
+  const [defaultEnd] = useState(() => toLocalInput(new Date(Date.now() + 2 * 86400000)))
   const [error, setError] = useState<string | null>(null)
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -102,8 +98,7 @@ export function BlocksManager({
   async function handleRemove(id: string) {
     const ok = await confirm({
       title: 'Excluir este bloqueio?',
-      description:
-        'Os horários voltam a aceitar reservas no período bloqueado.',
+      description: 'Os horários voltam a aceitar reservas no período bloqueado.',
       confirmLabel: 'Excluir',
       destructive: true,
     })
@@ -169,9 +164,7 @@ export function BlocksManager({
           <CardContent className="py-4">
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <span className="mb-1.5 block text-[0.8125rem] font-medium text-fg">
-                  Aplicar a
-                </span>
+                <span className="mb-1.5 block text-[0.8125rem] font-medium text-fg">Aplicar a</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -287,16 +280,10 @@ export function BlocksManager({
                       )}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-fg">
-                        {profLabel(b.professionalId)}
-                      </p>
-                      <p className="text-[0.8125rem] text-fg-muted">
-                        {fmtRange(b)}
-                      </p>
+                      <p className="truncate font-medium text-fg">{profLabel(b.professionalId)}</p>
+                      <p className="text-[0.8125rem] text-fg-muted">{fmtRange(b)}</p>
                       {b.reason ? (
-                        <p className="text-[0.8125rem] italic text-fg-muted">
-                          {b.reason}
-                        </p>
+                        <p className="text-[0.8125rem] italic text-fg-muted">{b.reason}</p>
                       ) : null}
                     </div>
                   </div>

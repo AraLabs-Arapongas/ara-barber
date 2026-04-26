@@ -10,10 +10,7 @@ export default function PerfilLoading() {
       </div>
       <div className="mt-8 space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-[3.25rem] animate-pulse rounded-lg bg-bg-subtle"
-          />
+          <div key={i} className="h-[3.25rem] animate-pulse rounded-lg bg-bg-subtle" />
         ))}
       </div>
     </main>

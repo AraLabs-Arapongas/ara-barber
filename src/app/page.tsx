@@ -73,8 +73,7 @@ function TenantNotFound() {
           404
         </p>
         <h1 className="mb-3 font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg sm:text-[2.25rem]">
-          Esse endereço não está{' '}
-          <span className="italic text-brand-primary">ativo</span>
+          Esse endereço não está <span className="italic text-brand-primary">ativo</span>
           <span className="text-brand-accent">.</span>
         </h1>
         <p className="max-w-sm text-[0.9375rem] leading-relaxed text-fg-muted">
@@ -154,9 +153,7 @@ async function TenantPublicHome() {
   const nextAppointment =
     myAppointments.find(
       (a) =>
-        new Date(a.startAt).getTime() >= nowMs &&
-        a.status !== 'CANCELED' &&
-        a.status !== 'NO_SHOW',
+        new Date(a.startAt).getTime() >= nowMs && a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
     ) ?? null
 
   return (
@@ -192,10 +189,7 @@ async function TenantPublicHome() {
               <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
                 Sua próxima reserva
               </p>
-              <NextAppointmentCard
-                appt={nextAppointment}
-                tenantTimezone={tenant.timezone}
-              />
+              <NextAppointmentCard appt={nextAppointment} tenantTimezone={tenant.timezone} />
             </section>
           ) : null}
 
@@ -213,11 +207,7 @@ async function TenantPublicHome() {
           ) : null}
 
           <div className="mb-4 mt-2 flex flex-col items-center">
-            <CustomerAccess
-              loggedIn={loggedIn}
-              displayName={displayName}
-              email={emailForHome}
-            />
+            <CustomerAccess loggedIn={loggedIn} displayName={displayName} email={emailForHome} />
           </div>
 
           <footer className="mt-auto flex justify-center pt-6">
@@ -279,9 +269,7 @@ function NextAppointmentCard({
             <Clock className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-fg">
-              {appt.serviceName ?? 'Serviço'}
-            </p>
+            <p className="truncate font-medium text-fg">{appt.serviceName ?? 'Serviço'}</p>
             <p className="truncate text-[0.8125rem] text-fg-muted">
               {dateTimeFmt.format(new Date(appt.startAt))}
               {appt.professionalName ? ` · ${appt.professionalName}` : ''}
@@ -306,12 +294,7 @@ function NextAppointmentCard({
 function DevRootIndex() {
   const devBase = process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me'
   const port = '3008'
-  const tenants = [
-    'barbearia-teste',
-    'casa-do-corte',
-    'barba-preta',
-    'bela-imagem',
-  ] as const
+  const tenants = ['barbearia-teste', 'casa-do-corte', 'barba-preta', 'bela-imagem'] as const
   const aralabsSite = 'https://aralabs.com.br'
 
   const links = tenants.flatMap((slug) => {

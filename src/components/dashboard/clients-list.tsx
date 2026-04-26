@@ -72,10 +72,7 @@ export function ClientsList({ items, tenantTimezone }: Props) {
         <ul className="space-y-2">
           {filtered.map((c) => (
             <li key={c.id}>
-              <Link
-                href={`/admin/dashboard/clientes/${c.id}`}
-                className="block transition-colors"
-              >
+              <Link href={`/admin/dashboard/clientes/${c.id}`} className="block transition-colors">
                 <Card className="shadow-xs hover:bg-bg-subtle/50">
                   <div className="flex items-start gap-3 px-4 py-3 sm:px-5">
                     <InitialsAvatar name={c.name} size={40} />
@@ -87,12 +84,8 @@ export function ClientsList({ items, tenantTimezone }: Props) {
                       <p className="mt-1 text-[0.75rem] text-fg-subtle">
                         {c.appointmentsCount} agendamento
                         {c.appointmentsCount === 1 ? '' : 's'}
-                        {c.lastAt
-                          ? ` · último em ${fmtDate(c.lastAt, tenantTimezone)}`
-                          : ''}
-                        {c.totalCents > 0
-                          ? ` · ${formatCentsToBrl(c.totalCents)} concluído`
-                          : ''}
+                        {c.lastAt ? ` · último em ${fmtDate(c.lastAt, tenantTimezone)}` : ''}
+                        {c.totalCents > 0 ? ` · ${formatCentsToBrl(c.totalCents)} concluído` : ''}
                       </p>
                     </div>
                   </div>

@@ -61,9 +61,7 @@ export function TeamServicesMatrix({ professionals, services, links }: Props) {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Equipe × Serviços
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Quem executa cada serviço.
-        </p>
+        <p className="mt-1 text-[0.875rem] text-fg-muted">Quem executa cada serviço.</p>
       </header>
 
       {error ? (

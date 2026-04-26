@@ -47,9 +47,7 @@ export default async function BookStepTime({ searchParams }: PageProps) {
 
   const eligiblePros = await getProfessionalsForService(tenant.id, current.serviceId)
   const candidateIds =
-    current.professionalId === 'any'
-      ? eligiblePros.map((p) => p.id)
-      : [current.professionalId]
+    current.professionalId === 'any' ? eligiblePros.map((p) => p.id) : [current.professionalId]
 
   const dayStart = dateTimeInTenantTZ(current.date, '00:00', tenant.timezone)
   const dayEnd = dateTimeInTenantTZ(current.date, '23:59', tenant.timezone)
@@ -63,12 +61,7 @@ export default async function BookStepTime({ searchParams }: PageProps) {
       dayStart.toISOString(),
       dayEnd.toISOString(),
     ),
-    getAppointmentsInRange(
-      tenant.id,
-      candidateIds,
-      dayStart.toISOString(),
-      dayEnd.toISOString(),
-    ),
+    getAppointmentsInRange(tenant.id, candidateIds, dayStart.toISOString(), dayEnd.toISOString()),
   ])
 
   const slots = computeSlots({
@@ -149,9 +142,7 @@ export default async function BookStepTime({ searchParams }: PageProps) {
         </ul>
       ) : (
         <div className="rounded-xl border border-border bg-surface p-8 text-center">
-          <p className="text-[0.9375rem] text-fg-muted">
-            Nenhum horário livre nesta data.
-          </p>
+          <p className="text-[0.9375rem] text-fg-muted">Nenhum horário livre nesta data.</p>
           <Link
             href={bookHrefWith('/book/data', current)}
             className="mt-3 inline-block text-[0.875rem] font-medium text-brand-primary hover:underline"

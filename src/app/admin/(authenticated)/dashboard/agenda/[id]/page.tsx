@@ -48,9 +48,7 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
   const { id } = await params
   const sp = await searchParams
   const fromDate = typeof sp.from === 'string' ? sp.from : undefined
-  const backHref = fromDate
-    ? `/admin/dashboard/agenda?date=${fromDate}`
-    : '/admin/dashboard/agenda'
+  const backHref = fromDate ? `/admin/dashboard/agenda?date=${fromDate}` : '/admin/dashboard/agenda'
 
   const supabase = await createClient()
   const { data: appt } = await supabase

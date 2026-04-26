@@ -80,8 +80,6 @@ export async function upsertTemplate(raw: UpsertTemplateInput): Promise<UpsertTe
   )
   if (error) return { ok: false, error: error.message }
 
-  revalidatePath(
-    `/admin/dashboard/comunicacao/${data.channel === 'EMAIL' ? 'emails' : 'whatsapp'}`,
-  )
+  revalidatePath(`/admin/dashboard/comunicacao/${data.channel === 'EMAIL' ? 'emails' : 'whatsapp'}`)
   return { ok: true }
 }

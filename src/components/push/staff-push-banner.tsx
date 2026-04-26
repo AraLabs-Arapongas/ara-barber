@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Bell, BellOff, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  requestAndSubscribe,
-  isPushSupported,
-  currentPermission,
-} from '@/lib/push/register'
+import { requestAndSubscribe, isPushSupported, currentPermission } from '@/lib/push/register'
 
 type Status = 'loading' | 'unsupported' | 'default' | 'granted' | 'denied'
 

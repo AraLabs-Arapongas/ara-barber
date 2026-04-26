@@ -25,51 +25,38 @@ export default async function ClienteDetailPage({ params }: PageProps) {
   const tenant = await getCurrentTenantOrNotFound()
   const supabase = await createClient()
 
-  const [{ data: customer }, { data: appts }, { data: services }] =
-    await Promise.all([
-      supabase
-        .from('customers')
-        .select('id, name, email, phone, created_at')
-        .eq('id', id)
-        .eq('tenant_id', tenant.id)
-        .is('deleted_at', null)
-        .maybeSingle(),
-      supabase
-        .from('appointments')
-        .select(
-          'id, start_at, status, price_cents_snapshot, service_id, service_name_snapshot',
-        )
-        .eq('tenant_id', tenant.id)
-        .eq('customer_id', id)
-        .order('start_at', { ascending: false }),
-      supabase
-        .from('services')
-        .select('id, name, price_cents')
-        .eq('tenant_id', tenant.id),
-    ])
+  const [{ data: customer }, { data: appts }, { data: services }] = await Promise.all([
+    supabase
+      .from('customers')
+      .select('id, name, email, phone, created_at')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .is('deleted_at', null)
+      .maybeSingle(),
+    supabase
+      .from('appointments')
+      .select('id, start_at, status, price_cents_snapshot, service_id, service_name_snapshot')
+      .eq('tenant_id', tenant.id)
+      .eq('customer_id', id)
+      .order('start_at', { ascending: false }),
+    supabase.from('services').select('id, name, price_cents').eq('tenant_id', tenant.id),
+  ])
 
   if (!customer) notFound()
 
-  const priceById = new Map<string, number>(
-    (services ?? []).map((s) => [s.id, s.price_cents]),
-  )
-  const nameById = new Map<string, string>(
-    (services ?? []).map((s) => [s.id, s.name]),
-  )
+  const priceById = new Map<string, number>((services ?? []).map((s) => [s.id, s.price_cents]))
+  const nameById = new Map<string, string>((services ?? []).map((s) => [s.id, s.name]))
 
   const all = appts ?? []
   const completed = all.filter((a) => a.status === 'COMPLETED')
   const totalCents = completed.reduce(
-    (s, a) =>
-      s + (a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0),
+    (s, a) => s + (a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0),
     0,
   )
 
   const name = displayName(customer.name, customer.email)
   const tel = buildTelUrl(customer.phone)
-  const wa = customer.phone
-    ? buildWhatsappUrl(customer.phone, `Oi ${name.split(/\s+/)[0]}!`)
-    : null
+  const wa = customer.phone ? buildWhatsappUrl(customer.phone, `Oi ${name.split(/\s+/)[0]}!`) : null
 
   const dateFmt = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenant.timezone,
@@ -136,9 +123,7 @@ export default async function ClienteDetailPage({ params }: PageProps) {
       </div>
 
       <div className="mb-5">
-        <Link
-          href={`/admin/dashboard/agenda/novo?customerId=${customer.id}`}
-        >
+        <Link href={`/admin/dashboard/agenda/novo?customerId=${customer.id}`}>
           <Button type="button" fullWidth>
             <Plus className="h-4 w-4" />
             Novo agendamento
@@ -162,21 +147,15 @@ export default async function ClienteDetailPage({ params }: PageProps) {
         <ul className="space-y-2">
           {all.map((a) => {
             const status = a.status as AppointmentStatus
-            const cents =
-              a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
-            const svcName =
-              a.service_name_snapshot ??
-              nameById.get(a.service_id) ??
-              'Serviço'
+            const cents = a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
+            const svcName = a.service_name_snapshot ?? nameById.get(a.service_id) ?? 'Serviço'
             return (
               <li key={a.id}>
                 <Link href={`/admin/dashboard/agenda/${a.id}`}>
                   <Card className="shadow-xs transition-colors hover:bg-bg-subtle/50">
                     <CardContent className="flex items-start justify-between gap-3 py-3">
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-fg">
-                          {svcName}
-                        </p>
+                        <p className="truncate font-medium text-fg">{svcName}</p>
                         <p className="text-[0.8125rem] text-fg-muted">
                           {dateFmt.format(new Date(a.start_at))}
                         </p>
@@ -205,12 +184,8 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <Card className="shadow-xs">
       <CardContent className="px-3 py-3">
-        <p className="text-[0.6875rem] uppercase tracking-wide text-fg-subtle">
-          {label}
-        </p>
-        <p className="font-display text-[1.125rem] font-semibold leading-tight text-fg">
-          {value}
-        </p>
+        <p className="text-[0.6875rem] uppercase tracking-wide text-fg-subtle">{label}</p>
+        <p className="font-display text-[1.125rem] font-semibold leading-tight text-fg">{value}</p>
       </CardContent>
     </Card>
   )

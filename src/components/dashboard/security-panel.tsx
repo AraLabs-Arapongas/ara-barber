@@ -6,10 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  changeMyPassword,
-  signOutAllSessions,
-} from '@/app/admin/(authenticated)/actions/security'
+import { changeMyPassword, signOutAllSessions } from '@/app/admin/(authenticated)/actions/security'
 
 type Msg = { kind: 'success' | 'error'; text: string }
 
@@ -87,9 +84,7 @@ export function SecurityPanel() {
           {pwdMsg ? (
             <p
               className={`rounded-lg px-3 py-2 text-sm ${
-                pwdMsg.kind === 'success'
-                  ? 'bg-success-bg text-success'
-                  : 'bg-error-bg text-error'
+                pwdMsg.kind === 'success' ? 'bg-success-bg text-success' : 'bg-error-bg text-error'
               }`}
               role={pwdMsg.kind === 'error' ? 'alert' : 'status'}
             >
@@ -110,8 +105,8 @@ export function SecurityPanel() {
         <CardContent className="space-y-3 py-4">
           <h2 className="font-medium text-fg">Sessões</h2>
           <p className="text-sm text-fg-muted">
-            Encerre todas as sessões ativas (em todos os dispositivos onde você está logado).
-            Útil se perdeu acesso a algum aparelho.
+            Encerre todas as sessões ativas (em todos os dispositivos onde você está logado). Útil
+            se perdeu acesso a algum aparelho.
           </p>
           {sessionMsg ? (
             <p

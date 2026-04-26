@@ -19,8 +19,8 @@ export function AgendaEmptyState({ publicUrl }: { publicUrl: string }) {
         Nenhum agendamento neste dia.
       </p>
       <p className="mt-2 text-[0.875rem] text-fg-muted">
-        Você pode adicionar um horário manualmente ou compartilhar seu link para seus
-        clientes agendarem sozinhos.
+        Você pode adicionar um horário manualmente ou compartilhar seu link para seus clientes
+        agendarem sozinhos.
       </p>
       <div className="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
         <Link href="/admin/dashboard/agenda/novo">

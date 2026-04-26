@@ -2,10 +2,7 @@
 
 import { z } from 'zod'
 import { createAppointment } from '@/lib/appointments/server-actions'
-import {
-  ensureCustomerForTenant,
-  updateMyCustomerProfile,
-} from '@/lib/customers/ensure'
+import { ensureCustomerForTenant, updateMyCustomerProfile } from '@/lib/customers/ensure'
 
 const Input = z.object({
   tenantId: z.string().uuid(),

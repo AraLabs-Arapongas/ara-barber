@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
-import {
-  requestAndSubscribe,
-  currentPermission,
-  isPushSupported,
-} from '@/lib/push/register'
+import { requestAndSubscribe, currentPermission, isPushSupported } from '@/lib/push/register'
 
 type Props = {
   /**

@@ -47,7 +47,9 @@ export default async function BookStepConfirm({ searchParams }: PageProps) {
     // (RLS bloquearia mesmo) → manda pro próprio dashboard. Sem distinguir os
     // 2 casos, staff entra em loop confirmar↔login.
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (user) {
       redirect('/admin/dashboard')
     }
@@ -117,11 +119,7 @@ export default async function BookStepConfirm({ searchParams }: PageProps) {
             label="Profissional"
             value={prof.displayName || prof.name}
           />
-          <Line
-            icon={<Calendar className="h-4 w-4" />}
-            label="Data"
-            value={dateLabel}
-          />
+          <Line icon={<Calendar className="h-4 w-4" />} label="Data" value={dateLabel} />
           <Line
             icon={<Clock className="h-4 w-4" />}
             label="Horário"

@@ -128,9 +128,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
                         >
                           {timeLabel(a.startAt, tenant.timezone)}
                         </span>
-                        <span className="text-[0.6875rem] text-fg-muted">
-                          {durationMin}min
-                        </span>
+                        <span className="text-[0.6875rem] text-fg-muted">{durationMin}min</span>
                       </span>
                       <div className="min-w-0 flex-1">
                         <p
@@ -141,8 +139,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
                           {a.serviceName ?? 'Serviço'}
                         </p>
                         <p className="truncate text-[0.8125rem] text-fg-muted">
-                          {a.customerName ?? 'Cliente'} ·{' '}
-                          {a.professionalName ?? '—'}
+                          {a.customerName ?? 'Cliente'} · {a.professionalName ?? '—'}
                         </p>
                       </div>
                       <span

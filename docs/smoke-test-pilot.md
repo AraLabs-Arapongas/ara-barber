@@ -2,7 +2,7 @@
 
 > **Atualizado em 2026-04-26 (admin revamp):** roteiro cobre Home revisada, Agenda com filtros, wizard de criação manual, Mais reorganizada em 5 seções com 14 sub-telas, e integração das edge functions com `tenant_message_templates`.
 >
-> **Manutenção:** sempre que um fluxo mudar (novas telas, rotas, ações, guards, rules de negócio, seed), atualizar este doc no **mesmo PR**. Foca em *comportamento*, não em copy/cor/layout.
+> **Manutenção:** sempre que um fluxo mudar (novas telas, rotas, ações, guards, rules de negócio, seed), atualizar este doc no **mesmo PR**. Foca em _comportamento_, não em copy/cor/layout.
 
 Roteiro manual pra validar o fluxo ponta-a-ponta do piloto antes de soltar pra um negócio real.
 Use `qa-aralabs` e `demo-aralabs` como tenants de referência.
@@ -20,10 +20,10 @@ URLs locais:
 
 **Staff (login em `/admin/login`):**
 
-| Tenant | Email | Senha | Role |
-| --- | --- | --- | --- |
-| qa-aralabs | `thiago@aralabs.com.br` | (definir via reset de senha) | BUSINESS_OWNER |
-| demo-aralabs | (criar via convite no `qa-aralabs` /conta/usuarios) | — | BUSINESS_OWNER |
+| Tenant       | Email                                               | Senha                        | Role           |
+| ------------ | --------------------------------------------------- | ---------------------------- | -------------- |
+| qa-aralabs   | `thiago@aralabs.com.br`                             | (definir via reset de senha) | BUSINESS_OWNER |
+| demo-aralabs | (criar via convite no `qa-aralabs` /conta/usuarios) | —                            | BUSINESS_OWNER |
 
 > Tenants antigos (`barbearia-teste`, `bela-imagem`, `casa-do-corte`, `barba-preta`) foram removidos no rebrand. Para criar usuário inicial num tenant sem owner, usar `mcp__supabase__execute_sql` pra inserir em `user_profiles` ou rodar o convite a partir de outro tenant onde já existe BUSINESS_OWNER.
 
@@ -41,6 +41,7 @@ URLs locais:
 ## 1. Home pública do tenant
 
 **Visitante deslogado:**
+
 - [ ] Abrir `/` em anônimo carrega sem erro.
 - [ ] Logo do tenant aparece em tamanho compacto (não ocupa a tela inteira).
 - [ ] Headline aparece (texto do tenant se setado, fallback genérico caso contrário).
@@ -51,11 +52,13 @@ URLs locais:
 - [ ] **Tab bar do cliente NÃO aparece** (só após login).
 
 **Visitante logado (sem reserva futura):**
+
 - [ ] Mesmos blocos da versão deslogada.
 - [ ] CustomerAccess mostra "Bem-vindo, [nome]" + botão "Minhas reservas".
 - [ ] **Tab bar do cliente aparece**: Início / Agendar / Reservas / Perfil.
 
 **Visitante logado (com reserva futura):**
+
 - [ ] Bloco "Sua próxima reserva" aparece logo após o hero, com horário + serviço + profissional + badge de status.
 - [ ] Clicar na próxima reserva abre `/meus-agendamentos/[id]` direto.
 - [ ] CTA principal muda pra "Agendar novamente".
@@ -288,11 +291,13 @@ Marca e aparência (`/admin/dashboard/marca`):
 ## 9. Mais — Agenda + Gestão (revamp 2026-04-26)
 
 ### 9a. Regras de agendamento
+
 - [ ] /admin/dashboard/regras: 4 fields editáveis (antecedência mínima em horas, intervalo entre horários, janela de cancelamento em horas, toggle de cancelamento pelo cliente).
 - [ ] Salvar persiste; refresh confirma. (NOTA: aplicação no slot calc é follow-up — só persistência nesta fase.)
 - [ ] User não-BUSINESS_OWNER (RECEPTIONIST/PROFESSIONAL) recebe mensagem PT-BR ao tentar salvar.
 
 ### 9b. Bloqueios
+
 - [ ] /admin/dashboard/bloqueios lista bloqueios futuros cross-professional (negócio inteiro + por profissional).
 - [ ] Criar bloqueio "Negócio inteiro" → desabilita slot pra todos os profs no /book.
 - [ ] Criar bloqueio "Um profissional" → desabilita só pra ele.
@@ -301,12 +306,14 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Detalhe do profissional NÃO tem mais form de bloqueios local — só link "Ver bloqueios deste profissional" que leva pra /bloqueios?professional=<id>.
 
 ### 9c. Clientes
+
 - [ ] /admin/dashboard/clientes: busca client-side por nome, telefone ou e-mail filtra a lista.
 - [ ] Cada card mostra contagem de agendamentos, última visita e total concluído (R$).
 - [ ] Click no card vai pra /admin/dashboard/clientes/[id] com histórico completo + dados de contato.
 - [ ] No detalhe, "Novo agendamento" leva pro wizard com `?customerId=<uuid>` pré-preenchendo o cliente.
 
 ### 9d. Financeiro
+
 - [ ] /admin/dashboard/financeiro mostra disclaimer "não representa pagamento real".
 - [ ] Filtro Hoje/Semana/Mês muda os dados via `?preset=`.
 - [ ] 4 cards: Previsto / Realizado / Perdido / Ticket médio (em R$).
@@ -314,6 +321,7 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Movimentos recentes lista até 20 com link pro detalhe do agendamento.
 
 ### 9e. Relatórios
+
 - [ ] /admin/dashboard/relatorios mostra contagem por status (5 cards) no período (default Mês).
 - [ ] Top serviços e top profissionais — ordenado por contagem (não R$).
 - [ ] Filtro Hoje/Semana/Mês altera os dados.
@@ -321,11 +329,13 @@ Marca e aparência (`/admin/dashboard/marca`):
 ## 10. Mais — Comunicação (revamp 2026-04-26)
 
 ### 10a. E-mails automáticos
+
 - [ ] /admin/dashboard/comunicacao/emails: lista 4 templates EMAIL (Confirmação, Cancelamento, Lembrete, Agradecimento) — campos `subject`+`body` editáveis.
 - [ ] Editar `subject` + `body` + Salvar; refresh confirma persistido.
 - [ ] Toggle "Desativado" persiste.
 
 **Integração edge function (C6 — `on-appointment-event`):**
+
 - [ ] Editar template `BOOKING_CONFIRMATION` (mudar subject e body com placeholders `{nome}`, `{servico}`, `{horario}`, `{profissional}`) + Salvar.
 - [ ] Criar appointment via wizard manual (`/admin/dashboard/agenda/novo`) com cliente que tenha e-mail real.
 - [ ] E-mail recebido na inbox tem o **subject editado** com placeholders substituídos; intro do e-mail tem o **body editado** com placeholders substituídos. Card rico (data/serviço/CTA) continua aparecendo abaixo da intro.
@@ -336,6 +346,7 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Quando o template não tem row em `tenant_message_templates` (deletar manualmente via SQL pra simular), edge function usa fallback hard-coded (subject "Seu agendamento foi confirmado", body com `Oi {nome}, ...`).
 
 ### 10b. WhatsApp
+
 - [ ] /admin/dashboard/comunicacao/whatsapp: lista 5 templates WHATSAPP (Confirmação, Lembrete, Cancelamento, Compartilhar link, Personalizado) — só `body`.
 - [ ] Editar `body` + Salvar; refresh confirma persistido.
 - [ ] No detalhe de um appointment (/admin/dashboard/agenda/[id]), botão "Enviar pelo WhatsApp" aparece logo abaixo do cliente quando o template WHATSAPP/BOOKING_CONFIRMATION está ativo.
@@ -344,6 +355,7 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Desativar template em /comunicacao/whatsapp → botão some do detalhe do appointment.
 
 ### 10c. Notificações da equipe
+
 - [ ] /admin/dashboard/comunicacao/notificacoes: StaffPushToggle aparece dentro de card com copy melhor.
 - [ ] Toggle ativa/desativa permission + cria/remove `push_subscription` no DB.
 - [ ] Estados `unsupported`/`denied` mostram mensagem apropriada (testar em browser sem push ou com permission negada).
@@ -351,6 +363,7 @@ Marca e aparência (`/admin/dashboard/marca`):
 ## 11. Mais — Conta (revamp 2026-04-26)
 
 ### 11a. Usuários e permissões (BUSINESS_OWNER only)
+
 - [ ] `/admin/dashboard/conta/usuarios` lista staff existentes do tenant (BUSINESS_OWNER, RECEPTIONIST, PROFESSIONAL) com e-mail e badge "você" no próprio usuário.
 - [ ] Logado como RECEPTIONIST/PROFESSIONAL: aviso "Apenas o dono do negócio pode gerenciar usuários" aparece e botões de invite/role/remover ficam ocultos. Tentativa direta na server action retorna mensagem PT-BR.
 - [ ] Logado como BUSINESS_OWNER: convidar e-mail novo + role → e-mail de convite chega na inbox do convidado (link aponta pra `<tenant>/auth/callback`).
@@ -358,12 +371,14 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Remover usuário (Trash) tira do `user_profiles` do tenant; ícone da lixeira não aparece pro próprio usuário.
 
 ### 11b. Plano e cobrança (info-only)
+
 - [ ] `/admin/dashboard/conta/plano` mostra status (TRIALING/ACTIVE), nome do plano, valor/mês.
 - [ ] Em TRIALING, mostra "X dias restantes no trial" (ou "Trial expirou" se passou).
 - [ ] Em ACTIVE, mostra "Próxima renovação em X dias" se `subscription_ends_at` estiver setado.
 - [ ] Botão "Falar com o suporte" abre `wa.me/<NEXT_PUBLIC_SUPPORT_PHONE ou 5543999999999>` com mensagem default. (NOTA: número de suporte é placeholder hardcoded enquanto `NEXT_PUBLIC_SUPPORT_PHONE` não existir no env.)
 
 ### 11c. Segurança
+
 - [ ] `/admin/dashboard/conta/seguranca`: alterar senha (nova + confirmação iguais, ≥ 8 chars) → sucesso.
 - [ ] Senha curta (<8) → erro inline "A senha precisa ter no mínimo 8 caracteres."
 - [ ] Confirmação diferente → erro inline "As senhas não conferem."

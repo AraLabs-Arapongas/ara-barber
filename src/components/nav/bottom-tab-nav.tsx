@@ -100,13 +100,8 @@ export function BottomTabNav() {
                   active ? 'text-brand-primary' : 'text-fg-subtle hover:text-fg',
                 )}
               >
-                <Icon
-                  className={cn('h-5 w-5', pending && 'animate-pulse')}
-                  aria-hidden="true"
-                />
-                <span className="text-[0.6875rem] font-medium tracking-wide">
-                  {tab.label}
-                </span>
+                <Icon className={cn('h-5 w-5', pending && 'animate-pulse')} aria-hidden="true" />
+                <span className="text-[0.6875rem] font-medium tracking-wide">{tab.label}</span>
               </Link>
             </li>
           )

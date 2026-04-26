@@ -117,9 +117,7 @@ export function BookingRulesForm({ initial }: Props) {
             <input
               type="checkbox"
               checked={data.customer_can_cancel}
-              onChange={(e) =>
-                setData((d) => ({ ...d, customer_can_cancel: e.target.checked }))
-              }
+              onChange={(e) => setData((d) => ({ ...d, customer_can_cancel: e.target.checked }))}
               className="mt-1 h-4 w-4 cursor-pointer accent-brand-primary"
             />
             <span className="flex-1">
@@ -133,9 +131,7 @@ export function BookingRulesForm({ initial }: Props) {
           </label>
 
           {msg ? (
-            <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>
-              {msg.text}
-            </Alert>
+            <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>{msg.text}</Alert>
           ) : null}
 
           <div>
@@ -162,10 +158,7 @@ function Field({
 }) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="mb-1 block text-[0.8125rem] font-medium text-fg"
-      >
+      <label htmlFor={id} className="mb-1 block text-[0.8125rem] font-medium text-fg">
         {label}
       </label>
       {hint ? <p className="mb-2 text-[0.8125rem] text-fg-muted">{hint}</p> : null}

@@ -17,9 +17,7 @@ const Input = z.object({
 export type TransitionInput = z.infer<typeof Input>
 export type TransitionResult = { ok: true } | { ok: false; error: string }
 
-export async function transitionAppointmentStatus(
-  raw: TransitionInput,
-): Promise<TransitionResult> {
+export async function transitionAppointmentStatus(raw: TransitionInput): Promise<TransitionResult> {
   const parsed = Input.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Input inválido.' }
   const { appointmentId, nextStatus, reason } = parsed.data

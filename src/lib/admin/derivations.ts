@@ -67,9 +67,6 @@ export function countAppointmentsForProfessional(
   professionalId: string,
 ): number {
   return appointments.filter(
-    (a) =>
-      a.professionalId === professionalId &&
-      a.status !== 'CANCELED' &&
-      a.status !== 'NO_SHOW',
+    (a) => a.professionalId === professionalId && a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
   ).length
 }

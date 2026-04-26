@@ -36,24 +36,13 @@ type Props = {
   currentPreset: RangePreset
 }
 
-export function ReportsSummary({
-  appointments,
-  services,
-  professionals,
-  currentPreset,
-}: Props) {
+export function ReportsSummary({ appointments, services, professionals, currentPreset }: Props) {
   const router = useRouter()
   const pathname = usePathname()
 
-  const svcNameById = useMemo(
-    () => new Map(services.map((s) => [s.id, s.name])),
-    [services],
-  )
+  const svcNameById = useMemo(() => new Map(services.map((s) => [s.id, s.name])), [services])
   const profNameById = useMemo(
-    () =>
-      new Map(
-        professionals.map((p) => [p.id, p.display_name ?? p.name]),
-      ),
+    () => new Map(professionals.map((p) => [p.id, p.display_name ?? p.name])),
     [professionals],
   )
 
@@ -69,10 +58,7 @@ export function ReportsSummary({
     const m = new Map<string, { name: string; count: number }>()
     for (const a of appointments) {
       const cur = m.get(a.service_id) ?? {
-        name:
-          svcNameById.get(a.service_id) ??
-          a.service_name_snapshot ??
-          'Serviço',
+        name: svcNameById.get(a.service_id) ?? a.service_name_snapshot ?? 'Serviço',
         count: 0,
       }
       cur.count++
@@ -120,9 +106,7 @@ export function ReportsSummary({
         ))}
       </div>
 
-      <Section
-        title={`Status — ${total} agendamento${total === 1 ? '' : 's'} no período`}
-      >
+      <Section title={`Status — ${total} agendamento${total === 1 ? '' : 's'} no período`}>
         {total === 0 ? (
           <Empty />
         ) : (
@@ -137,9 +121,7 @@ export function ReportsSummary({
                 >
                   {STATUS_LABELS[row.status]}
                 </span>
-                <span className="font-display text-[1rem] font-semibold text-fg">
-                  {row.count}
-                </span>
+                <span className="font-display text-[1rem] font-semibold text-fg">{row.count}</span>
               </li>
             ))}
           </ul>
@@ -185,13 +167,7 @@ export function ReportsSummary({
   )
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
       <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
@@ -205,9 +181,5 @@ function Section({
 }
 
 function Empty() {
-  return (
-    <p className="py-2 text-[0.875rem] text-fg-muted">
-      Sem dados no período.
-    </p>
-  )
+  return <p className="py-2 text-[0.875rem] text-fg-muted">Sem dados no período.</p>
 }

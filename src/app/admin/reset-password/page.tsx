@@ -9,7 +9,11 @@ import { Card } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
 import { buttonVariants } from '@/components/ui/button'
 import { getSessionUser } from '@/lib/auth/session'
-import { getCurrentArea, getCurrentTenantOrNotFound, type TenantContext } from '@/lib/tenant/context'
+import {
+  getCurrentArea,
+  getCurrentTenantOrNotFound,
+  type TenantContext,
+} from '@/lib/tenant/context'
 import { ResetPasswordForm } from './reset-password-form'
 
 export default async function AdminResetPasswordPage() {

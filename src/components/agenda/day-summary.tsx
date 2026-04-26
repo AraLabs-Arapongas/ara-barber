@@ -19,9 +19,7 @@ export function DaySummary({
   appointments: SummaryAppointment[]
   priceById: Map<string, number>
 }) {
-  const active = appointments.filter(
-    (a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
-  )
+  const active = appointments.filter((a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW')
   if (active.length === 0) return null
 
   const revenue = active.reduce(
@@ -29,9 +27,7 @@ export function DaySummary({
     0,
   )
   const now = new Date()
-  const late = active.filter((a) =>
-    isLate({ status: a.status, startAt: a.startAt }, now),
-  ).length
+  const late = active.filter((a) => isLate({ status: a.status, startAt: a.startAt }, now)).length
 
   return (
     <p className="my-2 text-[0.8125rem] text-fg-muted">

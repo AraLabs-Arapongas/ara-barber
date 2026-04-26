@@ -34,8 +34,8 @@ export function ProfessionalStep({
     <section className="space-y-4">
       {candidates.length === 0 ? (
         <p className="rounded-lg bg-warning-bg px-4 py-3 text-sm text-warning">
-          Nenhum profissional vinculado a este serviço. Vincule em Equipe →
-          [profissional] → Serviços.
+          Nenhum profissional vinculado a este serviço. Vincule em Equipe → [profissional] →
+          Serviços.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -50,16 +50,12 @@ export function ProfessionalStep({
                 >
                   <Card
                     className={`shadow-xs transition-colors ${
-                      selected
-                        ? 'border-brand-primary bg-brand-primary/5'
-                        : 'hover:bg-bg-subtle'
+                      selected ? 'border-brand-primary bg-brand-primary/5' : 'hover:bg-bg-subtle'
                     }`}
                   >
                     <CardContent className="py-3">
                       <p className="font-medium text-fg">{p.displayName ?? p.name}</p>
-                      {p.phone ? (
-                        <p className="text-sm text-fg-muted">{p.phone}</p>
-                      ) : null}
+                      {p.phone ? <p className="text-sm text-fg-muted">{p.phone}</p> : null}
                     </CardContent>
                   </Card>
                 </button>

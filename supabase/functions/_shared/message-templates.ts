@@ -29,10 +29,7 @@ export type TemplateEvent =
  * IMPORTANTE: ao mudar copy aqui, atualizar o equivalente no admin pra que
  * o staff veja o texto efetivamente em uso.
  */
-const FALLBACK_TEMPLATES: Record<
-  string,
-  { subject: string | null; body: string }
-> = {
+const FALLBACK_TEMPLATES: Record<string, { subject: string | null; body: string }> = {
   EMAIL_BOOKING_CONFIRMATION: {
     subject: 'Seu agendamento foi confirmado',
     body: 'Oi {nome}, seu agendamento de {servico} com {profissional} está confirmado para {horario}.',
@@ -92,10 +89,7 @@ export async function loadTemplate(
     // Falha silenciosa cai no fallback — mas precisamos saber se aconteceu
     // (ex: RLS denial, schema drift, network) pra não enviar template antigo
     // achando que o staff não customizou.
-    console.error(
-      `loadTemplate query failed for tenant=${tenantId} ${channel}/${event}`,
-      error,
-    )
+    console.error(`loadTemplate query failed for tenant=${tenantId} ${channel}/${event}`, error)
   }
 
   if (!data) {
@@ -104,10 +98,7 @@ export async function loadTemplate(
 
   return {
     enabled: data.enabled,
-    subject:
-      channel === 'EMAIL'
-        ? (data.subject && data.subject.trim()) || fallback.subject
-        : null,
+    subject: channel === 'EMAIL' ? (data.subject && data.subject.trim()) || fallback.subject : null,
     body: (data.body && data.body.trim()) || fallback.body,
   }
 }

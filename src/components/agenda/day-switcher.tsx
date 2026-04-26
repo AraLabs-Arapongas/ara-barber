@@ -48,7 +48,13 @@ export function DaySwitcher({ dateISO, tenantTimezone }: Props) {
   const today = todayISO(tenantTimezone)
   const diff = daysBetween(today, dateISO)
   const label =
-    diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : diff === -1 ? 'Ontem' : longLabel(dateISO, tenantTimezone)
+    diff === 0
+      ? 'Hoje'
+      : diff === 1
+        ? 'Amanhã'
+        : diff === -1
+          ? 'Ontem'
+          : longLabel(dateISO, tenantTimezone)
   const sublabel = longLabel(dateISO, tenantTimezone)
 
   return (

@@ -128,9 +128,7 @@ export function computeSlots(input: SlotInput): Slot[] {
   for (let t = businessStart; t + input.serviceDurationMinutes <= businessEnd; t += step) {
     const time = minutesToTime(t)
     const slotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
-    const slotEnd = new Date(
-      slotStart.getTime() + input.serviceDurationMinutes * 60_000,
-    )
+    const slotEnd = new Date(slotStart.getTime() + input.serviceDurationMinutes * 60_000)
 
     if (slotStart.getTime() < input.now.getTime()) continue
 

@@ -35,13 +35,7 @@ const SELECT_CLASSES =
 
 type Msg = { kind: 'success' | 'error'; text: string }
 
-export function UsersManager({
-  users,
-  canManage,
-}: {
-  users: StaffRow[]
-  canManage: boolean
-}) {
+export function UsersManager({ users, canManage }: { users: StaffRow[]; canManage: boolean }) {
   const [pending, startTransition] = useTransition()
   const [inviting, setInviting] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -109,10 +103,7 @@ export function UsersManager({
                 disabled={pending}
               />
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="invite-role"
-                  className="text-[0.8125rem] font-medium text-fg"
-                >
+                <label htmlFor="invite-role" className="text-[0.8125rem] font-medium text-fg">
                   Permissão
                 </label>
                 <select

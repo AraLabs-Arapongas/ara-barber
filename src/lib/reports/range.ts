@@ -23,9 +23,7 @@ export function rangeFromPreset(
 ): { from: string; to: string } {
   const nowMs = Date.now()
   // Converte "agora" pro instante percebido no TZ do tenant
-  const tzNow = new Date(
-    new Date().toLocaleString('en-US', { timeZone: timezone }),
-  )
+  const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }))
 
   const startOfDay = new Date(tzNow)
   startOfDay.setHours(0, 0, 0, 0)

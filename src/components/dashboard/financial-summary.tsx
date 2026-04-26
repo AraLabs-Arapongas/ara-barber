@@ -45,19 +45,10 @@ export function FinancialSummary({
   const router = useRouter()
   const pathname = usePathname()
 
-  const priceById = useMemo(
-    () => new Map(services.map((s) => [s.id, s.price_cents])),
-    [services],
-  )
-  const svcNameById = useMemo(
-    () => new Map(services.map((s) => [s.id, s.name])),
-    [services],
-  )
+  const priceById = useMemo(() => new Map(services.map((s) => [s.id, s.price_cents])), [services])
+  const svcNameById = useMemo(() => new Map(services.map((s) => [s.id, s.name])), [services])
   const profNameById = useMemo(
-    () =>
-      new Map(
-        professionals.map((p) => [p.id, p.display_name ?? p.name]),
-      ),
+    () => new Map(professionals.map((p) => [p.id, p.display_name ?? p.name])),
     [professionals],
   )
 
@@ -86,10 +77,7 @@ export function FinancialSummary({
     for (const a of appointments) {
       if (a.status !== 'COMPLETED') continue
       const cur = m.get(a.service_id) ?? {
-        name:
-          svcNameById.get(a.service_id) ??
-          a.service_name_snapshot ??
-          'Serviço',
+        name: svcNameById.get(a.service_id) ?? a.service_name_snapshot ?? 'Serviço',
         count: 0,
         cents: 0,
       }
@@ -185,9 +173,7 @@ export function FinancialSummary({
                   <span className="font-medium text-fg">{s.name}</span>{' '}
                   <span className="text-fg-muted">· {s.count}</span>
                 </span>
-                <span className="shrink-0 font-medium text-fg">
-                  {formatCentsToBrl(s.cents)}
-                </span>
+                <span className="shrink-0 font-medium text-fg">{formatCentsToBrl(s.cents)}</span>
               </li>
             ))}
           </ul>
@@ -208,9 +194,7 @@ export function FinancialSummary({
                   <span className="font-medium text-fg">{p.name}</span>{' '}
                   <span className="text-fg-muted">· {p.count}</span>
                 </span>
-                <span className="shrink-0 font-medium text-fg">
-                  {formatCentsToBrl(p.cents)}
-                </span>
+                <span className="shrink-0 font-medium text-fg">{formatCentsToBrl(p.cents)}</span>
               </li>
             ))}
           </ul>
@@ -223,12 +207,8 @@ export function FinancialSummary({
         ) : (
           <ul className="divide-y divide-border">
             {appointments.slice(0, 20).map((a) => {
-              const cents =
-                a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
-              const svcName =
-                a.service_name_snapshot ??
-                svcNameById.get(a.service_id) ??
-                'Serviço'
+              const cents = a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
+              const svcName = a.service_name_snapshot ?? svcNameById.get(a.service_id) ?? 'Serviço'
               return (
                 <li key={a.id} className="py-2.5">
                   <Link
@@ -251,9 +231,7 @@ export function FinancialSummary({
                         </span>
                       </span>
                     </span>
-                    <span className="shrink-0 font-medium text-fg">
-                      {formatCentsToBrl(cents)}
-                    </span>
+                    <span className="shrink-0 font-medium text-fg">{formatCentsToBrl(cents)}</span>
                   </Link>
                 </li>
               )
@@ -265,37 +243,19 @@ export function FinancialSummary({
   )
 }
 
-function StatBox({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: string
-  hint: string
-}) {
+function StatBox({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <Card className="shadow-xs">
       <CardContent className="px-3 py-3">
-        <p className="text-[0.6875rem] uppercase tracking-wide text-fg-subtle">
-          {label}
-        </p>
-        <p className="font-display text-[1.25rem] font-semibold leading-tight text-fg">
-          {value}
-        </p>
+        <p className="text-[0.6875rem] uppercase tracking-wide text-fg-subtle">{label}</p>
+        <p className="font-display text-[1.25rem] font-semibold leading-tight text-fg">{value}</p>
         <p className="mt-0.5 text-[0.6875rem] text-fg-subtle">{hint}</p>
       </CardContent>
     </Card>
   )
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
       <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
@@ -309,9 +269,5 @@ function Section({
 }
 
 function Empty() {
-  return (
-    <p className="py-2 text-[0.875rem] text-fg-muted">
-      Sem dados no período.
-    </p>
-  )
+  return <p className="py-2 text-[0.875rem] text-fg-muted">Sem dados no período.</p>
 }
