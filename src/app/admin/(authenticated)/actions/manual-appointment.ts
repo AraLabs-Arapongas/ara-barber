@@ -54,7 +54,21 @@ export async function createManualAppointment(
   const tenant = await getCurrentTenantOrNotFound()
   const parsed = Input.safeParse(raw)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' }
+    const issue = parsed.error.issues[0]
+    if (issue) {
+      const field = issue.path.join('.')
+      const friendly: Record<string, string> = {
+        'customerNew.phone': 'Telefone do cliente deve ter pelo menos 8 dígitos.',
+        'customerNew.name': 'Nome do cliente é obrigatório.',
+        'customerNew.email': 'E-mail inválido.',
+        serviceId: 'Serviço inválido.',
+        professionalId: 'Profissional inválido.',
+        startAtISO: 'Horário inválido.',
+        notes: 'Observações muito longas (máx 500).',
+      }
+      return { ok: false, error: friendly[field] ?? issue.message }
+    }
+    return { ok: false, error: 'Input inválido.' }
   }
   const data = parsed.data
 
@@ -146,5 +160,6 @@ export async function createManualAppointment(
 
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/dashboard/agenda')
+  revalidatePath('/admin/dashboard/clientes')
   return { ok: true, id: appt.id }
 }

@@ -58,9 +58,17 @@ export function CustomerStep({
   const [newPhone, setNewPhone] = useState(value?.kind === 'new' ? (value.phone ?? '') : '')
   const [newEmail, setNewEmail] = useState(value?.kind === 'new' ? (value.email ?? '') : '')
 
+  const phoneError: string | null = (() => {
+    const trimmed = newPhone.trim()
+    if (!trimmed) return null
+    const digits = trimmed.replace(/\D/g, '')
+    if (digits.length < 8) return 'Telefone deve ter pelo menos 8 dígitos.'
+    return null
+  })()
+
   const canContinue =
     (mode === 'pick' && value?.kind === 'existing') ||
-    (mode === 'new' && newName.trim().length > 0)
+    (mode === 'new' && newName.trim().length > 0 && !phoneError)
 
   function selectExisting(c: Customer) {
     onChange({
@@ -155,15 +163,22 @@ export function CustomerStep({
             onChange={(e) => setNewName(e.target.value)}
             onBlur={commitNew}
           />
-          <Input
-            label="Telefone"
-            type="tel"
-            placeholder="(11) 91234-5678"
-            value={newPhone}
-            onChange={(e) => setNewPhone(e.target.value)}
-            onBlur={commitNew}
-            hint="Opcional"
-          />
+          <div>
+            <Input
+              label="Telefone"
+              type="tel"
+              placeholder="(11) 91234-5678"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              onBlur={commitNew}
+              hint="Opcional"
+            />
+            {phoneError ? (
+              <p className="mt-1 text-sm text-fg-danger" role="alert">
+                {phoneError}
+              </p>
+            ) : null}
+          </div>
           <Input
             label="E-mail"
             type="email"
