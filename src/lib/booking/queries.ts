@@ -32,7 +32,8 @@ export type ProfessionalAvailabilityEntry = {
 }
 
 export type AvailabilityBlock = {
-  professionalId: string
+  /** NULL = bloqueio vale pra todos os profissionais do tenant. */
+  professionalId: string | null
   startAt: string
   endAt: string
 }

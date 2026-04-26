@@ -11,6 +11,8 @@ URLs locais:
 - `http://bela-imagem.lvh.me:3008`
 
 > Pré-condição: `pnpm dev` rodando na porta 3008 + projeto Supabase `ara-barber-dev` com seed aplicado.
+>
+> **Pré-condição (após revamp 2026-04-26):** colunas `tenants.{min_advance_hours, slot_interval_minutes, customer_can_cancel}` existem; `availability_blocks.professional_id` é nullable (NULL = bloqueio tenant-wide); tabela `tenant_message_templates` seedada com 6 templates default por tenant existente (3 EMAIL + 3 WHATSAPP).
 
 ## Credenciais de teste
 

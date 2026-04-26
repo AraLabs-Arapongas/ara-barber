@@ -111,7 +111,7 @@ export type Database = {
           created_at: string
           end_at: string
           id: string
-          professional_id: string
+          professional_id: string | null
           reason: string | null
           start_at: string
           tenant_id: string
@@ -120,7 +120,7 @@ export type Database = {
           created_at?: string
           end_at: string
           id?: string
-          professional_id: string
+          professional_id?: string | null
           reason?: string | null
           start_at: string
           tenant_id: string
@@ -129,7 +129,7 @@ export type Database = {
           created_at?: string
           end_at?: string
           id?: string
-          professional_id?: string
+          professional_id?: string | null
           reason?: string | null
           start_at?: string
           tenant_id?: string
@@ -603,6 +603,50 @@ export type Database = {
           },
         ]
       }
+      tenant_message_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          enabled: boolean
+          event: string
+          id: string
+          subject: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string
+          enabled?: boolean
+          event: string
+          id?: string
+          subject?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          enabled?: boolean
+          event?: string
+          id?: string
+          subject?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_message_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           accent_color: string | null
@@ -616,6 +660,7 @@ export type Database = {
           created_at: string
           current_plan_id: string | null
           custom_domain: string | null
+          customer_can_cancel: boolean
           email: string | null
           favicon_url: string | null
           grace_period_ends_at: string | null
@@ -624,6 +669,7 @@ export type Database = {
           id: string
           is_custom_trial: boolean
           logo_url: string | null
+          min_advance_hours: number
           monthly_price_cents: number
           name: string
           notes_internal: string | null
@@ -631,6 +677,7 @@ export type Database = {
           postal_code: string | null
           primary_color: string | null
           secondary_color: string | null
+          slot_interval_minutes: number
           slug: string
           state: string | null
           status: Database["public"]["Enums"]["tenant_status"]
@@ -659,6 +706,7 @@ export type Database = {
           created_at?: string
           current_plan_id?: string | null
           custom_domain?: string | null
+          customer_can_cancel?: boolean
           email?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
@@ -667,6 +715,7 @@ export type Database = {
           id?: string
           is_custom_trial?: boolean
           logo_url?: string | null
+          min_advance_hours?: number
           monthly_price_cents?: number
           name: string
           notes_internal?: string | null
@@ -674,6 +723,7 @@ export type Database = {
           postal_code?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          slot_interval_minutes?: number
           slug: string
           state?: string | null
           status?: Database["public"]["Enums"]["tenant_status"]
@@ -702,6 +752,7 @@ export type Database = {
           created_at?: string
           current_plan_id?: string | null
           custom_domain?: string | null
+          customer_can_cancel?: boolean
           email?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
@@ -710,6 +761,7 @@ export type Database = {
           id?: string
           is_custom_trial?: boolean
           logo_url?: string | null
+          min_advance_hours?: number
           monthly_price_cents?: number
           name?: string
           notes_internal?: string | null
@@ -717,6 +769,7 @@ export type Database = {
           postal_code?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          slot_interval_minutes?: number
           slug?: string
           state?: string | null
           status?: Database["public"]["Enums"]["tenant_status"]
