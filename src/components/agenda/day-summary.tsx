@@ -1,5 +1,6 @@
 import { formatCentsToBrl } from '@/lib/money'
 import { isLate } from '@/lib/admin/derivations'
+import { MoneyValue } from '@/components/ui/money-value'
 import type { Database } from '@/lib/supabase/types'
 
 type AppointmentStatus = Database['public']['Enums']['appointment_status']
@@ -32,7 +33,7 @@ export function DaySummary({
   return (
     <p className="my-2 text-[0.8125rem] text-fg-muted">
       {active.length} {active.length === 1 ? 'agendamento' : 'agendamentos'} ·{' '}
-      {formatCentsToBrl(revenue)} previsto
+      <MoneyValue value={formatCentsToBrl(revenue)} /> previsto
       {late > 0 ? ` · ${late} ${late === 1 ? 'atraso' : 'atrasos'}` : ''}
     </p>
   )

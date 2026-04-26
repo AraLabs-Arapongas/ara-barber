@@ -16,7 +16,10 @@ import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
 import { QuickActions } from '@/components/home/quick-actions'
 import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
 import { MoneyStatCard } from '@/components/home/money-stat-card'
+import { WeekAgendaStrip, type WeekDay } from '@/components/home/week-agenda-strip'
+import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
 import { hasNoSchedule, isLate, lateMinutes } from '@/lib/admin/derivations'
+import { dateTimeInTenantTZ } from '@/lib/booking/slots'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -42,7 +45,24 @@ export default async function DashboardHome() {
 
   const dateISO = todayISO(tenant.timezone)
   const nowISO = new Date().toISOString()
-  const [today, pending, svcRes, profsRes, availRes] = await Promise.all([
+
+  // Calcula domingo→sábado da semana atual em TZ do tenant. Faz aritmética
+  // de calendário em UTC tratando YYYY-MM-DD como datas puras (sem horário),
+  // o que evita off-by-one em virada de dia.
+  const [yyyy, mm, dd] = dateISO.split('-').map(Number)
+  const todayUTC = new Date(Date.UTC(yyyy, mm - 1, dd))
+  const sundayUTC = new Date(todayUTC)
+  sundayUTC.setUTCDate(sundayUTC.getUTCDate() - todayUTC.getUTCDay())
+  const weekDateISOs: string[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sundayUTC)
+    d.setUTCDate(d.getUTCDate() + i)
+    weekDateISOs.push(d.toISOString().slice(0, 10))
+  }
+  const weekStartUTC = dateTimeInTenantTZ(weekDateISOs[0], '00:00', tenant.timezone).toISOString()
+  const weekEndUTC = dateTimeInTenantTZ(weekDateISOs[6], '23:59', tenant.timezone).toISOString()
+
+  const [today, pending, svcRes, profsRes, availRes, weekApptsRes] = await Promise.all([
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
     getPendingConfirmations(tenant.id, nowISO),
     supabase.from('services').select('id, price_cents').eq('tenant_id', tenant.id),
@@ -55,8 +75,36 @@ export default async function DashboardHome() {
       .from('professional_availability')
       .select('professional_id, weekday, start_time, end_time')
       .eq('tenant_id', tenant.id),
+    supabase
+      .from('appointments')
+      .select('start_at, service_id, price_cents_snapshot')
+      .eq('tenant_id', tenant.id)
+      .not('status', 'in', '(CANCELED,NO_SHOW)')
+      .gte('start_at', weekStartUTC)
+      .lte('start_at', weekEndUTC),
   ])
   const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
+
+  // Agrupa agendamentos da semana por data em TZ do tenant.
+  const weekFmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tenant.timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const weekByDate = new Map<string, { count: number; revenueCents: number }>()
+  for (const date of weekDateISOs) weekByDate.set(date, { count: 0, revenueCents: 0 })
+  for (const a of weekApptsRes.data ?? []) {
+    const dateInTZ = weekFmt.format(new Date(a.start_at))
+    const entry = weekByDate.get(dateInTZ)
+    if (!entry) continue
+    entry.count += 1
+    entry.revenueCents += a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
+  }
+  const weekDays: WeekDay[] = weekDateISOs.map((d) => {
+    const entry = weekByDate.get(d) ?? { count: 0, revenueCents: 0 }
+    return { dateISO: d, count: entry.count, revenueCents: entry.revenueCents }
+  })
 
   // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const now = Date.now()
@@ -111,13 +159,16 @@ export default async function DashboardHome() {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
       <RealtimeAgendaRefresh tenantId={tenant.id} />
-      <header className="mb-6">
-        <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-          Hoje
-        </p>
-        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          {headerDate}
-        </h1>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
+            Hoje
+          </p>
+          <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
+            {headerDate}
+          </h1>
+        </div>
+        <MoneyVisibilityToggle className="mt-1" />
       </header>
 
       {next ? (
@@ -174,6 +225,8 @@ export default async function DashboardHome() {
       <PendingConfirmations appointments={pending} tenantTimezone={tenant.timezone} />
 
       <AttentionSection items={attentionItems} />
+
+      <WeekAgendaStrip days={weekDays} todayISO={dateISO} />
 
       <AgendaPreview
         appointments={active.sort(
