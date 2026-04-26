@@ -281,12 +281,45 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Apagar URL do logo (campo vazio) salva sem erro; cores vazias também (NULL → reset pro tema default).
 - [ ] Hex inválido (`#zzz`) bloqueia salvar com mensagem de erro inline.
 
-## 9. Fora de escopo — stubs
+## 9. Mais — Agenda + Gestão (revamp 2026-04-26)
 
-- [ ] Rotas `/admin/dashboard/operacao`, `/financeiro`, `/relatorios` retornam placeholder sem quebrar.
-- [ ] Itens "Em construção" da Mais (Regras, Bloqueios, Comunicação, Conta) levam a placeholder com botão "Voltar".
+### 9a. Regras de agendamento
+- [ ] /admin/dashboard/regras: 4 fields editáveis (antecedência mínima em horas, intervalo entre horários, janela de cancelamento em horas, toggle de cancelamento pelo cliente).
+- [ ] Salvar persiste; refresh confirma. (NOTA: aplicação no slot calc é follow-up — só persistência nesta fase.)
+- [ ] User não-BUSINESS_OWNER (RECEPTIONIST/PROFESSIONAL) recebe mensagem PT-BR ao tentar salvar.
 
-## 10. Smoke técnico
+### 9b. Bloqueios
+- [ ] /admin/dashboard/bloqueios lista bloqueios futuros cross-professional (negócio inteiro + por profissional).
+- [ ] Criar bloqueio "Negócio inteiro" → desabilita slot pra todos os profs no /book.
+- [ ] Criar bloqueio "Um profissional" → desabilita só pra ele.
+- [ ] Excluir bloqueio funciona; horário volta a aparecer.
+- [ ] /admin/dashboard/disponibilidade redireciona pra /bloqueios.
+- [ ] Detalhe do profissional NÃO tem mais form de bloqueios local — só link "Ver bloqueios deste profissional" que leva pra /bloqueios?professional=<id>.
+
+### 9c. Clientes
+- [ ] /admin/dashboard/clientes: busca client-side por nome, telefone ou e-mail filtra a lista.
+- [ ] Cada card mostra contagem de agendamentos, última visita e total concluído (R$).
+- [ ] Click no card vai pra /admin/dashboard/clientes/[id] com histórico completo + dados de contato.
+- [ ] No detalhe, "Novo agendamento" leva pro wizard com `?customerId=<uuid>` pré-preenchendo o cliente.
+
+### 9d. Financeiro
+- [ ] /admin/dashboard/financeiro mostra disclaimer "não representa pagamento real".
+- [ ] Filtro Hoje/Semana/Mês muda os dados via `?preset=`.
+- [ ] 4 cards: Previsto / Realizado / Perdido / Ticket médio (em R$).
+- [ ] Top serviços e top profissionais ordenados por valor concluído.
+- [ ] Movimentos recentes lista até 20 com link pro detalhe do agendamento.
+
+### 9e. Relatórios
+- [ ] /admin/dashboard/relatorios mostra contagem por status (5 cards) no período (default Mês).
+- [ ] Top serviços e top profissionais — ordenado por contagem (não R$).
+- [ ] Filtro Hoje/Semana/Mês altera os dados.
+
+## 10. Fora de escopo — stubs
+
+- [ ] Rotas `/admin/dashboard/operacao` retorna placeholder sem quebrar.
+- [ ] Itens "Em construção" da Mais (Comunicação, Conta) levam a placeholder com botão "Voltar".
+
+## 11. Smoke técnico
 
 - [ ] `pnpm typecheck` limpo.
 - [ ] `pnpm test` verde.
