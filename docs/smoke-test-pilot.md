@@ -1,18 +1,20 @@
 # Smoke test — piloto (Spec 1)
 
+> **Atualizado em 2026-04-26 (admin revamp):** roteiro cobre Home revisada, Agenda com filtros, wizard de criação manual, Mais reorganizada em 5 seções com 14 sub-telas, e integração das edge functions com `tenant_message_templates`.
+>
 > **Manutenção:** sempre que um fluxo mudar (novas telas, rotas, ações, guards, rules de negócio, seed), atualizar este doc no **mesmo PR**. Foca em *comportamento*, não em copy/cor/layout.
 
 Roteiro manual pra validar o fluxo ponta-a-ponta do piloto antes de soltar pra um negócio real.
-Use `barbearia-teste` e `bela-imagem` como tenants de referência.
+Use `qa-aralabs` e `demo-aralabs` como tenants de referência.
 
 URLs locais:
 
-- `http://barbearia-teste.lvh.me:3008`
-- `http://bela-imagem.lvh.me:3008`
+- `http://qa-aralabs.lvh.me:3008`
+- `http://demo-aralabs.lvh.me:3008`
 
-> Pré-condição: `pnpm dev` rodando na porta 3008 + projeto Supabase `ara-barber-dev` com seed aplicado.
+> Pré-condição: `pnpm dev` rodando na porta 3008 + projeto Supabase com seed aplicado.
 >
-> **Pré-condição (após revamp 2026-04-26):** colunas `tenants.{min_advance_hours, slot_interval_minutes, customer_can_cancel}` existem; `availability_blocks.professional_id` é nullable (NULL = bloqueio tenant-wide); tabela `tenant_message_templates` seedada com 6 templates default por tenant existente (3 EMAIL + 3 WHATSAPP).
+> **Pré-condição (após revamp 2026-04-26):** colunas `tenants.{min_advance_hours, slot_interval_minutes, customer_can_cancel}` existem; `availability_blocks.professional_id` é nullable (NULL = bloqueio tenant-wide); tabela `tenant_message_templates` seedada com 6 templates default por tenant existente (3 EMAIL + 3 WHATSAPP). Edge function `on-appointment-event` deployada com lookup de templates do DB + fallback hard-coded.
 
 ## Credenciais de teste
 
@@ -20,8 +22,10 @@ URLs locais:
 
 | Tenant | Email | Senha | Role |
 | --- | --- | --- | --- |
-| barbearia-teste | `dono@barbearia-teste.test` | `barber1234` | SALON_OWNER |
-| bela-imagem | `dono@bela-imagem.test` | `bela1234` | SALON_OWNER |
+| qa-aralabs | `thiago@aralabs.com.br` | (definir via reset de senha) | BUSINESS_OWNER |
+| demo-aralabs | (criar via convite no `qa-aralabs` /conta/usuarios) | — | BUSINESS_OWNER |
+
+> Tenants antigos (`barbearia-teste`, `bela-imagem`, `casa-do-corte`, `barba-preta`) foram removidos no rebrand. Para criar usuário inicial num tenant sem owner, usar `mcp__supabase__execute_sql` pra inserir em `user_profiles` ou rodar o convite a partir de outro tenant onde já existe BUSINESS_OWNER.
 
 **Cliente final:** e-mail real (OTP chega por email), ex: `thiagodevtavares@gmail.com`.
 
@@ -319,7 +323,17 @@ Marca e aparência (`/admin/dashboard/marca`):
 ### 10a. E-mails automáticos
 - [ ] /admin/dashboard/comunicacao/emails: lista 4 templates EMAIL (Confirmação, Cancelamento, Lembrete, Agradecimento) — campos `subject`+`body` editáveis.
 - [ ] Editar `subject` + `body` + Salvar; refresh confirma persistido.
-- [ ] Toggle "Desativado" persiste (verificação de envio real é parte do C6, edge function fica em follow-up).
+- [ ] Toggle "Desativado" persiste.
+
+**Integração edge function (C6 — `on-appointment-event`):**
+- [ ] Editar template `BOOKING_CONFIRMATION` (mudar subject e body com placeholders `{nome}`, `{servico}`, `{horario}`, `{profissional}`) + Salvar.
+- [ ] Criar appointment via wizard manual (`/admin/dashboard/agenda/novo`) com cliente que tenha e-mail real.
+- [ ] E-mail recebido na inbox tem o **subject editado** com placeholders substituídos; intro do e-mail tem o **body editado** com placeholders substituídos. Card rico (data/serviço/CTA) continua aparecendo abaixo da intro.
+- [ ] Desativar template `BOOKING_CONFIRMATION` (toggle off) + Salvar.
+- [ ] Criar outro appointment.
+- [ ] **Nenhum e-mail é enviado**; logs da edge function (`mcp__supabase__get_logs({service:'edge-function'})`) mostram `Template EMAIL/BOOKING_CONFIRMATION desativado pro tenant <id>; skip e-mail.`
+- [ ] Repetir o mesmo fluxo (editar + cancelar + verificar) pra `BOOKING_CANCELLATION` cancelando um agendamento existente.
+- [ ] Quando o template não tem row em `tenant_message_templates` (deletar manualmente via SQL pra simular), edge function usa fallback hard-coded (subject "Seu agendamento foi confirmado", body com `Oi {nome}, ...`).
 
 ### 10b. WhatsApp
 - [ ] /admin/dashboard/comunicacao/whatsapp: lista 5 templates WHATSAPP (Confirmação, Lembrete, Cancelamento, Compartilhar link, Personalizado) — só `body`.
@@ -369,12 +383,12 @@ Marca e aparência (`/admin/dashboard/marca`):
 ## Reset entre runs
 
 ```sql
--- via MCP supabase no projeto ara-barber-dev:
+-- via MCP supabase:
 delete from appointments where tenant_id in (
-  select id from tenants where slug in ('barbearia-teste','bela-imagem')
+  select id from tenants where slug in ('qa-aralabs','demo-aralabs')
 );
 update customers set deleted_at = now(), user_id = null, email = null, phone = null, name = null
-  where tenant_id in (select id from tenants where slug in ('barbearia-teste','bela-imagem'));
+  where tenant_id in (select id from tenants where slug in ('qa-aralabs','demo-aralabs'));
 ```
 
 Reset profundo: rodar seed de profissionais/serviços via `supabase/seed` (TODO — Épico 10).
