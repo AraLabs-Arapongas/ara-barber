@@ -7,6 +7,17 @@ import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 
+// Aceita URL absoluta (https://…) OU caminho relativo a partir da raiz (/logos/foo.svg).
+// Caminho relativo cobre o convencional `resolveConventionalLogoUrl(slug)` em
+// src/lib/tenant/context.ts, que serve assets do public/.
+const urlOrPath = z
+  .string()
+  .max(500)
+  .refine(
+    (s) => s === '' || /^https?:\/\//.test(s) || /^\/[\w\-./]+$/.test(s),
+    'Deve ser uma URL https://… ou caminho relativo /…',
+  )
+
 const ProfileInput = z.object({
   name: z.string().min(1, 'Nome é obrigatório.').max(120),
   contact_phone: z.string().max(40).optional().or(z.literal('')),
@@ -28,15 +39,27 @@ export type UpdateTenantProfileResult =
 /**
  * Atualiza o perfil público do tenant (nome, contato, endereço).
  * Strings vazias viram NULL pra manter consistência com colunas nullable.
+ *
+ * Restrito a BUSINESS_OWNER (defense in depth — RLS também bloqueia via
+ * policy `tenants_owner_update_own_policy`). Checamos linhas afetadas pra
+ * detectar silent denial caso a policy seja modificada no futuro.
  */
 export async function updateTenantProfile(
   raw: UpdateTenantProfileInput,
 ): Promise<UpdateTenantProfileResult> {
+  let user
   try {
-    await assertStaff()
+    user = await assertStaff()
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
+  }
+
+  if (user.profile.role !== 'BUSINESS_OWNER') {
+    return {
+      ok: false,
+      error: 'Apenas o dono do negócio pode editar essas informações.',
+    }
   }
 
   const tenant = await getCurrentTenantOrNotFound()
@@ -50,10 +73,18 @@ export async function updateTenantProfile(
     Object.entries(parsed.data).map(([k, v]) => [k, v === '' ? null : v]),
   )
 
-  const { error } = await supabase.from('tenants').update(update).eq('id', tenant.id)
+  const { data, error } = await supabase
+    .from('tenants')
+    .update(update)
+    .eq('id', tenant.id)
+    .select('id')
   if (error) return { ok: false, error: error.message }
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'Não foi possível salvar (sem permissão).' }
+  }
 
   revalidatePath('/admin/dashboard/perfil')
+  // Revalida a home pública do tenant (mesmo host, segmento /).
   revalidatePath('/')
   return { ok: true }
 }
@@ -76,8 +107,8 @@ const BrandInput = z.object({
     .regex(HEX_COLOR, 'Cor de destaque inválida (use #RRGGBB).')
     .optional()
     .or(z.literal('')),
-  logo_url: z.string().url('URL do logo inválida.').max(500).optional().or(z.literal('')),
-  favicon_url: z.string().url('URL do favicon inválida.').max(500).optional().or(z.literal('')),
+  logo_url: urlOrPath.optional(),
+  favicon_url: urlOrPath.optional(),
   home_headline_top: z.string().max(120).optional().or(z.literal('')),
   home_headline_accent: z.string().max(120).optional().or(z.literal('')),
 })
@@ -91,15 +122,27 @@ export type UpdateTenantBrandResult =
 /**
  * Atualiza branding (cores, logo, favicon, headlines) do tenant.
  * Cores vazias viram NULL e a home volta ao tema default.
+ *
+ * Restrito a BUSINESS_OWNER (defense in depth — RLS também bloqueia via
+ * policy `tenants_owner_update_own_policy`). Checamos linhas afetadas pra
+ * detectar silent denial caso a policy seja modificada no futuro.
  */
 export async function updateTenantBrand(
   raw: UpdateTenantBrandInput,
 ): Promise<UpdateTenantBrandResult> {
+  let user
   try {
-    await assertStaff()
+    user = await assertStaff()
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
+  }
+
+  if (user.profile.role !== 'BUSINESS_OWNER') {
+    return {
+      ok: false,
+      error: 'Apenas o dono do negócio pode editar essas informações.',
+    }
   }
 
   const tenant = await getCurrentTenantOrNotFound()
@@ -113,10 +156,18 @@ export async function updateTenantBrand(
     Object.entries(parsed.data).map(([k, v]) => [k, v === '' ? null : v]),
   )
 
-  const { error } = await supabase.from('tenants').update(update).eq('id', tenant.id)
+  const { data, error } = await supabase
+    .from('tenants')
+    .update(update)
+    .eq('id', tenant.id)
+    .select('id')
   if (error) return { ok: false, error: error.message }
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'Não foi possível salvar (sem permissão).' }
+  }
 
   revalidatePath('/admin/dashboard/marca')
+  // Revalida a home pública do tenant (mesmo host, segmento /).
   revalidatePath('/')
   return { ok: true }
 }

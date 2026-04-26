@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
 
 export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
   const [copied, setCopied] = useState(false)
+  const qrRef = useRef<SVGSVGElement>(null)
 
   function copy() {
     void navigator.clipboard.writeText(publicUrl)
@@ -21,7 +22,7 @@ export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
   }
 
   function downloadQR() {
-    const svg = document.getElementById('qr-svg') as SVGSVGElement | null
+    const svg = qrRef.current
     if (!svg) return
     const data = new XMLSerializer().serializeToString(svg)
     const blob = new Blob([data], { type: 'image/svg+xml' })
@@ -50,15 +51,21 @@ export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={copy}>{copied ? 'Copiado!' : 'Copiar link'}</Button>
-            <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-              <Button type="button" variant="secondary">
-                Abrir página pública
-              </Button>
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: 'secondary' })}
+            >
+              Abrir página pública
             </a>
-            <a href={whatsappShareLink} target="_blank" rel="noopener noreferrer">
-              <Button type="button" variant="secondary">
-                Compartilhar no WhatsApp
-              </Button>
+            <a
+              href={whatsappShareLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: 'secondary' })}
+            >
+              Compartilhar no WhatsApp
             </a>
           </div>
         </CardContent>
@@ -66,7 +73,7 @@ export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
 
       <Card>
         <CardContent className="flex flex-col items-center gap-3 py-6">
-          <QRCodeSVG id="qr-svg" value={publicUrl} size={192} level="M" />
+          <QRCodeSVG ref={qrRef} value={publicUrl} size={192} level="M" />
           <Button type="button" variant="secondary" onClick={downloadQR}>
             Baixar QR Code
           </Button>
