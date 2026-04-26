@@ -82,8 +82,8 @@ function formatDayHeader(dateISO: string, todayISOStr: string, tenantTimezone: s
 }
 
 function formatWeekRange(weekStartISO: string, weekEndISO: string): string {
-  const [, , sd] = weekStartISO.split('-').map(Number)
-  const [, em, ed] = weekEndISO.split('-').map(Number)
+  const sd = Number(weekStartISO.slice(8, 10))
+  const ed = Number(weekEndISO.slice(8, 10))
   const monthFmt = new Intl.DateTimeFormat('pt-BR', { month: 'short' })
   const startMonth = monthFmt.format(new Date(`${weekStartISO}T12:00:00Z`)).replace('.', '')
   const endMonth = monthFmt.format(new Date(`${weekEndISO}T12:00:00Z`)).replace('.', '')

@@ -1,6 +1,7 @@
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
 import { FinancialSummary, type FinAppt } from '@/components/dashboard/financial-summary'
+import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
 import { rangeFromPreset, type RangePreset } from '@/lib/reports/range'
 
 type PageProps = {
@@ -46,19 +47,22 @@ export default async function FinanceiroPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
-      <header className="mb-6">
-        <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-          Gestão
-        </p>
-        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-          Financeiro
-        </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Resumo dos valores baseado em agendamentos e status.{' '}
-          <span className="text-fg-subtle">
-            Não representa pagamento real — pagamento online entra em fase futura.
-          </span>
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
+            Gestão
+          </p>
+          <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
+            Financeiro
+          </h1>
+          <p className="mt-1 text-[0.875rem] text-fg-muted">
+            Resumo dos valores baseado em agendamentos e status.{' '}
+            <span className="text-fg-subtle">
+              Não representa pagamento real — pagamento online entra em fase futura.
+            </span>
+          </p>
+        </div>
+        <MoneyVisibilityToggle className="mt-1" />
       </header>
       <FinancialSummary
         appointments={appointments}

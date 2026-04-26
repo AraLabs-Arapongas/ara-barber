@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatCentsToBrl } from '@/lib/money'
+import { MoneyValue } from '@/components/ui/money-value'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { PRESET_LABELS, type RangePreset } from '@/lib/reports/range'
 import type { AppointmentStatus } from '@/lib/appointments/status-rules'
@@ -139,22 +140,22 @@ export function FinancialSummary({
       <div className="grid grid-cols-2 gap-2">
         <StatBox
           label="Previsto"
-          value={formatCentsToBrl(totals.scheduled + totals.completed)}
+          value={<MoneyValue value={formatCentsToBrl(totals.scheduled + totals.completed)} />}
           hint="Marcados + concluídos"
         />
         <StatBox
           label="Realizado"
-          value={formatCentsToBrl(totals.completed)}
+          value={<MoneyValue value={formatCentsToBrl(totals.completed)} />}
           hint="Atendimentos concluídos"
         />
         <StatBox
           label="Perdido"
-          value={formatCentsToBrl(totals.lost)}
+          value={<MoneyValue value={formatCentsToBrl(totals.lost)} />}
           hint="Cancelados ou faltaram"
         />
         <StatBox
           label="Ticket médio"
-          value={formatCentsToBrl(totals.ticket)}
+          value={<MoneyValue value={formatCentsToBrl(totals.ticket)} />}
           hint="Por atendimento concluído"
         />
       </div>
@@ -173,7 +174,9 @@ export function FinancialSummary({
                   <span className="font-medium text-fg">{s.name}</span>{' '}
                   <span className="text-fg-muted">· {s.count}</span>
                 </span>
-                <span className="shrink-0 font-medium text-fg">{formatCentsToBrl(s.cents)}</span>
+                <span className="shrink-0 font-medium text-fg">
+                  <MoneyValue value={formatCentsToBrl(s.cents)} />
+                </span>
               </li>
             ))}
           </ul>
@@ -194,7 +197,9 @@ export function FinancialSummary({
                   <span className="font-medium text-fg">{p.name}</span>{' '}
                   <span className="text-fg-muted">· {p.count}</span>
                 </span>
-                <span className="shrink-0 font-medium text-fg">{formatCentsToBrl(p.cents)}</span>
+                <span className="shrink-0 font-medium text-fg">
+                  <MoneyValue value={formatCentsToBrl(p.cents)} />
+                </span>
               </li>
             ))}
           </ul>
@@ -231,7 +236,9 @@ export function FinancialSummary({
                         </span>
                       </span>
                     </span>
-                    <span className="shrink-0 font-medium text-fg">{formatCentsToBrl(cents)}</span>
+                    <span className="shrink-0 font-medium text-fg">
+                      <MoneyValue value={formatCentsToBrl(cents)} />
+                    </span>
                   </Link>
                 </li>
               )
@@ -243,7 +250,7 @@ export function FinancialSummary({
   )
 }
 
-function StatBox({ label, value, hint }: { label: string; value: string; hint: string }) {
+function StatBox({ label, value, hint }: { label: string; value: React.ReactNode; hint: string }) {
   return (
     <Card className="shadow-xs">
       <CardContent className="px-3 py-3">

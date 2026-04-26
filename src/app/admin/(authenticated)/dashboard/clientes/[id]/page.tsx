@@ -10,6 +10,8 @@ import { WhatsappIcon } from '@/components/ui/whatsapp-icon'
 import { buildTelUrl, buildWhatsappUrl } from '@/lib/contact/whatsapp'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
+import { MoneyValue } from '@/components/ui/money-value'
+import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
 import type { AppointmentStatus } from '@/lib/appointments/status-rules'
 
 type PageProps = { params: Promise<{ id: string }> }
@@ -78,9 +80,12 @@ export default async function ClienteDetailPage({ params }: PageProps) {
       </Link>
 
       <header className="mb-6">
-        <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-          Cliente
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
+            Cliente
+          </p>
+          <MoneyVisibilityToggle />
+        </div>
         <div className="mt-1 flex items-center gap-3">
           <InitialsAvatar name={name} size={48} />
           <div className="min-w-0 flex-1">
@@ -119,7 +124,7 @@ export default async function ClienteDetailPage({ params }: PageProps) {
       <div className="mb-4 grid grid-cols-3 gap-2">
         <Stat label="Agendamentos" value={String(all.length)} />
         <Stat label="Concluídos" value={String(completed.length)} />
-        <Stat label="Total" value={formatCentsToBrl(totalCents)} />
+        <Stat label="Total" value={<MoneyValue value={formatCentsToBrl(totalCents)} />} />
       </div>
 
       <div className="mb-5">
@@ -160,7 +165,7 @@ export default async function ClienteDetailPage({ params }: PageProps) {
                           {dateFmt.format(new Date(a.start_at))}
                         </p>
                         <p className="mt-1 text-[0.75rem] text-fg-subtle">
-                          {formatCentsToBrl(cents)}
+                          <MoneyValue value={formatCentsToBrl(cents)} />
                         </p>
                       </div>
                       <span
@@ -180,7 +185,7 @@ export default async function ClienteDetailPage({ params }: PageProps) {
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <Card className="shadow-xs">
       <CardContent className="px-3 py-3">

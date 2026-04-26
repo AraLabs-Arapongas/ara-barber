@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { InitialsAvatar } from '@/components/ui/initials-avatar'
 import { formatCentsToBrl } from '@/lib/money'
+import { MoneyValue } from '@/components/ui/money-value'
 
 export type ClientItem = {
   id: string
@@ -85,7 +86,12 @@ export function ClientsList({ items, tenantTimezone }: Props) {
                         {c.appointmentsCount} agendamento
                         {c.appointmentsCount === 1 ? '' : 's'}
                         {c.lastAt ? ` · último em ${fmtDate(c.lastAt, tenantTimezone)}` : ''}
-                        {c.totalCents > 0 ? ` · ${formatCentsToBrl(c.totalCents)} concluído` : ''}
+                        {c.totalCents > 0 ? (
+                          <>
+                            {' · '}
+                            <MoneyValue value={formatCentsToBrl(c.totalCents)} /> concluído
+                          </>
+                        ) : null}
                       </p>
                     </div>
                   </div>
