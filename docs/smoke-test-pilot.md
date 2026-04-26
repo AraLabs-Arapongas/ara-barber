@@ -27,6 +27,13 @@ URLs locais:
 
 ---
 
+## 0c. Foundation utils (revamp 2026-04-26)
+
+- [ ] `getBookingContext({from, to})` retorna `{services, professionals, professionalServices, businessHours, availability, blocks, existingAppointments}` num único payload (testar via wizard manual em fase posterior).
+- [ ] Slot calculator respeita `availability_blocks.professional_id IS NULL` (block tenant-wide some pra todo profissional).
+
+---
+
 ## 1. Home pública do tenant
 
 **Visitante deslogado:**
