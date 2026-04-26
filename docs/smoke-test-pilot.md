@@ -334,12 +334,32 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Toggle ativa/desativa permission + cria/remove `push_subscription` no DB.
 - [ ] Estados `unsupported`/`denied` mostram mensagem apropriada (testar em browser sem push ou com permission negada).
 
-## 11. Fora de escopo — stubs
+## 11. Mais — Conta (revamp 2026-04-26)
+
+### 11a. Usuários e permissões (BUSINESS_OWNER only)
+- [ ] `/admin/dashboard/conta/usuarios` lista staff existentes do tenant (BUSINESS_OWNER, RECEPTIONIST, PROFESSIONAL) com e-mail e badge "você" no próprio usuário.
+- [ ] Logado como RECEPTIONIST/PROFESSIONAL: aviso "Apenas o dono do negócio pode gerenciar usuários" aparece e botões de invite/role/remover ficam ocultos. Tentativa direta na server action retorna mensagem PT-BR.
+- [ ] Logado como BUSINESS_OWNER: convidar e-mail novo + role → e-mail de convite chega na inbox do convidado (link aponta pra `<tenant>/auth/callback`).
+- [ ] Mudar role no dropdown persiste imediatamente (refresh confirma); dropdown do próprio usuário fica desabilitado.
+- [ ] Remover usuário (Trash) tira do `user_profiles` do tenant; ícone da lixeira não aparece pro próprio usuário.
+
+### 11b. Plano e cobrança (info-only)
+- [ ] `/admin/dashboard/conta/plano` mostra status (TRIALING/ACTIVE), nome do plano, valor/mês.
+- [ ] Em TRIALING, mostra "X dias restantes no trial" (ou "Trial expirou" se passou).
+- [ ] Em ACTIVE, mostra "Próxima renovação em X dias" se `subscription_ends_at` estiver setado.
+- [ ] Botão "Falar com o suporte" abre `wa.me/<NEXT_PUBLIC_SUPPORT_PHONE ou 5543999999999>` com mensagem default. (NOTA: número de suporte é placeholder hardcoded enquanto `NEXT_PUBLIC_SUPPORT_PHONE` não existir no env.)
+
+### 11c. Segurança
+- [ ] `/admin/dashboard/conta/seguranca`: alterar senha (nova + confirmação iguais, ≥ 8 chars) → sucesso.
+- [ ] Senha curta (<8) → erro inline "A senha precisa ter no mínimo 8 caracteres."
+- [ ] Confirmação diferente → erro inline "As senhas não conferem."
+- [ ] "Encerrar todas as sessões" → confirmação → redireciona pra `/admin/login`.
+
+## 12. Fora de escopo — stubs
 
 - [ ] Rota `/admin/dashboard/operacao` retorna placeholder sem quebrar.
-- [ ] Itens "Em construção" da Mais (Conta) levam a placeholder com botão "Voltar".
 
-## 12. Smoke técnico
+## 13. Smoke técnico
 
 - [ ] `pnpm typecheck` limpo.
 - [ ] `pnpm test` verde.
