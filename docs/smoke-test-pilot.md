@@ -106,7 +106,7 @@ URLs locais:
   - Novo agendamento → `/admin/dashboard/agenda/novo` (wizard).
   - Abrir agenda → `/admin/dashboard/agenda`.
   - Copiar link copia `https://<subdomain>.aralabs.com.br` pro clipboard; texto vira "Copiado!" por 2s.
-  - Bloquear horário → `/admin/dashboard/bloqueios?new=1` (rota será criada em fase posterior — 404 esperado por enquanto).
+  - Bloquear horário → `/admin/dashboard/bloqueios?new=1` abre a tela de bloqueios já com o form de criação aberto.
 - [ ] Bloco "Precisam confirmar" continua aparecendo com botão inline e contagem (não foi removido).
 - [ ] Seção "Atenção" sempre aparece logo após PendingConfirmations:
   - Vazia: card "Tudo certo por enquanto. Nenhuma pendência importante hoje.".
@@ -260,7 +260,7 @@ Toda gestão do profissional vive em `/admin/dashboard/profissionais/[id]`.
 Acessar `/admin/dashboard/mais` autenticado como staff.
 
 - [ ] Página exibe 5 seções (Meu negócio, Agenda, Gestão, Comunicação, Conta) + cartão "Sair".
-- [ ] Cada item linka pra rota correta; itens não-implementados nesta fase abrem placeholder "Em construção" (Regras, Bloqueios, E-mails, WhatsApp, Notificações, Usuários, Plano, Segurança).
+- [ ] Cada item linka pra rota correta. Todos os 14 itens estão implementados (sub-telas detalhadas nas seções 9, 10 e 11).
 
 Perfil público (`/admin/dashboard/perfil`):
 
