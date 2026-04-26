@@ -143,12 +143,11 @@ export async function getAvailabilityBlocksInRange(
   const supabase = createSecretClient()
   // `professional_id IN (...)` cobre bloqueios do profissional;
   // `professional_id IS NULL` cobre bloqueios tenant-wide (valem pra todos).
-  const inList = professionalIds.map((id) => `"${id}"`).join(',')
   const { data } = await supabase
     .from('availability_blocks')
     .select('professional_id, start_at, end_at')
     .eq('tenant_id', tenantId)
-    .or(`professional_id.in.(${inList}),professional_id.is.null`)
+    .or(`professional_id.in.(${professionalIds.join(',')}),professional_id.is.null`)
     .lt('start_at', endUTC)
     .gt('end_at', startUTC)
 

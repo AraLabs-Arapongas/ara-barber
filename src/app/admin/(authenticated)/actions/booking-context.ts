@@ -3,6 +3,7 @@
 import { z } from 'zod'
 
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { dateTimeInTenantTZ } from '@/lib/booking/slots'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import type {
@@ -38,16 +39,16 @@ export type BookingContext = {
 
 export async function getBookingContext(
   raw: BookingContextInput,
-): Promise<{ data?: BookingContext; error?: string }> {
+): Promise<{ ok: true; context: BookingContext } | { ok: false; error: string }> {
   const parsed = Input.safeParse(raw)
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Input inválido' }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Input inválido' }
   }
 
   try {
     await assertStaff()
   } catch (e) {
-    if (e instanceof AuthError) return { error: 'Sem permissão.' }
+    if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
   }
 
@@ -55,8 +56,8 @@ export async function getBookingContext(
 
   const supabase = await createClient()
   const { from, to } = parsed.data
-  const fromISO = `${from}T00:00:00.000Z`
-  const toISO = `${to}T23:59:59.999Z`
+  const fromUTC = dateTimeInTenantTZ(from, '00:00', tenant.timezone).toISOString()
+  const toUTC = dateTimeInTenantTZ(to, '23:59', tenant.timezone).toISOString()
 
   const [services, professionals, profServices, hours, availability, blocks, appts] =
     await Promise.all([
@@ -88,19 +89,20 @@ export async function getBookingContext(
         .from('availability_blocks')
         .select('professional_id, start_at, end_at')
         .eq('tenant_id', tenant.id)
-        .lt('start_at', toISO)
-        .gt('end_at', fromISO),
+        .lt('start_at', toUTC)
+        .gt('end_at', fromUTC),
       supabase
         .from('appointments')
         .select('professional_id, start_at, end_at')
         .eq('tenant_id', tenant.id)
         .not('status', 'in', '(CANCELED,NO_SHOW)')
-        .gte('start_at', fromISO)
-        .lte('start_at', toISO),
+        .lt('start_at', toUTC)
+        .gt('end_at', fromUTC),
     ])
 
   return {
-    data: {
+    ok: true,
+    context: {
       tenantId: tenant.id,
       tenantTimezone: tenant.timezone,
       services: (services.data ?? []).map((s) => ({

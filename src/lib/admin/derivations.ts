@@ -1,11 +1,13 @@
-import type { AgendaAppointment } from '@/lib/appointments/queries'
+import type { Database } from '@/lib/supabase/types'
+
+type AppointmentStatus = Database['public']['Enums']['appointment_status']
 
 /**
  * Considera atrasado quando o appointment ainda está em estado "pendente"
  * (SCHEDULED ou CONFIRMED) e o horário de início já passou.
  */
 export function isLate(
-  appointment: { status: string; startAt: string },
+  appointment: { status: AppointmentStatus; startAt: string },
   now: Date = new Date(),
 ): boolean {
   if (appointment.status !== 'SCHEDULED' && appointment.status !== 'CONFIRMED') return false
@@ -16,7 +18,7 @@ export function isLate(
  * Retorna minutos de atraso (ou 0 se não está atrasado).
  */
 export function lateMinutes(
-  appointment: { status: string; startAt: string },
+  appointment: { status: AppointmentStatus; startAt: string },
   now: Date = new Date(),
 ): number {
   if (!isLate(appointment, now)) return 0
@@ -61,7 +63,7 @@ export function hasNoSchedule(
  * Conta agendamentos ativos (excluindo CANCELED/NO_SHOW) de um profissional num dia.
  */
 export function countAppointmentsForProfessional(
-  appointments: AgendaAppointment[],
+  appointments: Array<{ professionalId: string; status: AppointmentStatus }>,
   professionalId: string,
 ): number {
   return appointments.filter(

@@ -43,7 +43,7 @@ export function applyTemplate(
   vars: Record<string, string | undefined | null>,
 ): string {
   return body.replace(/\{(\w+)\}/g, (match, key) => {
-    const v = vars[key]
+    const v = Object.prototype.hasOwnProperty.call(vars, key) ? vars[key] : undefined
     return v == null || v === '' ? match : v
   })
 }
