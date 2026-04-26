@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type Props = {
@@ -31,10 +31,18 @@ function todayISO(tenantTimezone: string): string {
 
 export function DaySwitcher({ dateISO, tenantTimezone }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   function goto(next: string) {
-    const qs = next === todayISO(tenantTimezone) ? '' : `?date=${next}`
-    router.push(`/admin/dashboard/agenda${qs}`)
+    const params = new URLSearchParams(searchParams)
+    if (next === todayISO(tenantTimezone)) {
+      params.delete('date')
+    } else {
+      params.set('date', next)
+    }
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname)
   }
 
   const today = todayISO(tenantTimezone)
