@@ -7,6 +7,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { getTenantPublicUrl } from '@/lib/tenant/public-url'
 import {
   getAgendaForDay,
   getPendingConfirmations,
@@ -112,7 +113,7 @@ export default async function DashboardHome() {
     }))
 
   const attentionItems: AttentionItem[] = [...lateItems, ...noScheduleItems]
-  const publicUrl = `https://${tenant.subdomain}.aralabs.com.br`
+  const publicUrl = await getTenantPublicUrl(tenant)
 
   const headerDate = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenant.timezone,

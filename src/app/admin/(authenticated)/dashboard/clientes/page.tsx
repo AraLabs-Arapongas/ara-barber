@@ -1,6 +1,6 @@
-import { headers } from 'next/headers'
 import { Phone } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { getTenantPublicUrl } from '@/lib/tenant/public-url'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { InitialsAvatar } from '@/components/ui/initials-avatar'
@@ -35,10 +35,7 @@ export default async function CustomersPage() {
 
   const customers = data ?? []
 
-  const h = await headers()
-  const host = h.get('host') ?? `${tenant.slug}.aralabs.com.br`
-  const proto = h.get('x-forwarded-proto') ?? (host.includes('lvh.me') ? 'http' : 'https')
-  const tenantUrl = `${proto}://${host}`
+  const tenantUrl = await getTenantPublicUrl(tenant)
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">

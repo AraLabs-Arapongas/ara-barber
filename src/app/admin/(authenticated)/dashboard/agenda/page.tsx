@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { getTenantPublicUrl } from '@/lib/tenant/public-url'
 import { getAgendaForDay } from '@/lib/appointments/queries'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { Card, CardContent } from '@/components/ui/card'
@@ -81,7 +82,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
     return true
   })
 
-  const publicUrl = `https://${tenant.subdomain}.aralabs.com.br`
+  const publicUrl = await getTenantPublicUrl(tenant)
   const hasAnyToday = appointments.length > 0
   const isFiltering = Boolean(profFilter || statusFilter)
 
