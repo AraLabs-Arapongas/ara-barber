@@ -1,5 +1,11 @@
 import Link from 'next/link'
-import { ArrowRight, BellRing, Calendar, TrendingUp } from 'lucide-react'
+import {
+  BellRing,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  TrendingUp,
+} from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import {
   getAgendaForDay,
@@ -12,6 +18,12 @@ import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
 import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
 import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
+import { QuickActions } from '@/components/home/quick-actions'
+import {
+  AttentionSection,
+  type AttentionItem,
+} from '@/components/home/attention-section'
+import { hasNoSchedule, isLate, lateMinutes } from '@/lib/admin/derivations'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -37,15 +49,25 @@ export default async function DashboardHome() {
 
   const dateISO = todayISO(tenant.timezone)
   const nowISO = new Date().toISOString()
-  const [today, pending, svcRes] = await Promise.all([
+  const [today, pending, svcRes, profsRes, availRes] = await Promise.all([
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
     getPendingConfirmations(tenant.id, nowISO),
     supabase.from('services').select('id, price_cents').eq('tenant_id', tenant.id),
+    supabase
+      .from('professionals')
+      .select('id, name')
+      .eq('tenant_id', tenant.id)
+      .eq('is_active', true),
+    supabase
+      .from('professional_availability')
+      .select('professional_id, weekday, start_time, end_time')
+      .eq('tenant_id', tenant.id),
   ])
   const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
 
   // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const now = Date.now()
+  const nowDate = new Date(now)
   const active = today.filter(
     (a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
   )
@@ -57,7 +79,40 @@ export default async function DashboardHome() {
     (sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0),
     0,
   )
+  const completedRevenueCents = active
+    .filter((a) => a.status === 'COMPLETED')
+    .reduce((sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0), 0)
   const completed = today.filter((a) => a.status === 'COMPLETED').length
+  const canceled = today.filter(
+    (a) => a.status === 'CANCELED' || a.status === 'NO_SHOW',
+  ).length
+  const pendingActive = active.filter(
+    (a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED',
+  )
+  const lateAppointments = active.filter((a) =>
+    isLate({ status: a.status, startAt: a.startAt }, nowDate),
+  )
+
+  const lateItems: AttentionItem[] = lateAppointments.map((a) => ({
+    kind: 'late',
+    appointmentId: a.id,
+    customerName: a.customerName ?? 'Cliente',
+    minutes: lateMinutes({ status: a.status, startAt: a.startAt }, nowDate),
+  }))
+
+  const availability = (availRes.data ?? []).map((a) => ({
+    professionalId: a.professional_id,
+  }))
+  const noScheduleItems: AttentionItem[] = (profsRes.data ?? [])
+    .filter((p) => hasNoSchedule(availability, p.id))
+    .map((p) => ({
+      kind: 'no-schedule',
+      professionalId: p.id,
+      professionalName: p.name,
+    }))
+
+  const attentionItems: AttentionItem[] = [...lateItems, ...noScheduleItems]
+  const publicUrl = `https://${tenant.subdomain}.aralabs.com.br`
 
   const headerDate = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenant.timezone,
@@ -103,22 +158,40 @@ export default async function DashboardHome() {
           icon={<Calendar className="h-4 w-4" />}
           label="Agenda hoje"
           value={String(active.length)}
-          hint={`${completed} já concluídos`}
+          hint={`${completed} ${completed === 1 ? 'concluído' : 'concluídos'}`}
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Previsto"
           value={formatCentsToBrl(todayRevenueCents)}
-          hint="somando serviços"
+          hint={`${formatCentsToBrl(completedRevenueCents)} já feito`}
+        />
+        <StatCard
+          icon={<Clock className="h-4 w-4" />}
+          label="Pendentes"
+          value={String(pendingActive.length)}
+          hint={
+            lateAppointments.length > 0
+              ? `${lateAppointments.length} ${lateAppointments.length === 1 ? 'atrasado' : 'atrasados'}`
+              : 'no horário'
+          }
+        />
+        <StatCard
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          label="Concluídos"
+          value={String(completed)}
+          hint={`${canceled} ${canceled === 1 ? 'cancelado/falta' : 'cancelados/faltas'}`}
         />
       </div>
 
-      <QuickActions />
+      <QuickActions publicUrl={publicUrl} />
 
       <PendingConfirmations
         appointments={pending}
         tenantTimezone={tenant.timezone}
       />
+
+      <AttentionSection items={attentionItems} />
 
       <AgendaPreview
         appointments={active.sort(
@@ -211,27 +284,6 @@ function StatCard({
         <p className="text-[0.75rem] text-fg-muted">{hint}</p>
       </CardContent>
     </Card>
-  )
-}
-
-function QuickActions() {
-  const actions = [
-    { href: '/admin/dashboard/agenda', label: 'Abrir agenda', icon: Calendar },
-    { href: '/admin/dashboard/mais', label: 'Ajustes do negócio', icon: ArrowRight },
-  ] as const
-  return (
-    <div className="mt-4 flex gap-2">
-      {actions.map((a) => (
-        <Link
-          key={a.href}
-          href={a.href}
-          className="flex flex-1 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-[0.875rem] font-medium text-fg shadow-xs transition-colors hover:bg-bg-subtle"
-        >
-          {a.label}
-          <a.icon className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
-        </Link>
-      ))}
-    </div>
   )
 }
 

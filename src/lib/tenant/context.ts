@@ -26,6 +26,7 @@ function resolveConventionalLogoUrl(slug: string): string | null {
 export type TenantContext = {
   id: string
   slug: string
+  subdomain: string
   name: string
   timezone: string
   primaryColor: string | null
@@ -75,7 +76,7 @@ export const getCurrentTenantOrNotFound = cache(
     const { data } = await supabase
       .from('tenants')
       .select(
-        'id, slug, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours',
+        'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours',
       )
       .eq('id', tenantId)
       .maybeSingle()
@@ -85,6 +86,7 @@ export const getCurrentTenantOrNotFound = cache(
     return {
       id: data.id,
       slug: data.slug,
+      subdomain: data.subdomain,
       name: data.name,
       timezone: data.timezone,
       primaryColor: data.primary_color,

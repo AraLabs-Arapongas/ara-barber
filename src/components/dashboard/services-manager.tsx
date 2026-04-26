@@ -23,6 +23,7 @@ export type ServiceListItem = {
   durationMinutes: number
   priceCents: number
   isActive: boolean
+  professionalNames: string[]
 }
 
 type Props = {
@@ -192,7 +193,7 @@ export function ServicesManager({ services }: Props) {
             {filtered.map((s) => (
               <li key={s.id}>
                 <Card className="shadow-xs">
-                  <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                  <div className="flex items-start justify-between gap-3 px-4 py-3 sm:px-5">
                     <button
                       type="button"
                       onClick={() => openEdit(s)}
@@ -202,17 +203,28 @@ export function ServicesManager({ services }: Props) {
                       <p className="truncate text-[0.8125rem] text-fg-muted">
                         {s.durationMinutes} min · {formatCentsToBrl(s.priceCents)}
                       </p>
+                      {s.professionalNames.length > 0 ? (
+                        <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">
+                          Profissionais: {s.professionalNames.join(', ')}
+                        </p>
+                      ) : (
+                        <p className="mt-0.5 truncate text-[0.8125rem] text-warning">
+                          Nenhum profissional vinculado
+                        </p>
+                      )}
+                      <p className="mt-1">
+                        <span
+                          className={
+                            s.isActive
+                              ? 'inline-block rounded-full bg-success-bg px-2 py-0.5 text-[0.6875rem] font-medium text-success'
+                              : 'inline-block rounded-full bg-bg-subtle px-2 py-0.5 text-[0.6875rem] font-medium text-fg-subtle'
+                          }
+                        >
+                          {s.isActive ? 'Visível para clientes' : 'Oculto'}
+                        </span>
+                      </p>
                     </button>
                     <div className="flex shrink-0 items-center gap-1">
-                      <span
-                        className={
-                          s.isActive
-                            ? 'rounded-full bg-success-bg px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-success'
-                            : 'rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle'
-                        }
-                      >
-                        {s.isActive ? 'Ativo' : 'Inativo'}
-                      </span>
                       <button
                         type="button"
                         onClick={() => openEdit(s)}
@@ -227,7 +239,7 @@ export function ServicesManager({ services }: Props) {
                         onClick={() => toggle(s.id, s.isActive)}
                         disabled={pending}
                         className="rounded-md p-1.5 text-fg-subtle hover:bg-bg-subtle hover:text-fg disabled:opacity-50"
-                        aria-label={s.isActive ? 'Desativar' : 'Ativar'}
+                        aria-label={s.isActive ? 'Ocultar do público' : 'Tornar visível'}
                       >
                         <Power className="h-3.5 w-3.5" />
                       </button>

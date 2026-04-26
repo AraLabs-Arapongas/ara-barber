@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/alert'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { InitialsAvatar } from '@/components/ui/initials-avatar'
 import { formatBrPhone } from '@/lib/format'
+import { formatCentsToBrl } from '@/lib/money'
 import { createProfessional } from '@/app/admin/(authenticated)/actions/professionals'
 
 export type ProfessionalListItem = {
@@ -19,6 +20,17 @@ export type ProfessionalListItem = {
   displayName: string | null
   phone: string | null
   isActive: boolean
+  worksToday: { startTime: string; endTime: string } | null
+  hasNoSchedule: boolean
+  appointmentsToday: number
+  revenueTodayCents: number
+  servicesCount: number
+  hasUserAccess: boolean
+}
+
+function trimSeconds(time: string): string {
+  // "08:00:00" → "08:00"
+  return time.length >= 5 ? time.slice(0, 5) : time
 }
 
 type Props = {
@@ -82,6 +94,9 @@ export function ProfessionalsManager({ professionals }: Props) {
     })
   }
 
+  const workingToday = professionals.filter((p) => p.worksToday !== null).length
+  const withoutSchedule = professionals.filter((p) => p.hasNoSchedule).length
+
   return (
     <>
       <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -93,6 +108,14 @@ export function ProfessionalsManager({ professionals }: Props) {
             Profissionais
           </h1>
           <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu negócio.</p>
+          {professionals.length > 0 ? (
+            <p className="mt-2 text-[0.8125rem] text-fg-muted">
+              {workingToday} {workingToday === 1 ? 'trabalhando' : 'trabalhando'} hoje
+              {withoutSchedule > 0
+                ? ` · ${withoutSchedule} sem horário configurado`
+                : ''}
+            </p>
+          ) : null}
           <Button type="button" size="sm" onClick={openCreate} className="mt-3">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Adicionar profissional
@@ -101,40 +124,70 @@ export function ProfessionalsManager({ professionals }: Props) {
 
         {professionals.length > 0 ? (
           <ul className="space-y-2">
-            {professionals.map((p) => (
-              <li key={p.id}>
-                <Link href={`/admin/dashboard/profissionais/${p.id}`} className="block">
-                  <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
-                    <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
-                      <InitialsAvatar name={p.displayName || p.name} size={40} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-fg">
-                          {p.displayName || p.name}
-                        </p>
-                        <p className="truncate text-[0.8125rem] text-fg-muted">
-                          {p.phone ?? 'sem telefone'}
-                        </p>
+            {professionals.map((p) => {
+              const scheduleLine = p.worksToday
+                ? `Trabalha hoje ${trimSeconds(p.worksToday.startTime)}–${trimSeconds(p.worksToday.endTime)}`
+                : p.hasNoSchedule
+                  ? 'Sem horário configurado'
+                  : 'De folga hoje'
+              return (
+                <li key={p.id}>
+                  <Link href={`/admin/dashboard/profissionais/${p.id}`} className="block">
+                    <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
+                      <div className="flex items-start gap-3 px-4 py-3 sm:px-5">
+                        <InitialsAvatar name={p.displayName || p.name} size={40} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate font-medium text-fg">
+                              {p.displayName || p.name}
+                            </p>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <span
+                                className={
+                                  p.isActive
+                                    ? 'rounded-full bg-success-bg px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-success'
+                                    : 'rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle'
+                                }
+                              >
+                                {p.isActive ? 'Ativo' : 'Inativo'}
+                              </span>
+                              <ChevronRight
+                                className="h-4 w-4 text-fg-subtle"
+                                aria-hidden="true"
+                              />
+                            </div>
+                          </div>
+                          <p
+                            className={`mt-0.5 truncate text-[0.8125rem] ${
+                              p.hasNoSchedule ? 'text-warning' : 'text-fg-muted'
+                            }`}
+                          >
+                            {scheduleLine}
+                          </p>
+                          <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">
+                            {p.appointmentsToday}{' '}
+                            {p.appointmentsToday === 1
+                              ? 'agendamento hoje'
+                              : 'agendamentos hoje'}{' '}
+                            · {formatCentsToBrl(p.revenueTodayCents)} previsto
+                          </p>
+                          <p className="mt-0.5 truncate text-[0.8125rem] text-fg-subtle">
+                            {p.servicesCount}{' '}
+                            {p.servicesCount === 1
+                              ? 'serviço vinculado'
+                              : 'serviços vinculados'}{' '}
+                            ·{' '}
+                            {p.hasUserAccess
+                              ? 'Acesso ao painel'
+                              : 'Sem acesso ao painel'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span
-                          className={
-                            p.isActive
-                              ? 'rounded-full bg-success-bg px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-success'
-                              : 'rounded-full bg-bg-subtle px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide text-fg-subtle'
-                          }
-                        >
-                          {p.isActive ? 'Ativo' : 'Inativo'}
-                        </span>
-                        <ChevronRight
-                          className="h-4 w-4 text-fg-subtle"
-                          aria-hidden="true"
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              </li>
-            ))}
+                    </Card>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <Card className="shadow-xs">

@@ -94,6 +94,31 @@ URLs locais:
 - [ ] Transição persiste status e atualiza a UI sem reload.
 - [ ] Realtime: criar appointment em outra aba → agenda atualiza sozinha em ≤2s.
 
+### 5a. Home revamp (revamp 2026-04-26)
+
+- [ ] 4 stat cards aparecem em grid 2x2: **Agenda hoje**, **Previsto**, **Pendentes**, **Concluídos**. Hint do "Pendentes" mostra "N atrasados" se algum existe; senão "no horário".
+- [ ] Bloco "Próximo atendimento" (full-width destacado) aparece quando há agendamento futuro hoje.
+- [ ] Quick actions exibe 4 botões em grid 2x2 (mobile) / 4 colunas (sm+): **Novo agendamento**, **Abrir agenda**, **Copiar link**, **Bloquear horário**.
+  - Novo agendamento → `/admin/dashboard/agenda/novo` (wizard).
+  - Abrir agenda → `/admin/dashboard/agenda`.
+  - Copiar link copia `https://<subdomain>.aralabs.com.br` pro clipboard; texto vira "Copiado!" por 2s.
+  - Bloquear horário → `/admin/dashboard/bloqueios?new=1` (rota será criada em fase posterior — 404 esperado por enquanto).
+- [ ] Bloco "Precisam confirmar" continua aparecendo com botão inline e contagem (não foi removido).
+- [ ] Seção "Atenção" sempre aparece logo após PendingConfirmations:
+  - Vazia: card "Tudo certo por enquanto. Nenhuma pendência importante hoje.".
+  - Com itens: lista cards com ícone warning. Atrasado linka pro detalhe do agendamento; Sem horário linka pro detalhe do profissional.
+- [ ] Bloco "Próximos" (lista até 5) continua aparecendo abaixo da Atenção.
+
+### 5b. Agenda revamp (revamp 2026-04-26)
+
+- [ ] Filtros (2 selects) aparecem entre o DaySwitcher e a lista: **Todos os profissionais** + **Todos os status**.
+- [ ] Selecionar profissional → URL ganha `?professional=<id>`; lista re-renderiza filtrada.
+- [ ] Selecionar status → URL ganha `?status=<STATUS>`; combinável com profissional.
+- [ ] Resumo do dia aparece logo abaixo dos filtros quando há ≥1 ativo: `N agendamentos · R$ X,XX previsto[ · N atrasos]`.
+- [ ] Lista vazia + sem filtros aplicados: empty state actionável com **Adicionar agendamento** (linka pro wizard) + **Copiar link de agendamento** (toast "Copiado!" 2s).
+- [ ] Lista vazia mas com filtros aplicados: card "Nenhum agendamento para os filtros selecionados." (não mostra empty state principal).
+- [ ] StaffPushBanner, DaySwitcher e RealtimeRefresh continuam funcionando.
+
 ## 5b. Wizard de criação manual de agendamento (revamp 2026-04-26)
 
 Acessar `/admin/dashboard/agenda/novo` autenticado como staff.
@@ -140,6 +165,14 @@ Validar fluxo self-service de "Esqueci a senha" em `/admin/*`.
 - [ ] Editar serviço → mudanças persistem e aparecem no wizard.
 - [ ] Desativar serviço → some do wizard público.
 
+### 6a. Serviços revamp (revamp 2026-04-26)
+
+- [ ] Busca por nome (input com ícone de lupa) aparece quando há ≥1 serviço; filtra a lista client-side; "Nada encontrado para X" quando não bate.
+- [ ] Cada card de serviço mostra: nome, "X min · R$ Y,YY", linha "Profissionais: A, B, C" quando há vínculo, linha "Nenhum profissional vinculado" em **warning** quando não há.
+- [ ] Badge de visibilidade rotulada: **Visível para clientes** (verde) ou **Oculto** (cinza) — substitui o antigo "Ativo/Inativo".
+- [ ] Botão Power (toggle visibilidade) tem aria-label "Ocultar do público" / "Tornar visível".
+- [ ] Empty state quando lista vazia: card centralizado com botão "Adicionar serviço".
+
 ## 7. Staff — equipe (detail consolidado)
 
 Toda gestão do profissional vive em `/admin/dashboard/profissionais/[id]`.
@@ -153,6 +186,17 @@ Toda gestão do profissional vive em `/admin/dashboard/profissionais/[id]`.
   - **Bloqueios:** criar bloqueio (ex.: amanhã 14-17h) → slots no intervalo ficam disabled no wizard. Deletar também funciona.
 - [ ] `/admin/dashboard/disponibilidade` e `/equipe-servicos` redirecionam pra `/profissionais`.
 - [ ] `/admin/dashboard/configuracoes/horarios`: fechar um dia → wizard bloqueia aquele weekday.
+
+### 7a. Equipe revamp (revamp 2026-04-26)
+
+- [ ] Header da listagem mostra resumo "N trabalhando hoje[ · M sem horário configurado]" abaixo da copy padrão.
+- [ ] Cada card de profissional mostra:
+  - Avatar com iniciais + nome.
+  - Badge **Ativo**/**Inativo** + chevron à direita.
+  - Linha de jornada: `Trabalha hoje HH:MM–HH:MM` quando há availability hoje, `Sem horário configurado` (em **warning**) quando não há nenhuma availability cadastrada, ou `De folga hoje` quando tem availability mas não pro weekday corrente.
+  - Linha "N agendamentos hoje · R$ X,XX previsto" baseada nos agendamentos ativos do dia (exclui CANCELED/NO_SHOW).
+  - Linha "N serviços vinculados · Acesso ao painel"/"Sem acesso ao painel" (acesso = `user_id IS NOT NULL`).
+- [ ] Card inteiro continua sendo um link pro detalhe `/admin/dashboard/profissionais/[id]`.
 
 ## 7b. Staff — cadastros auxiliares
 

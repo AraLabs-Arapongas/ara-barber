@@ -6,10 +6,25 @@ import { Card, CardContent } from '@/components/ui/card'
 import { DaySwitcher } from '@/components/agenda/day-switcher'
 import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
 import { StaffPushBanner } from '@/components/push/staff-push-banner'
+import { AgendaFilters } from '@/components/agenda/agenda-filters'
+import { DaySummary } from '@/components/agenda/day-summary'
+import { AgendaEmptyState } from '@/components/agenda/empty-state'
+import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/lib/supabase/types'
+
+type AppointmentStatus = Database['public']['Enums']['appointment_status']
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
+
+const VALID_STATUSES: AppointmentStatus[] = [
+  'SCHEDULED',
+  'CONFIRMED',
+  'COMPLETED',
+  'CANCELED',
+  'NO_SHOW',
+]
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -39,8 +54,36 @@ export default async function AgendaPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const rawDate = typeof sp.date === 'string' ? sp.date : undefined
   const dateISO = validISOOrToday(rawDate, tenant.timezone)
+  const profFilter = typeof sp.professional === 'string' ? sp.professional : null
+  const statusRaw = typeof sp.status === 'string' ? sp.status : null
+  const statusFilter =
+    statusRaw && (VALID_STATUSES as string[]).includes(statusRaw)
+      ? (statusRaw as AppointmentStatus)
+      : null
 
-  const appointments = await getAgendaForDay(tenant.id, dateISO, tenant.timezone)
+  const supabase = await createClient()
+  const [appointments, profsRes, svcRes] = await Promise.all([
+    getAgendaForDay(tenant.id, dateISO, tenant.timezone),
+    supabase
+      .from('professionals')
+      .select('id, name')
+      .eq('tenant_id', tenant.id)
+      .eq('is_active', true)
+      .order('name'),
+    supabase.from('services').select('id, price_cents').eq('tenant_id', tenant.id),
+  ])
+  const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
+  const professionals = (profsRes.data ?? []).map((p) => ({ id: p.id, name: p.name }))
+
+  const filtered = appointments.filter((a) => {
+    if (profFilter && a.professionalId !== profFilter) return false
+    if (statusFilter && a.status !== statusFilter) return false
+    return true
+  })
+
+  const publicUrl = `https://${tenant.subdomain}.aralabs.com.br`
+  const hasAnyToday = appointments.length > 0
+  const isFiltering = Boolean(profFilter || statusFilter)
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -57,9 +100,12 @@ export default async function AgendaPage({ searchParams }: PageProps) {
       <DaySwitcher dateISO={dateISO} tenantTimezone={tenant.timezone} />
       <RealtimeAgendaRefresh tenantId={tenant.id} />
 
-      {appointments.length > 0 ? (
+      <AgendaFilters professionals={professionals} />
+      <DaySummary appointments={filtered} priceById={priceById} />
+
+      {filtered.length > 0 ? (
         <ul className="space-y-2">
-          {appointments.map((a) => {
+          {filtered.map((a) => {
             const durationMin = Math.round(
               (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60000,
             )
@@ -110,17 +156,19 @@ export default async function AgendaPage({ searchParams }: PageProps) {
             )
           })}
         </ul>
-      ) : (
+      ) : hasAnyToday && isFiltering ? (
         <Card className="shadow-xs">
           <CardContent className="py-10 text-center">
             <p className="text-[0.9375rem] text-fg-muted">
-              Nenhum agendamento neste dia.
+              Nenhum agendamento para os filtros selecionados.
             </p>
             <p className="mt-1 text-[0.8125rem] text-fg-subtle">
-              Clientes se agendam pela página pública.
+              Ajuste os filtros acima pra ver mais.
             </p>
           </CardContent>
         </Card>
+      ) : (
+        <AgendaEmptyState publicUrl={publicUrl} />
       )}
     </main>
   )
