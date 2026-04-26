@@ -94,6 +94,21 @@ URLs locais:
 - [ ] Transição persiste status e atualiza a UI sem reload.
 - [ ] Realtime: criar appointment em outra aba → agenda atualiza sozinha em ≤2s.
 
+## 5b. Wizard de criação manual de agendamento (revamp 2026-04-26)
+
+Acessar `/admin/dashboard/agenda/novo` autenticado como staff.
+
+- [ ] Step 1 — escolher cliente existente da lista; busca por nome funciona; selecionar avança state.
+- [ ] Step 1 — alternar pra "Novo cliente"; preencher nome obrigatório; telefone/e-mail opcionais; "Continuar" só habilita com nome preenchido.
+- [ ] Step 2 — lista só serviços com `is_active=true`; selecionar muda card pra estado selecionado.
+- [ ] Step 3 — lista só profissionais vinculados ao serviço (via `professional_services`); empty state quando vínculo não existe.
+- [ ] Step 4 — date picker default = hoje no TZ do tenant; slots calculados client-side; slots em conflito ficam riscados/desabilitados.
+- [ ] Step 4 — bloquear horário tenant-wide (`availability_blocks` com `professional_id NULL`) faz aquele horário sumir.
+- [ ] Step 5 — resumo bate com escolhas; observações opcionais (max 500 chars).
+- [ ] Submit → cria appointment com `status=CONFIRMED`, redireciona pra `/admin/dashboard/agenda/[id]`.
+- [ ] Cliente novo apareceu em `/admin/dashboard/clientes`.
+- [ ] Tentar criar segundo agendamento mesmo profissional + mesmo horário → erro "Horário não disponível".
+
 ## Recuperação de senha (staff)
 
 Validar fluxo self-service de "Esqueci a senha" em `/admin/*`.
