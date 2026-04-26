@@ -80,13 +80,23 @@ export async function loadTemplate(
   }
 
   const client = createAdminClient()
-  const { data } = await client
+  const { data, error } = await client
     .from('tenant_message_templates')
     .select('enabled, subject, body')
     .eq('tenant_id', tenantId)
     .eq('channel', channel)
     .eq('event', event)
     .maybeSingle()
+
+  if (error) {
+    // Falha silenciosa cai no fallback — mas precisamos saber se aconteceu
+    // (ex: RLS denial, schema drift, network) pra não enviar template antigo
+    // achando que o staff não customizou.
+    console.error(
+      `loadTemplate query failed for tenant=${tenantId} ${channel}/${event}`,
+      error,
+    )
+  }
 
   if (!data) {
     return { enabled: true, subject: fallback.subject, body: fallback.body }
