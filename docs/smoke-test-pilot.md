@@ -314,16 +314,36 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] Top serviços e top profissionais — ordenado por contagem (não R$).
 - [ ] Filtro Hoje/Semana/Mês altera os dados.
 
-## 10. Fora de escopo — stubs
+## 10. Mais — Comunicação (revamp 2026-04-26)
 
-- [ ] Rotas `/admin/dashboard/operacao` retorna placeholder sem quebrar.
-- [ ] Itens "Em construção" da Mais (Comunicação, Conta) levam a placeholder com botão "Voltar".
+### 10a. E-mails automáticos
+- [ ] /admin/dashboard/comunicacao/emails: lista 4 templates EMAIL (Confirmação, Cancelamento, Lembrete, Agradecimento) — campos `subject`+`body` editáveis.
+- [ ] Editar `subject` + `body` + Salvar; refresh confirma persistido.
+- [ ] Toggle "Desativado" persiste (verificação de envio real é parte do C6, edge function fica em follow-up).
 
-## 11. Smoke técnico
+### 10b. WhatsApp
+- [ ] /admin/dashboard/comunicacao/whatsapp: lista 5 templates WHATSAPP (Confirmação, Lembrete, Cancelamento, Compartilhar link, Personalizado) — só `body`.
+- [ ] Editar `body` + Salvar; refresh confirma persistido.
+- [ ] No detalhe de um appointment (/admin/dashboard/agenda/[id]), botão "Enviar pelo WhatsApp" aparece logo abaixo do cliente quando o template WHATSAPP/BOOKING_CONFIRMATION está ativo.
+- [ ] Click abre `wa.me/55<phone>?text=...` com mensagem renderizada (placeholders {nome}/{servico}/{horario}/{profissional}/{link} substituídos).
+- [ ] Cliente sem telefone → botão fica desabilitado com tooltip "Cliente sem telefone cadastrado".
+- [ ] Desativar template em /comunicacao/whatsapp → botão some do detalhe do appointment.
+
+### 10c. Notificações da equipe
+- [ ] /admin/dashboard/comunicacao/notificacoes: StaffPushToggle aparece dentro de card com copy melhor.
+- [ ] Toggle ativa/desativa permission + cria/remove `push_subscription` no DB.
+- [ ] Estados `unsupported`/`denied` mostram mensagem apropriada (testar em browser sem push ou com permission negada).
+
+## 11. Fora de escopo — stubs
+
+- [ ] Rota `/admin/dashboard/operacao` retorna placeholder sem quebrar.
+- [ ] Itens "Em construção" da Mais (Conta) levam a placeholder com botão "Voltar".
+
+## 12. Smoke técnico
 
 - [ ] `pnpm typecheck` limpo.
 - [ ] `pnpm test` verde.
-- [ ] `pnpm lint` zero errors (warnings de `console` em `customer-client.ts` são pré-existentes).
+- [ ] `pnpm lint` zero errors (warnings de `console` em `customer-client.ts` e `realtime-refresh.tsx`, e o erro `set-state-in-effect` em `staff-push-banner.tsx`, são pré-existentes).
 - [ ] `pnpm build` completa sem erro.
 
 ## Reset entre runs
