@@ -56,25 +56,35 @@ export async function inviteStaff(raw: InviteStaffInput): Promise<ActionResult> 
   const publicUrl = await getTenantPublicUrl(tenant)
   const admin = createSecretClient()
 
-  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
-    redirectTo: `${publicUrl}/auth/callback`,
-    data: { tenant_id: tenant.id, tenant_name: tenant.name },
-  })
-  if (error || !invited?.user) {
-    return { ok: false, error: error?.message ?? 'Falha ao enviar convite.' }
+  const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(
+    parsed.data.email,
+    {
+      redirectTo: `${publicUrl}/auth/callback`,
+      data: { tenant_id: tenant.id, tenant_name: tenant.name },
+    },
+  )
+  if (inviteErr || !invited?.user) {
+    return { ok: false, error: inviteErr?.message ?? 'Falha ao enviar convite.' }
   }
 
   // O user_profiles tem `name` NOT NULL — usa o local-part do e-mail como
   // placeholder; o convidado pode atualizar depois.
   const fallbackName = parsed.data.email.split('@')[0] || parsed.data.email
 
-  const { error: profileError } = await admin.from('user_profiles').insert({
+  const { error: profileErr } = await admin.from('user_profiles').insert({
     user_id: invited.user.id,
     tenant_id: tenant.id,
     role: parsed.data.role,
     name: fallbackName,
   })
-  if (profileError) return { ok: false, error: profileError.message }
+  if (profileErr) {
+    // Rollback do auth.user pra evitar órfão. Sem isso, um re-invite
+    // bate em "user already exists" e o staff fica preso.
+    // Best-effort: se a deleção falhar, ainda assim retornamos o erro
+    // original do profile pra não esconder a causa raiz.
+    await admin.auth.admin.deleteUser(invited.user.id).catch(() => {})
+    return { ok: false, error: `Convite criado mas perfil falhou: ${profileErr.message}` }
+  }
 
   revalidatePath('/admin/dashboard/conta/usuarios')
   return { ok: true }

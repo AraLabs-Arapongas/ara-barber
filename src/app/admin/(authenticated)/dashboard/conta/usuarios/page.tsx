@@ -15,20 +15,22 @@ export default async function UsuariosPage() {
     .in('role', ['BUSINESS_OWNER', 'RECEPTIONIST', 'PROFESSIONAL'])
     .order('created_at', { ascending: true })
 
-  const userIds = (profiles ?? []).map((p) => p.user_id)
-  // listUsers paginado — perPage:200 cobre folga pra Phase 1 (tenants pequenos).
-  const { data: usersList } =
-    userIds.length > 0
-      ? await admin.auth.admin.listUsers({ perPage: 200 })
-      : { data: { users: [] as Array<{ id: string; email?: string | null }> } }
+  const profileList = profiles ?? []
 
-  const emailById = new Map(
-    (usersList?.users ?? [])
-      .filter((u) => userIds.includes(u.id))
-      .map((u) => [u.id, u.email ?? '']),
+  // Lookup individual via getUserById. N é pequeno (staff por tenant em
+  // dígito único). Evita listUsers({perPage:200}) que lista TODOS os users
+  // do projeto Supabase inteiro — quebra silenciosamente quando o projeto
+  // ultrapassa 200 users no total (cross-tenant).
+  const userResults = await Promise.all(
+    profileList.map((p) => admin.auth.admin.getUserById(p.user_id)),
   )
+  const emailById = new Map<string, string>()
+  for (let i = 0; i < profileList.length; i++) {
+    const u = userResults[i]?.data?.user
+    emailById.set(profileList[i].user_id, u?.email ?? '')
+  }
 
-  const rows: StaffRow[] = (profiles ?? []).map((p) => ({
+  const rows: StaffRow[] = profileList.map((p) => ({
     id: p.id,
     userId: p.user_id,
     name: p.name,
