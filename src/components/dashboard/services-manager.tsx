@@ -24,10 +24,17 @@ export type ServiceListItem = {
   priceCents: number
   isActive: boolean
   professionalNames: string[]
+  professionalIds: string[]
+}
+
+export type ServiceProfessional = {
+  id: string
+  name: string
 }
 
 type Props = {
   services: ServiceListItem[]
+  professionals: ServiceProfessional[]
 }
 
 function centsToInputValue(cents: number): string {
@@ -41,7 +48,7 @@ function normalizeForSearch(s: string): string {
     .replace(/[\u0300-\u036f]/g, '')
 }
 
-export function ServicesManager({ services }: Props) {
+export function ServicesManager({ services, professionals }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -51,6 +58,7 @@ export function ServicesManager({ services }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [query, setQuery] = useState('')
+  const [selectedProfIds, setSelectedProfIds] = useState<string[]>([])
 
   const filtered = useMemo(() => {
     const q = normalizeForSearch(query.trim())
@@ -71,14 +79,20 @@ export function ServicesManager({ services }: Props) {
 
   function openCreate() {
     setEditing(null)
+    setSelectedProfIds([])
     setError(null)
     setSheetOpen(true)
   }
 
   function openEdit(item: ServiceListItem) {
     setEditing(item)
+    setSelectedProfIds(item.professionalIds)
     setError(null)
     setSheetOpen(true)
+  }
+
+  function toggleProfId(id: string) {
+    setSelectedProfIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
   }
 
   function closeSheet() {
@@ -113,6 +127,7 @@ export function ServicesManager({ services }: Props) {
         description,
         durationMinutes: Math.round(durationRaw),
         priceCents,
+        professionalIds: selectedProfIds,
       }
       const result = editing
         ? await updateService({ id: editing.id, ...payload })
@@ -335,6 +350,40 @@ export function ServicesManager({ services }: Props) {
               className="w-full rounded-lg border border-transparent bg-bg-subtle px-3 py-2.5 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
             />
           </label>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-[0.8125rem] font-medium text-fg">Profissionais que atendem</span>
+            {professionals.length === 0 ? (
+              <p className="text-[0.8125rem] text-fg-muted">
+                Nenhum profissional ativo. Cadastre um em Equipe primeiro.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {professionals.map((p) => {
+                  const selected = selectedProfIds.includes(p.id)
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => toggleProfId(p.id)}
+                      aria-pressed={selected}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-[0.8125rem] transition-colors',
+                        selected
+                          ? 'border-brand-primary bg-brand-primary text-brand-primary-fg'
+                          : 'border-border bg-bg-subtle text-fg-muted hover:bg-surface-raised hover:text-fg',
+                      )}
+                    >
+                      {p.name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            <p className="text-[0.75rem] text-fg-subtle">
+              Cliente só pode escolher profissionais vinculados ao serviço no booking.
+            </p>
+          </div>
 
           {error ? (
             <Alert variant="error" title="Não foi possível salvar">

@@ -1,6 +1,10 @@
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
-import { ServicesManager, type ServiceListItem } from '@/components/dashboard/services-manager'
+import {
+  ServicesManager,
+  type ServiceListItem,
+  type ServiceProfessional,
+} from '@/components/dashboard/services-manager'
 
 export default async function ServicesPage() {
   const tenant = await getCurrentTenantOrNotFound()
@@ -20,18 +24,23 @@ export default async function ServicesPage() {
       .from('professionals')
       .select('id, name, display_name')
       .eq('tenant_id', tenant.id)
-      .eq('is_active', true),
+      .eq('is_active', true)
+      .order('name'),
   ])
 
   const profById = new Map((profsRes.data ?? []).map((p) => [p.id, p.display_name ?? p.name]))
 
   const namesByService = new Map<string, string[]>()
+  const idsByService = new Map<string, string[]>()
   for (const ps of profServicesRes.data ?? []) {
     const name = profById.get(ps.professional_id)
     if (!name) continue
-    const arr = namesByService.get(ps.service_id) ?? []
-    arr.push(name)
-    namesByService.set(ps.service_id, arr)
+    const names = namesByService.get(ps.service_id) ?? []
+    names.push(name)
+    namesByService.set(ps.service_id, names)
+    const ids = idsByService.get(ps.service_id) ?? []
+    ids.push(ps.professional_id)
+    idsByService.set(ps.service_id, ids)
   }
 
   const services: ServiceListItem[] = (servicesRes.data ?? []).map((s) => ({
@@ -42,7 +51,13 @@ export default async function ServicesPage() {
     priceCents: s.price_cents,
     isActive: s.is_active,
     professionalNames: namesByService.get(s.id) ?? [],
+    professionalIds: idsByService.get(s.id) ?? [],
   }))
 
-  return <ServicesManager services={services} />
+  const professionals: ServiceProfessional[] = (profsRes.data ?? []).map((p) => ({
+    id: p.id,
+    name: p.display_name ?? p.name,
+  }))
+
+  return <ServicesManager services={services} professionals={professionals} />
 }

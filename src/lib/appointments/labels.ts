@@ -1,7 +1,7 @@
 import type { AppointmentStatus } from '@/lib/appointments/status-rules'
 
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  SCHEDULED: 'Marcado',
+  SCHEDULED: 'Aguardando confirmação',
   CONFIRMED: 'Confirmado',
   COMPLETED: 'Feito',
   CANCELED: 'Cancelado',

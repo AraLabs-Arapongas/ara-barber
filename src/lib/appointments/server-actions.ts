@@ -63,7 +63,10 @@ export async function createAppointment(
     .select('id')
     .single()
 
-  if (error || !data) return { ok: false, error: 'Falha ao criar reserva.' }
+  if (error || !data) {
+    console.error('createAppointment insert error:', error)
+    return { ok: false, error: 'Falha ao criar reserva.' }
+  }
 
   revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/meus-agendamentos')

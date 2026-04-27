@@ -141,7 +141,7 @@ export function FinancialSummary({
         <StatBox
           label="Previsto"
           value={<MoneyValue value={formatCentsToBrl(totals.scheduled + totals.completed)} />}
-          hint="Marcados + concluídos"
+          hint="Pendentes + concluídos"
         />
         <StatBox
           label="Realizado"
