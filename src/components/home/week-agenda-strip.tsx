@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatCentsToBrl } from '@/lib/money'
 import { MASK, useMoneyHidden } from '@/lib/money-visibility'
@@ -16,18 +18,6 @@ export type WeekDay = {
   revenueCents: number
 }
 
-/**
- * Strip horizontal com 7 dias da semana (Dom→Sáb). Mostra contagem de
- * agendamentos ou R$ previsto por dia, em barras de altura proporcional.
- *
- * - Toggle Count / R$ no header da seção.
- * - R$ respeita o estado global de visibilidade (`useMoneyHidden`) — toggle
- *   no header da página esconde/mostra.
- * - Hoje destacado com ring; dia selecionado em brand-primary (quando
- *   `selectedDateISO` ≠ `todayISO`).
- * - `onDayClickHref` opcional: quando passado, cada dia vira um Link.
- *   Quando ausente, é só visualização.
- */
 export type WeekNav = {
   rangeLabel: string
   prevHref: string
@@ -37,6 +27,28 @@ export type WeekNav = {
   isCurrentWeek: boolean
 }
 
+type ChartPoint = {
+  dateISO: string
+  label: string
+  dateNumber: string
+  value: number
+  count: number
+  revenueCents: number
+  isToday: boolean
+  isSelected: boolean
+  href?: string
+}
+
+/**
+ * Strip semanal com chart de barras (recharts). Mostra 7 dias da semana
+ * (Dom→Sáb) com count de agendamentos ou R$ previsto por dia.
+ *
+ * - Toggle Count / R$ no header da seção.
+ * - R$ respeita o estado global de visibilidade (`useMoneyHidden`).
+ * - Hoje destacado; dia selecionado em brand-primary.
+ * - `onDayClickHref` opcional: torna as barras clicáveis (navega pra rota
+ *   informada). `weekNav` opcional: adiciona prev/next/today semana acima.
+ */
 export function WeekAgendaStrip({
   days,
   todayISO,
@@ -46,22 +58,36 @@ export function WeekAgendaStrip({
 }: {
   days: WeekDay[]
   todayISO: string
-  /** Dia destacado em brand-primary. Quando ausente, só `todayISO` é destacado. */
   selectedDateISO?: string
-  /** Função que recebe a dateISO e devolve o href de navegação. Se ausente, sem click. */
   onDayClickHref?: (dateISO: string) => string
-  /** Navegação entre semanas (Path II — strip vira o seletor de dia da Agenda). */
   weekNav?: WeekNav
 }) {
   const [mode, setMode] = useState<'count' | 'revenue'>('count')
   const { hidden: moneyHidden } = useMoneyHidden()
+  const router = useRouter()
 
   const totalCount = days.reduce((s, d) => s + d.count, 0)
   const totalRevenue = days.reduce((s, d) => s + d.revenueCents, 0)
-  const maxValue =
-    mode === 'count'
-      ? Math.max(...days.map((d) => d.count), 1)
-      : Math.max(...days.map((d) => d.revenueCents), 1)
+
+  const chartData: ChartPoint[] = useMemo(
+    () =>
+      days.map((day, i) => {
+        const isToday = day.dateISO === todayISO
+        const isSelected = selectedDateISO ? day.dateISO === selectedDateISO : isToday
+        return {
+          dateISO: day.dateISO,
+          label: DAY_LABELS[i] ?? '',
+          dateNumber: day.dateISO.slice(8, 10),
+          value: mode === 'count' ? day.count : day.revenueCents,
+          count: day.count,
+          revenueCents: day.revenueCents,
+          isToday,
+          isSelected,
+          href: onDayClickHref?.(day.dateISO),
+        }
+      }),
+    [days, todayISO, selectedDateISO, mode, onDayClickHref],
+  )
 
   const totalLabel =
     mode === 'count'
@@ -69,6 +95,11 @@ export function WeekAgendaStrip({
       : moneyHidden
         ? MASK
         : `${formatCentsToBrl(totalRevenue)} previsto`
+
+  function handleBarClick(data: unknown) {
+    const point = data as ChartPoint | undefined
+    if (point?.href) router.push(point.href)
+  }
 
   return (
     <section className="my-4">
@@ -107,7 +138,7 @@ export function WeekAgendaStrip({
       <Card>
         <CardContent className="py-3">
           {weekNav ? (
-            <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
               <Link
                 href={weekNav.prevHref}
                 aria-label="Semana anterior"
@@ -135,76 +166,127 @@ export function WeekAgendaStrip({
               </Link>
             </div>
           ) : (
-            <p className="mb-3 text-sm text-fg-muted">{totalLabel}</p>
+            <p className="mb-2 text-sm text-fg-muted">{totalLabel}</p>
           )}
 
-          <div className="flex h-20 items-end justify-between gap-1.5">
-            {days.map((day, i) => {
-              const value = mode === 'count' ? day.count : day.revenueCents
-              const heightPct = value === 0 ? 0 : Math.max(8, (value / maxValue) * 100)
-              const isToday = day.dateISO === todayISO
-              const isSelected = selectedDateISO ? day.dateISO === selectedDateISO : isToday
-              const label = DAY_LABELS[i]
-              const dateNumber = day.dateISO.slice(8, 10)
-              const valueDescription =
-                mode === 'count'
-                  ? `${day.count} ${day.count === 1 ? 'agendamento' : 'agendamentos'}`
-                  : moneyHidden
-                    ? 'valor oculto'
-                    : formatCentsToBrl(day.revenueCents)
-
-              const barClass = `w-full rounded-t ${
-                isSelected ? 'bg-brand-primary' : 'bg-fg-muted/50'
-              }`
-              const labelClass = `text-[0.6875rem] tabular-nums ${
-                isSelected ? 'font-semibold text-brand-primary' : 'text-fg-subtle'
-              }`
-              const dateClass = `text-[0.625rem] tabular-nums ${
-                isToday && !isSelected
-                  ? 'rounded bg-brand-primary/10 px-1 text-brand-primary'
-                  : isSelected
-                    ? 'text-brand-primary'
-                    : 'text-fg-subtle'
-              }`
-
-              const inner = (
-                <>
-                  <div className="relative flex w-full flex-1 items-end justify-center">
-                    {value > 0 ? (
-                      <div className={barClass} style={{ height: `${heightPct}%` }} />
-                    ) : null}
-                  </div>
-                  <span className={labelClass}>{label}</span>
-                  <span className={dateClass}>{dateNumber}</span>
-                </>
-              )
-
-              const wrapperBase = 'flex flex-1 flex-col items-center gap-0.5'
-              const titleAttr = `${label} ${dateNumber} · ${valueDescription}`
-
-              if (onDayClickHref) {
-                return (
-                  <Link
-                    key={day.dateISO}
-                    href={onDayClickHref(day.dateISO)}
-                    className={`${wrapperBase} group transition-opacity hover:opacity-80`}
-                    title={titleAttr}
-                  >
-                    {inner}
-                  </Link>
-                )
-              }
-              return (
-                <div key={day.dateISO} className={wrapperBase} title={titleAttr}>
-                  {inner}
-                </div>
-              )
-            })}
+          <div className="h-32 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 4 }}>
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={(props) => {
+                    const { x, y, payload } = props as {
+                      x: number
+                      y: number
+                      payload: { value: string; index: number }
+                    }
+                    const point = chartData[payload.index]
+                    if (!point) return <g />
+                    const dayColor = point.isSelected
+                      ? 'var(--color-brand-primary)'
+                      : 'var(--color-fg-subtle)'
+                    return (
+                      <g transform={`translate(${x},${y})`}>
+                        <text
+                          x={0}
+                          y={0}
+                          dy={12}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fontWeight={point.isSelected ? 600 : 400}
+                          fill={dayColor}
+                        >
+                          {payload.value}
+                        </text>
+                        <text
+                          x={0}
+                          y={0}
+                          dy={26}
+                          textAnchor="middle"
+                          fontSize={10}
+                          fill={dayColor}
+                          opacity={point.isSelected || point.isToday ? 1 : 0.7}
+                        >
+                          {point.dateNumber}
+                        </text>
+                      </g>
+                    )
+                  }}
+                  height={36}
+                  interval={0}
+                />
+                <Tooltip
+                  cursor={{ fill: 'var(--color-bg-subtle)', opacity: 0.5 }}
+                  content={(props) => {
+                    const cast = props as unknown as {
+                      active?: boolean
+                      payload?: ReadonlyArray<{ payload: ChartPoint }>
+                    }
+                    return (
+                      <ChartTooltip
+                        active={cast.active}
+                        payload={cast.payload}
+                        mode={mode}
+                        moneyHidden={moneyHidden}
+                      />
+                    )
+                  }}
+                />
+                <Bar
+                  dataKey="value"
+                  radius={[4, 4, 0, 0]}
+                  cursor={onDayClickHref ? 'pointer' : 'default'}
+                  onClick={handleBarClick}
+                >
+                  {chartData.map((point) => (
+                    <Cell
+                      key={point.dateISO}
+                      fill={
+                        point.isSelected ? 'var(--color-brand-primary)' : 'var(--color-fg-muted)'
+                      }
+                      fillOpacity={point.isSelected ? 1 : 0.35}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
-          {weekNav ? <p className="mt-3 text-center text-sm text-fg-muted">{totalLabel}</p> : null}
+          {weekNav ? <p className="mt-2 text-center text-sm text-fg-muted">{totalLabel}</p> : null}
         </CardContent>
       </Card>
     </section>
+  )
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  mode,
+  moneyHidden,
+}: {
+  active?: boolean
+  payload?: ReadonlyArray<{ payload: ChartPoint }>
+  mode: 'count' | 'revenue'
+  moneyHidden: boolean
+}) {
+  if (!active || !payload || payload.length === 0) return null
+  const point = payload[0]?.payload
+  if (!point) return null
+  const valueText =
+    mode === 'count'
+      ? `${point.count} ${point.count === 1 ? 'agendamento' : 'agendamentos'}`
+      : moneyHidden
+        ? MASK
+        : formatCentsToBrl(point.revenueCents)
+  return (
+    <div className="rounded-md border border-border bg-bg px-2 py-1 text-[0.75rem] shadow-md">
+      <p className="font-medium text-fg">
+        {point.label} {point.dateNumber}
+      </p>
+      <p className="text-fg-muted">{valueText}</p>
+    </div>
   )
 }

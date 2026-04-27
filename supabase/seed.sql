@@ -149,3 +149,75 @@ values
   ('c699b22a-c663-4831-862e-a61c474802ae', '98fd8218-090a-4d88-a16a-85f780bd6478', 5, '09:00', '19:00', true),
   ('c699b22a-c663-4831-862e-a61c474802ae', '98fd8218-090a-4d88-a16a-85f780bd6478', 6, '09:00', '19:00', true)
 on conflict (tenant_id, professional_id, weekday, start_time) do nothing;
+
+-- ============================================================================
+-- tenant_message_templates: 6 defaults pro tenant de dev (3 EMAIL + 3 WHATSAPP)
+-- Edge function on-appointment-event lê dessa tabela com fallback hard-coded.
+-- ============================================================================
+
+insert into public.tenant_message_templates (tenant_id, channel, event, subject, body)
+values
+  ('c699b22a-c663-4831-862e-a61c474802ae', 'EMAIL',    'BOOKING_CONFIRMATION', 'Seu agendamento foi confirmado',  'Oi {nome}, seu agendamento de {servico} com {profissional} está confirmado para {horario}.'),
+  ('c699b22a-c663-4831-862e-a61c474802ae', 'EMAIL',    'BOOKING_CANCELLATION', 'Seu agendamento foi cancelado',   'Oi {nome}, infelizmente seu agendamento de {servico} para {horario} foi cancelado.'),
+  ('c699b22a-c663-4831-862e-a61c474802ae', 'EMAIL',    'BOOKING_REMINDER',     'Lembrete do seu agendamento',     'Oi {nome}, lembrete: você tem {servico} com {profissional} {horario}.'),
+  ('c699b22a-c663-4831-862e-a61c474802ae', 'WHATSAPP', 'BOOKING_CONFIRMATION', null, 'Oi {nome}, seu agendamento de {servico} com {profissional} está confirmado para {horario}. Qualquer coisa, me avisa por aqui!'),
+  ('c699b22a-c663-4831-862e-a61c474802ae', 'WHATSAPP', 'BOOKING_REMINDER',     null, 'Oi {nome}, lembrete: você tem {servico} {horario}. Te espero!'),
+  ('c699b22a-c663-4831-862e-a61c474802ae', 'WHATSAPP', 'SHARE_LINK',           null, 'Oi! Agora você pode agendar comigo direto por aqui: {link}')
+on conflict (tenant_id, channel, event) do nothing;
+
+-- ============================================================================
+-- Staff owner pra login local: dono@dev.test / dev1234
+-- Usa pgcrypto.crypt + bf pra gerar bcrypt compatível com Supabase Auth.
+-- Email confirmado, sem reset/invite. Só pra dev — NUNCA usar em prod.
+-- ============================================================================
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, recovery_sent_at,
+  raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at,
+  confirmation_token, email_change, email_change_token_new, recovery_token
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  'b5d8c7c4-3a0a-4f7e-8c4b-1a0e1e2e3a4b',
+  'authenticated',
+  'authenticated',
+  'dono@dev.test',
+  crypt('dev1234', gen_salt('bf')),
+  now(),
+  null,
+  '{"provider": "email", "providers": ["email"]}',
+  '{}',
+  now(),
+  now(),
+  '', '', '', ''
+)
+on conflict (id) do nothing;
+
+-- Identidade auth (Supabase exige row em auth.identities pra usuário email/password)
+insert into auth.identities (
+  id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+)
+values (
+  'b5d8c7c4-3a0a-4f7e-8c4b-1a0e1e2e3a4b',
+  'b5d8c7c4-3a0a-4f7e-8c4b-1a0e1e2e3a4b',
+  '{"sub": "b5d8c7c4-3a0a-4f7e-8c4b-1a0e1e2e3a4b", "email": "dono@dev.test", "email_verified": true}',
+  'email',
+  'b5d8c7c4-3a0a-4f7e-8c4b-1a0e1e2e3a4b',
+  now(),
+  now(),
+  now()
+)
+on conflict (provider, provider_id) do nothing;
+
+-- user_profile linkando o auth.user ao tenant como BUSINESS_OWNER
+insert into public.user_profiles (user_id, tenant_id, role, name)
+values (
+  'b5d8c7c4-3a0a-4f7e-8c4b-1a0e1e2e3a4b',
+  'c699b22a-c663-4831-862e-a61c474802ae',
+  'BUSINESS_OWNER',
+  'Dono Dev'
+)
+on conflict (user_id, tenant_id) do nothing;
+
