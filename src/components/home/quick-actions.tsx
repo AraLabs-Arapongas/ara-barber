@@ -3,12 +3,14 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Plus, CalendarDays, Link2, Ban } from 'lucide-react'
+import { copyToClipboard } from '@/lib/clipboard'
 
 export function QuickActions({ publicUrl }: { publicUrl: string }) {
   const [copied, setCopied] = useState(false)
 
-  function copyLink() {
-    void navigator.clipboard.writeText(publicUrl)
+  async function copyLink() {
+    const ok = await copyToClipboard(publicUrl)
+    if (!ok) return
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

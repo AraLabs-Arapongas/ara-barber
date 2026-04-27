@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Link2, Plus } from 'lucide-react'
+import { copyToClipboard } from '@/lib/clipboard'
 
 /**
  * 2 botões compactos pro header da Agenda — Novo agendamento + Copiar link.
@@ -12,8 +13,9 @@ import { Link2, Plus } from 'lucide-react'
 export function AgendaHeaderActions({ publicUrl }: { publicUrl: string }) {
   const [copied, setCopied] = useState(false)
 
-  function copy() {
-    void navigator.clipboard.writeText(publicUrl)
+  async function copy() {
+    const ok = await copyToClipboard(publicUrl)
+    if (!ok) return
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

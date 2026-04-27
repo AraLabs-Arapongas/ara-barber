@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react'
 
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { copyToClipboard } from '@/lib/clipboard'
 
 type Props = {
   publicUrl: string
@@ -15,8 +16,9 @@ export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
   const [copied, setCopied] = useState(false)
   const qrRef = useRef<SVGSVGElement>(null)
 
-  function copy() {
-    void navigator.clipboard.writeText(publicUrl)
+  async function copy() {
+    const ok = await copyToClipboard(publicUrl)
+    if (!ok) return
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
