@@ -6,6 +6,7 @@ import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
 import { TenantLogo } from '@/components/branding/tenant-logo'
 import { CustomerShell } from '@/components/customer/customer-shell'
+import { RealtimeBookingRefresh } from '@/components/book/realtime-refresh'
 
 export async function generateMetadata(): Promise<Metadata> {
   const tenant = await getCurrentTenantOrNotFound()
@@ -24,6 +25,7 @@ export default async function BookLayout({ children }: { children: ReactNode }) 
           accentColor: tenant.accentColor,
         }}
       />
+      <RealtimeBookingRefresh tenantId={tenant.id} />
       <div className="min-h-screen bg-bg text-fg">
         <CustomerShell>
           <header className="border-b border-border bg-surface/80 backdrop-blur">
