@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
 import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
-import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
+import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { QuickActions } from '@/components/home/quick-actions'
 import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
 import { MoneyStatCard } from '@/components/home/money-stat-card'
@@ -158,7 +158,7 @@ export default async function DashboardHome() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
-      <RealtimeAgendaRefresh tenantId={tenant.id} />
+      <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="staff-home" />
       <header className="mb-6 flex items-start justify-between gap-3">
         <div>
           <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">

@@ -4,7 +4,7 @@ import { getTenantBookingUrl } from '@/lib/tenant/public-url'
 import { getAgendaForDay } from '@/lib/appointments/queries'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { Card, CardContent } from '@/components/ui/card'
-import { RealtimeAgendaRefresh } from '@/components/agenda/realtime-refresh'
+import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { StaffPushBanner } from '@/components/push/staff-push-banner'
 import { AgendaFilters } from '@/components/agenda/agenda-filters'
 import { DaySummary } from '@/components/agenda/day-summary'
@@ -222,7 +222,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
 
       <p className="mb-3 mt-1 text-center text-[0.8125rem] text-fg-muted">{dayHeader}</p>
 
-      <RealtimeAgendaRefresh tenantId={tenant.id} />
+      <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="staff-agenda" />
 
       <AgendaFilters professionals={professionals} />
       <DaySummary appointments={filtered} priceById={priceById} />
