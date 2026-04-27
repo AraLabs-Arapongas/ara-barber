@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getMyCustomerAppointments } from '@/lib/appointments/queries'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
 import { MyAppointmentsList } from '@/components/appointments/my-appointments-list'
+import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { Card, CardContent } from '@/components/ui/card'
 
 export default async function MeusAgendamentosPage() {
@@ -34,5 +35,10 @@ export default async function MeusAgendamentosPage() {
   const customer = await getCustomerForTenant(tenant.id)
   const appointments = customer ? await getMyCustomerAppointments(tenant.id) : []
 
-  return <MyAppointmentsList appointments={appointments} />
+  return (
+    <>
+      <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="customer" />
+      <MyAppointmentsList appointments={appointments} />
+    </>
+  )
 }
