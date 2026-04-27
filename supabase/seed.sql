@@ -209,7 +209,7 @@ values (
   now(),
   now()
 )
-on conflict (provider, provider_id) do nothing;
+on conflict (provider_id, provider) do nothing;
 
 -- user_profile linkando o auth.user ao tenant como BUSINESS_OWNER
 insert into public.user_profiles (user_id, tenant_id, role, name)
@@ -219,5 +219,5 @@ values (
   'BUSINESS_OWNER',
   'Dono Dev'
 )
-on conflict (user_id, tenant_id) do nothing;
+on conflict (user_id) do nothing;
 
