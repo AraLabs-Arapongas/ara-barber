@@ -16,6 +16,8 @@ export type WeekDay = {
   dateISO: string
   count: number
   revenueCents: number
+  /** Quando presente, transforma a barra em link clicável (Path II). */
+  href?: string
 }
 
 export type WeekNav = {
@@ -53,15 +55,14 @@ export function WeekAgendaStrip({
   days,
   todayISO,
   selectedDateISO,
-  onDayClickHref,
   weekNav,
 }: {
   days: WeekDay[]
   todayISO: string
   selectedDateISO?: string
-  onDayClickHref?: (dateISO: string) => string
   weekNav?: WeekNav
 }) {
+  const hasClickableDays = days.some((d) => d.href)
   const [mode, setMode] = useState<'count' | 'revenue'>('count')
   const { hidden: moneyHidden } = useMoneyHidden()
   const router = useRouter()
@@ -83,10 +84,10 @@ export function WeekAgendaStrip({
           revenueCents: day.revenueCents,
           isToday,
           isSelected,
-          href: onDayClickHref?.(day.dateISO),
+          href: day.href,
         }
       }),
-    [days, todayISO, selectedDateISO, mode, onDayClickHref],
+    [days, todayISO, selectedDateISO, mode],
   )
 
   const totalLabel =
@@ -237,7 +238,7 @@ export function WeekAgendaStrip({
                 <Bar
                   dataKey="value"
                   radius={[4, 4, 0, 0]}
-                  cursor={onDayClickHref ? 'pointer' : 'default'}
+                  cursor={hasClickableDays ? 'pointer' : 'default'}
                   onClick={handleBarClick}
                 >
                   {chartData.map((point) => (

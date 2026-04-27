@@ -149,11 +149,6 @@ export default async function AgendaPage({ searchParams }: PageProps) {
     entry.count += 1
     entry.revenueCents += a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
   }
-  const weekDays: WeekDay[] = weekDateISOs.map((d) => {
-    const entry = weekByDate.get(d) ?? { count: 0, revenueCents: 0 }
-    return { dateISO: d, count: entry.count, revenueCents: entry.revenueCents }
-  })
-
   const filtered = appointments.filter((a) => {
     if (profFilter && a.professionalId !== profFilter) return false
     if (statusFilter && a.status !== statusFilter) return false
@@ -169,6 +164,9 @@ export default async function AgendaPage({ searchParams }: PageProps) {
   const isCurrentWeek = weekStartISO === todaysWeekStart
   const prevWeekDateISO = addDaysISO(weekStartISO, -7)
   const nextWeekDateISO = addDaysISO(weekStartISO, 7)
+
+  // Pre-compute hrefs server-side. Server components não podem passar funções
+  // pra client components — então cada dia carrega seu href como dado.
   const buildAgendaHref = (d: string) => {
     const params = new URLSearchParams()
     params.set('date', d)
@@ -177,6 +175,16 @@ export default async function AgendaPage({ searchParams }: PageProps) {
       params.set('status', statusRaw)
     return `/admin/dashboard/agenda?${params.toString()}`
   }
+
+  const weekDays: WeekDay[] = weekDateISOs.map((d) => {
+    const entry = weekByDate.get(d) ?? { count: 0, revenueCents: 0 }
+    return {
+      dateISO: d,
+      count: entry.count,
+      revenueCents: entry.revenueCents,
+      href: buildAgendaHref(d),
+    }
+  })
 
   const dayHeader = formatDayHeader(dateISO, todayISOStr, tenant.timezone)
 
@@ -203,7 +211,6 @@ export default async function AgendaPage({ searchParams }: PageProps) {
         days={weekDays}
         todayISO={todayISOStr}
         selectedDateISO={dateISO}
-        onDayClickHref={buildAgendaHref}
         weekNav={{
           rangeLabel: formatWeekRange(weekStartISO, weekDateISOs[6]),
           prevHref: buildAgendaHref(prevWeekDateISO),
