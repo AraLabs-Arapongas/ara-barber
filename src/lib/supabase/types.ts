@@ -654,6 +654,7 @@ export type Database = {
           address_line2: string | null
           billing_model: Database["public"]["Enums"]["billing_model"]
           billing_status: Database["public"]["Enums"]["billing_status"]
+          booking_window_days: number
           cancellation_window_hours: number
           city: string | null
           contact_phone: string | null
@@ -700,6 +701,7 @@ export type Database = {
           address_line2?: string | null
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
+          booking_window_days?: number
           cancellation_window_hours?: number
           city?: string | null
           contact_phone?: string | null
@@ -746,6 +748,7 @@ export type Database = {
           address_line2?: string | null
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
+          booking_window_days?: number
           cancellation_window_hours?: number
           city?: string | null
           contact_phone?: string | null

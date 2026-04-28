@@ -14,7 +14,7 @@ URLs locais:
 
 > Pré-condição: `pnpm dev` rodando na porta 3008 + projeto Supabase com seed aplicado.
 >
-> **Pré-condição (após revamp 2026-04-26):** colunas `tenants.{min_advance_hours, slot_interval_minutes, customer_can_cancel}` existem; `availability_blocks.professional_id` é nullable (NULL = bloqueio tenant-wide); tabela `tenant_message_templates` seedada com 6 templates default por tenant existente (3 EMAIL + 3 WHATSAPP). Edge function `on-appointment-event` deployada com lookup de templates do DB + fallback hard-coded.
+> **Pré-condição (após revamp 2026-04-26):** colunas `tenants.{min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days}` existem; `availability_blocks.professional_id` é nullable (NULL = bloqueio tenant-wide); tabela `tenant_message_templates` seedada com 6 templates default por tenant existente (3 EMAIL + 3 WHATSAPP). Edge function `on-appointment-event` deployada com lookup de templates do DB + fallback hard-coded.
 
 ## Credenciais de teste
 
@@ -65,13 +65,22 @@ URLs locais:
 
 ## 2. Wizard de booking (cliente novo)
 
-- [ ] `/book` lista só serviços com `is_active = true`.
-- [ ] Selecionar serviço → `/book/profissional` mostra quem atende aquele serviço + "Qualquer profissional".
-- [ ] Selecionar profissional → `/book/data` desativa dias sem business_hours/availability.
-- [ ] Selecionar dia → `/book/horario` desativa slots passados, em conflito e dentro de bloqueio.
-- [ ] Selecionar slot livre → `/book/login` pede OTP (anônimo).
-- [ ] Após OTP → `/book/confirmar` pede nome/telefone.
-- [ ] Confirmar → cria `appointments` com snapshot + marca `customers.consent_given_at` → redireciona pra `/book/sucesso`.
+Wizard único client-side em `/book` — substitui as antigas rotas
+`/book/{profissional,data,horario,login,confirmar}`. Steps mudam via
+URL search params (`?step=service|professional|datetime|confirm` +
+`serviceId`, `professionalId`, `startAt`).
+
+- [ ] `/book` abre direto no step "Serviço" e lista só serviços com `is_active = true`.
+- [ ] Selecionar serviço → step "Profissional" mostra quem atende aquele serviço + opção "Qualquer profissional" no topo.
+- [ ] Selecionar profissional (ou "Qualquer") → step "Data e horário" combina date picker + grid de slots na mesma tela.
+- [ ] Date picker respeita `tenant.booking_window_days` (default 14) — `<input type="date">` tem `max` setado.
+- [ ] Slots desativam: passado, em conflito (já tem appointment), dentro de bloqueio (`availability_blocks`), fora da jornada do profissional.
+- [ ] Selecionar slot → step "Confirmar" mostra resumo (serviço, profissional, data/hora, duração + valor).
+- [ ] **Visitante anon no Confirmar**: card "Entrar pra confirmar" → CustomerLoginForm inline (OTP 8 dígitos). Após OTP → revalida e mostra form name/phone.
+- [ ] **Cliente já logado no Confirmar**: pula login, vai direto pro form name/phone (pré-preenchido com perfil).
+- [ ] Submeter → cria `appointments` com snapshot + marca `customers.consent_given_at` → redireciona pra `/book/sucesso?appointmentId=...`.
+- [ ] Botão Voltar do browser (back/forward) funciona — URL params reidratam o step correto sem perder seleções.
+- [ ] Reload (F5) em qualquer step preserva o que já foi escolhido.
 
 ## 3. Customer já logado
 
@@ -85,7 +94,7 @@ URLs locais:
 
 ## 4. Conflito de horário
 
-- [ ] Com reserva existente às 15:00 pro profissional X, `/book/horario` desabilita 15:00 pra X.
+- [ ] Com reserva existente às 15:00 pro profissional X, no step "Data e horário" do wizard `/book` o slot 15:00 fica desabilitado pra X.
 - [ ] Tentativa forçada via request direto → `createAppointment` retorna "Horário não disponível".
 
 ## 5. Staff — agenda
@@ -189,7 +198,7 @@ Toda gestão do profissional vive em `/admin/dashboard/profissionais/[id]`.
 - [ ] Abrir detalhe expõe 4 seções, cada uma persistindo:
   - **Info:** editar nome/apelido/telefone.
   - **Serviços:** toggle chip vincula/desvincula → wizard reflete.
-  - **Jornada:** editor semanal; remover segunda → `/book/data` desativa segundas.
+  - **Jornada:** editor semanal; remover segunda → step "Data e horário" do wizard `/book` desativa segundas.
   - **Bloqueios:** criar bloqueio (ex.: amanhã 14-17h) → slots no intervalo ficam disabled no wizard. Deletar também funciona.
 - [ ] `/admin/dashboard/disponibilidade` e `/equipe-servicos` redirecionam pra `/profissionais`.
 - [ ] `/admin/dashboard/configuracoes/horarios`: fechar um dia → wizard bloqueia aquele weekday.

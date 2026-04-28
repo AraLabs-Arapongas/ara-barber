@@ -27,10 +27,10 @@ type Props = {
  * regras durante uma sessão de booking são raras o suficiente pra aceitar
  * a defasagem.
  *
- * Funciona só pra usuário authenticated (RLS no broadcast). Pré-login
- * (visitante anon em /book/horario) o subscriber não recebe events. Aceito
- * — visitante anon refresca slots quando avança pra /book/login → server
- * fetch fresh.
+ * Funciona só pra usuário authenticated (RLS no broadcast). Visitante
+ * anon (pré-login no wizard `/book`) não recebe events — aceito porque
+ * slots são re-fetched quando o cliente faz login inline no step
+ * "Confirmar".
  *
  * Resiliência: TOKEN_REFRESHED → setAuth, visibilitychange → re-setAuth +
  * router.refresh, auto-resubscribe com backoff em CHANNEL_ERROR/TIMED_OUT/CLOSED.
@@ -77,7 +77,7 @@ export function RealtimeBookingRefresh({ tenantId }: Props) {
       const token = data.session?.access_token
       if (cancelled) return
       if (!token) {
-        // Visitante anon (pré /book/login) — silenciosamente não subscribe.
+        // Visitante anon (pré-login no wizard) — silenciosamente não subscribe.
         return
       }
       supabase.realtime.setAuth(token)

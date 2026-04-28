@@ -22,6 +22,7 @@ export default async function RegrasPage() {
           slot_interval_minutes: tenant.slotIntervalMinutes,
           cancellation_window_hours: tenant.cancellationWindowHours,
           customer_can_cancel: tenant.customerCanCancel,
+          booking_window_days: tenant.bookingWindowDays,
         }}
       />
     </main>

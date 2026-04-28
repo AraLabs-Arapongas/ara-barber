@@ -1,39 +1,66 @@
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
-import { getActiveServicesForTenant } from '@/lib/booking/queries'
-import { StepIndicator } from '@/components/book/step-indicator'
-import { BookServiceList } from '@/components/book/service-list'
-import { parseBookParams } from '@/lib/booking/params'
+import { getCustomerBookingContext } from '@/lib/booking/customer-context'
+import { getCustomerForTenant } from '@/lib/customers/ensure'
+import { createClient } from '@/lib/supabase/server'
+import { CustomerBookingWizard } from '@/components/book/wizard'
+
+type Step = 'service' | 'professional' | 'datetime' | 'confirm'
+const VALID_STEPS = new Set<Step>(['service', 'professional', 'datetime', 'confirm'])
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function BookStepService({ searchParams }: PageProps) {
+function pickString(v: string | string[] | undefined): string | null {
+  if (Array.isArray(v)) return v[0] ?? null
+  return v ?? null
+}
+
+/**
+ * Wizard único de booking. Substitui o multi-route antigo
+ * (`/book/{servico,profissional,data,horario,login,confirmar}`).
+ *
+ * Dados de contexto (services, professionals, blocks, appointments do
+ * range) são fetched aqui no server e passados de uma vez pro wizard
+ * client-side. URL search params (`step`, `serviceId`, `professionalId`,
+ * `startAt`) preservam estado em deep-link/back/forward.
+ */
+export default async function BookPage({ searchParams }: PageProps) {
   const tenant = await getCurrentTenantOrNotFound()
   const sp = await searchParams
-  const current = parseBookParams(sp)
-  const services = await getActiveServicesForTenant(tenant.id)
+
+  const stepParam = pickString(sp.step) as Step | null
+  const initialStep = stepParam && VALID_STEPS.has(stepParam) ? stepParam : null
+
+  const [context, customer, supabase] = await Promise.all([
+    getCustomerBookingContext(tenant),
+    getCustomerForTenant(tenant.id),
+    createClient(),
+  ])
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   return (
-    <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-24 sm:px-6">
-      <StepIndicator
-        current={1}
-        total={6}
-        labels={['Serviço', 'Profissional', 'Data', 'Horário', 'Login', 'Confirmar']}
-      />
-
-      <h1 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-fg">
-        O que você quer fazer?
-      </h1>
-      <p className="mt-1 mb-5 text-[0.9375rem] text-fg-muted">Escolha o serviço pra começar.</p>
-
-      {services.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-6 text-center text-[0.875rem] text-fg-muted">
-          Este estabelecimento ainda não cadastrou serviços.
-        </div>
-      ) : (
-        <BookServiceList services={services} current={current} />
-      )}
-    </main>
+    <CustomerBookingWizard
+      context={context}
+      initial={{
+        step: initialStep,
+        serviceId: pickString(sp.serviceId),
+        professionalId: pickString(sp.professionalId),
+        startAtISO: pickString(sp.startAt),
+      }}
+      initialCustomer={
+        customer
+          ? {
+              id: customer.id,
+              name: customer.name,
+              phone: customer.phone,
+              email: customer.email,
+            }
+          : null
+      }
+      isAuthenticated={Boolean(user)}
+    />
   )
 }

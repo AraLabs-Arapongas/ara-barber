@@ -32,15 +32,20 @@ export function useMoneyHidden(): { hidden: boolean; toggle: () => void } {
   }, [])
 
   function toggle() {
-    setHidden((h) => {
-      const next = !h
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
-      } catch {
-        // localStorage pode falhar em modo privado; tudo bem.
-      }
+    const next = !hidden
+    setHidden(next)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
+    } catch {
+      // localStorage pode falhar em modo privado; tudo bem.
+    }
+    // Dispatch em microtask pra React terminar o commit deste componente
+    // antes dos listeners (em OUTRAS instâncias do hook) chamarem setHidden.
+    // Sem isso, dispara warning "Cannot update a component while rendering
+    // a different component" porque o evento propaga sincronamente dentro
+    // do updater function.
+    queueMicrotask(() => {
       window.dispatchEvent(new CustomEvent(TOGGLE_EVENT, { detail: { hidden: next } }))
-      return next
     })
   }
 

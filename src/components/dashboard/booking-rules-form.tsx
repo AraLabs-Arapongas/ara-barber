@@ -13,6 +13,7 @@ export type BookingRules = {
   slot_interval_minutes: number
   cancellation_window_hours: number
   customer_can_cancel: boolean
+  booking_window_days: number
 }
 
 type Props = {
@@ -89,6 +90,28 @@ export function BookingRulesForm({ initial }: Props) {
                 </option>
               ))}
             </select>
+          </Field>
+
+          <Field
+            id="booking-window"
+            label="Janela máxima de agendamento (dias)"
+            hint="Quantos dias à frente o cliente pode agendar."
+          >
+            <input
+              id="booking-window"
+              type="number"
+              min={1}
+              max={365}
+              step={1}
+              value={data.booking_window_days}
+              onChange={(e) =>
+                setData((d) => ({
+                  ...d,
+                  booking_window_days: clampInt(e.target.value, 1, 365),
+                }))
+              }
+              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+            />
           </Field>
 
           <Field

@@ -45,6 +45,13 @@ import {
 export interface CustomerLoginFormProps {
   /** Pra onde o cliente vai após autenticar. Default: /meus-agendamentos */
   redirectTo?: string
+  /**
+   * Callback chamado após autenticação por OTP bem-sucedida. Quando definido,
+   * substitui o redirect — útil pra login inline no meio de um flow (ex:
+   * wizard de booking que precisa continuar na mesma página).
+   * Login por Google sempre faz redirect (OAuth callback).
+   */
+  onOtpSuccess?: () => void
   /** Se true, foca o campo de e-mail no mount. */
   autoFocusEmail?: boolean
   className?: string
@@ -58,6 +65,7 @@ const OTP_LENGTH = 8
 
 export function CustomerLoginForm({
   redirectTo = '/meus-agendamentos',
+  onOtpSuccess,
   autoFocusEmail = false,
   className,
 }: CustomerLoginFormProps) {
@@ -101,6 +109,10 @@ export function CustomerLoginForm({
     setPendingEmail(false)
     if (verifyError) {
       setError(verifyError)
+      return
+    }
+    if (onOtpSuccess) {
+      onOtpSuccess()
       return
     }
     router.push(redirectTo)
