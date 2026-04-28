@@ -85,12 +85,19 @@ export function UpcomingAppointmentsCarousel({
 
   return (
     <div className="space-y-2">
+      {/* Carousel com "peek" do card anterior à esquerda quando scrollado.
+          Truque: cada card é mais estreito que o viewport (calc(100%-4rem))
+          + scroll-padding-left de 2rem. snap-start alinha o card focado
+          NÃO no edge do viewport, mas 32px à frente — o que mostra a
+          tail do anterior. Card 1 não tem anterior, então o "peek" vira
+          padding visual (32px de espaço vazio à esquerda — aceito;
+          dá respiro e faz o card parecer parte da grade). */}
       <div
         ref={containerRef}
-        className="-mx-5 flex snap-x snap-mandatory overflow-x-auto scroll-smooth px-5 sm:-mx-6 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth scroll-pl-8 px-5 sm:-mx-6 sm:scroll-pl-9 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {appointments.map((a) => (
-          <div key={a.id} className="w-full shrink-0 snap-start pr-3 last:pr-0">
+          <div key={a.id} className="w-[calc(100%-4rem)] shrink-0 snap-start">
             <NextAppointmentCardHero
               appointment={a}
               tenantTimezone={tenantTimezone}
