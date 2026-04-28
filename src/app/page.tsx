@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CustomerAccess } from '@/components/home/customer-access'
 import { CustomerQuickActions } from '@/components/home/customer-quick-actions'
 import { BusinessHoursAccordion } from '@/components/home/business-hours-accordion'
+import { LoyaltyStamps } from '@/components/home/loyalty-stamps'
 import { CustomerShell } from '@/components/customer/customer-shell'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
@@ -218,7 +219,11 @@ async function TenantPublicHome() {
             />
           ) : null}
 
-          {/* Bloco 4 — Funcionamento: accordion fechado por default.
+          {/* Bloco 4 — Programa de pontos (mockado, feature flag).
+              Só renderiza pra logado. */}
+          {loggedIn ? <LoyaltyStamps /> : null}
+
+          {/* Bloco 5 — Funcionamento: accordion fechado por default.
               Útil mas não disputa protagonismo com a reserva. */}
           {businessHours.length > 0 ? <BusinessHoursAccordion hours={businessHours} /> : null}
 

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Download, FileText, LogOut, Mail, Shield, User } from 'lucide-react'
+import { Download, FileText, LogOut, Mail, Phone, Shield, User } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
@@ -59,7 +59,10 @@ export default async function PerfilPage() {
             {email}
           </p>
           {phone ? (
-            <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">{phone}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-[0.8125rem] text-fg-muted">
+              <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+              {phone}
+            </p>
           ) : null}
         </div>
       </section>
@@ -67,7 +70,7 @@ export default async function PerfilPage() {
       {/* Conta — ações que mexem no acesso/identidade. */}
       <Section title="Conta">
         <form action="/auth/logout" method="post">
-          <Button type="submit" variant="ghost" size="lg" fullWidth>
+          <Button type="submit" variant="ghost" size="lg" fullWidth className="justify-start">
             <LogOut className="h-4 w-4" aria-hidden="true" />
             Sair
           </Button>
@@ -78,19 +81,19 @@ export default async function PerfilPage() {
       {/* Privacidade — direitos LGPD do titular + transparência. */}
       <Section title="Privacidade">
         <a href="/api/perfil/dados" download>
-          <Button variant="ghost" size="lg" fullWidth>
+          <Button variant="ghost" size="lg" fullWidth className="justify-start">
             <Download className="h-4 w-4" aria-hidden="true" />
             Baixar meus dados
           </Button>
         </a>
         <Link href="/politica-privacidade">
-          <Button variant="ghost" size="lg" fullWidth>
+          <Button variant="ghost" size="lg" fullWidth className="justify-start">
             <Shield className="h-4 w-4" aria-hidden="true" />
             Política de privacidade
           </Button>
         </Link>
         <Link href="/termos-uso">
-          <Button variant="ghost" size="lg" fullWidth>
+          <Button variant="ghost" size="lg" fullWidth className="justify-start">
             <FileText className="h-4 w-4" aria-hidden="true" />
             Termos de uso
           </Button>

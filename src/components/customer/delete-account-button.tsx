@@ -43,6 +43,7 @@ export function DeleteAccountButton() {
         variant="ghost"
         size="lg"
         fullWidth
+        className="justify-start"
         onClick={handleClick}
         loading={pending}
       >

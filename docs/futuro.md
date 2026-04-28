@@ -110,7 +110,10 @@ _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão
 ### Tier 3 — Marginal / experimental
 
 - **Programa de fidelidade simples** (cliente N reservas → desconto
-  no próximo). Forte retenção. Esforço médio.
+  no próximo). Forte retenção. Esforço médio. **Mockup já existe na
+  home** atrás de feature flag `ara:flag:loyalty-stamps` (default ON).
+  Pra virar real: migration `loyalty_stamps`, server query, configurar
+  meta + recompensa por tenant em "Mais → Programa".
 
 - **Marketing campaigns** (envio em massa, segmentação por última
   visita / vertical). Útil pra época baixa. Custo de mensagens.
