@@ -1,5 +1,7 @@
 'use client'
 
+import { Check } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { BookingService } from '@/lib/booking/queries'
@@ -36,20 +38,28 @@ export function ServiceStep({
                 <button
                   type="button"
                   onClick={() => onChange(s.id)}
+                  aria-pressed={selected}
                   className="block w-full text-left"
                 >
                   <Card
                     className={`shadow-xs transition-colors ${
-                      selected ? 'border-brand-primary bg-brand-primary/5' : 'hover:bg-bg-subtle'
+                      selected
+                        ? 'border-brand-primary bg-brand-primary/10 ring-1 ring-brand-primary/40'
+                        : 'hover:bg-bg-subtle'
                     }`}
                   >
-                    <CardContent className="flex items-center justify-between py-3">
-                      <div>
+                    <CardContent className="flex items-center justify-between gap-3 py-3">
+                      <div className="min-w-0">
                         <p className="font-medium text-fg">{s.name}</p>
                         <p className="text-sm text-fg-muted">
                           {s.durationMinutes} min · {formatCentsToBrl(s.priceCents)}
                         </p>
                       </div>
+                      {selected ? (
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-primary text-brand-primary-fg">
+                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                        </span>
+                      ) : null}
                     </CardContent>
                   </Card>
                 </button>

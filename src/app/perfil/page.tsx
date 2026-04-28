@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CalendarCheck, Download, LogOut, Mail, Shield, User } from 'lucide-react'
+import { Download, FileText, LogOut, Mail, Shield, User } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
@@ -36,70 +36,77 @@ export default async function PerfilPage() {
 
   const customer = await getCustomerForTenant(tenant.id)
   const email = customer?.email ?? user.email ?? ''
+  const phone = customer?.phone ?? null
   const displayName = customer?.name?.trim() || (email ? email.split('@')[0] : null) || 'Cliente'
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 py-8 sm:px-6">
-      <section className="flex items-center gap-4">
+      {/* Header compacto: avatar (inicial), nome, email, telefone se houver.
+          Sem botão "Editar perfil" porque ainda não temos UI de edição. */}
+      <section className="flex items-center gap-3">
         <div
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-primary text-brand-primary-fg font-display text-xl font-semibold"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-primary text-brand-primary-fg font-display text-lg font-semibold"
           aria-hidden="true"
         >
           {(displayName.charAt(0) || '?').toUpperCase()}
         </div>
         <div className="min-w-0">
-          <h1 className="truncate font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
+          <h1 className="truncate font-display text-[1.25rem] font-semibold leading-tight tracking-tight text-fg">
             {displayName}
           </h1>
           <p className="mt-0.5 flex items-center gap-1.5 truncate text-[0.8125rem] text-fg-muted">
             <Mail className="h-3.5 w-3.5" aria-hidden="true" />
             {email}
           </p>
+          {phone ? (
+            <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">{phone}</p>
+          ) : null}
         </div>
       </section>
 
-      <section className="mt-8 space-y-2">
-        <Link href="/meus-agendamentos">
-          <Button variant="secondary" size="lg" fullWidth>
-            <CalendarCheck className="h-4 w-4" aria-hidden="true" />
-            Minhas reservas
+      {/* Conta — ações que mexem no acesso/identidade. */}
+      <Section title="Conta">
+        <form action="/auth/logout" method="post">
+          <Button type="submit" variant="ghost" size="lg" fullWidth>
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            Sair
+          </Button>
+        </form>
+        <DeleteAccountButton />
+      </Section>
+
+      {/* Privacidade — direitos LGPD do titular + transparência. */}
+      <Section title="Privacidade">
+        <a href="/api/perfil/dados" download>
+          <Button variant="ghost" size="lg" fullWidth>
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Baixar meus dados
+          </Button>
+        </a>
+        <Link href="/politica-privacidade">
+          <Button variant="ghost" size="lg" fullWidth>
+            <Shield className="h-4 w-4" aria-hidden="true" />
+            Política de privacidade
           </Button>
         </Link>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-          Privacidade (LGPD)
-        </h2>
-        <div className="space-y-2">
-          <a href="/api/perfil/dados" download>
-            <Button variant="secondary" size="lg" fullWidth>
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Baixar meus dados
-            </Button>
-          </a>
-          <Link href="/politica-privacidade">
-            <Button variant="ghost" size="lg" fullWidth>
-              <Shield className="h-4 w-4" aria-hidden="true" />
-              Política de privacidade
-            </Button>
-          </Link>
-          <Link href="/termos-uso">
-            <Button variant="ghost" size="lg" fullWidth>
-              <Shield className="h-4 w-4" aria-hidden="true" />
-              Termos de uso
-            </Button>
-          </Link>
-          <DeleteAccountButton />
-        </div>
-      </section>
-
-      <form action="/auth/logout" method="post" className="mt-8">
-        <Button type="submit" variant="ghost" size="lg" fullWidth>
-          <LogOut className="h-4 w-4" aria-hidden="true" />
-          Sair
-        </Button>
-      </form>
+        <Link href="/termos-uso">
+          <Button variant="ghost" size="lg" fullWidth>
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            Termos de uso
+          </Button>
+        </Link>
+      </Section>
     </main>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-7">
+      <h2 className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+        {title}
+      </h2>
+      <div className="space-y-1">{children}</div>
+    </section>
   )
 }

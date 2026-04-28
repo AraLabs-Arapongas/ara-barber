@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Clock, ExternalLink } from 'lucide-react'
+import { ArrowRight, Calendar, ExternalLink } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
 import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
@@ -12,6 +12,8 @@ import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomerAccess } from '@/components/home/customer-access'
+import { CustomerQuickActions } from '@/components/home/customer-quick-actions'
+import { BusinessHoursAccordion } from '@/components/home/business-hours-accordion'
 import { CustomerShell } from '@/components/customer/customer-shell'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
@@ -167,25 +169,17 @@ async function TenantPublicHome() {
       />
 
       <CustomerShell showTabBar={loggedIn}>
-        <main className="mx-auto flex w-full max-w-xl flex-col px-5 pt-8 pb-12 sm:px-6">
-          <header className="mb-6 flex flex-col items-center gap-4 text-center">
-            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={350} />
+        <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5 pt-6 pb-12 sm:px-6">
+          {/* Logo do tenant — compacto pra deixar a próxima reserva ganhar
+              destaque. Antes era 350px e empurrava todo o conteúdo. */}
+          <header className="flex flex-col items-center gap-2 text-center">
+            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={120} />
           </header>
 
-          <section className="mb-2 text-center">
-            <Link href="/book" className="inline-block w-full max-w-xs">
-              <Button size="lg" fullWidth>
-                {nextAppointment ? 'Agendar novamente' : 'Agendar agora'}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </Link>
-            <p className="mt-3 text-[0.8125rem] text-fg-muted">
-              Escolha serviço, profissional e horário.
-            </p>
-          </section>
-
+          {/* Bloco 1 — Próxima reserva: prioridade máxima quando existe.
+              Cliente quase sempre abre o app pra ver "tenho algo marcado?" */}
           {nextAppointment ? (
-            <section className="mb-2">
+            <section>
               <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
                 Sua próxima reserva
               </p>
@@ -193,22 +187,47 @@ async function TenantPublicHome() {
             </section>
           ) : null}
 
-          {businessHours.length > 0 ? (
-            <section className="mb-2">
-              <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-                Horário de funcionamento
-              </p>
-              <Card className="shadow-xs">
-                <CardContent className="py-3">
-                  <BusinessHoursList hours={businessHours} />
-                </CardContent>
-              </Card>
-            </section>
+          {/* Bloco 2 — CTA principal (Nova reserva). Vira "Agendar agora"
+              quando ainda não há histórico, mas sempre conceito é o mesmo. */}
+          <section className="text-center">
+            <Link href="/book" className="inline-block w-full">
+              <Button size="lg" fullWidth>
+                <Calendar className="h-4 w-4" aria-hidden="true" />
+                Nova reserva
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </Link>
+          </section>
+
+          {/* Bloco 3 — Ações rápidas: aparece se há próxima reserva
+              (Reagendar) OU se tenant tem contato (Falar/Ligar).
+              "Ver reservas" sempre presente quando logado. */}
+          {loggedIn ? (
+            <CustomerQuickActions
+              nextAppointment={
+                nextAppointment
+                  ? {
+                      id: nextAppointment.id,
+                      serviceId: nextAppointment.serviceId,
+                      professionalId: nextAppointment.professionalId,
+                    }
+                  : null
+              }
+              contactPhone={tenant.contactPhone}
+              whatsapp={tenant.whatsapp}
+            />
           ) : null}
 
-          <div className="mb-4 mt-2 flex flex-col items-center">
-            <CustomerAccess loggedIn={loggedIn} displayName={displayName} email={emailForHome} />
-          </div>
+          {/* Bloco 4 — Funcionamento: accordion fechado por default.
+              Útil mas não disputa protagonismo com a reserva. */}
+          {businessHours.length > 0 ? <BusinessHoursAccordion hours={businessHours} /> : null}
+
+          {/* Login / signup pra anônimos. Logged-in não vê (já está dentro). */}
+          {!loggedIn ? (
+            <div className="mt-2 flex flex-col items-center">
+              <CustomerAccess loggedIn={loggedIn} displayName={displayName} email={emailForHome} />
+            </div>
+          ) : null}
 
           <footer className="mt-auto flex justify-center pt-6">
             <AraLabsAttribution />
@@ -219,33 +238,12 @@ async function TenantPublicHome() {
   )
 }
 
-const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const
-
-function BusinessHoursList({
-  hours,
-}: {
-  hours: Array<{ weekday: number; isOpen: boolean; startTime: string; endTime: string }>
-}) {
-  // Ordena semana começando na segunda (weekday 1..6, 0) pra leitura mais natural
-  const sorted = [...hours].sort((a, b) => {
-    const aw = a.weekday === 0 ? 7 : a.weekday
-    const bw = b.weekday === 0 ? 7 : b.weekday
-    return aw - bw
-  })
-  return (
-    <ul className="space-y-1 text-[0.875rem]">
-      {sorted.map((h) => (
-        <li key={h.weekday} className="flex items-center justify-between">
-          <span className="font-medium text-fg">{WEEKDAY_LABELS[h.weekday]}</span>
-          <span className="text-fg-muted">
-            {h.isOpen ? `${h.startTime.slice(0, 5)} – ${h.endTime.slice(0, 5)}` : 'Fechado'}
-          </span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
+/**
+ * Card "Sua próxima reserva" — versão hero, mais alta visualmente.
+ * Mostra serviço grande, data por extenso, profissional e status.
+ * É o primeiro elemento da home (depois do logo) — onde o cliente
+ * pousa primeiro o olho.
+ */
 function NextAppointmentCard({
   appt,
   tenantTimezone,
@@ -253,33 +251,44 @@ function NextAppointmentCard({
   appt: AgendaAppointment
   tenantTimezone: string
 }) {
-  const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', {
+  const date = new Date(appt.startAt)
+  const dateLabel = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenantTimezone,
-    weekday: 'short',
+    weekday: 'long',
     day: '2-digit',
-    month: 'short',
+    month: 'long',
+  }).format(date)
+  const timeLabel = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: tenantTimezone,
     hour: '2-digit',
     minute: '2-digit',
-  })
+  }).format(date)
+
   return (
     <Link href={`/meus-agendamentos/${appt.id}`} className="block">
-      <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
-        <CardContent className="flex items-center gap-3 py-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10 text-brand-primary">
-            <Clock className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-fg">{appt.serviceName ?? 'Serviço'}</p>
-            <p className="truncate text-[0.8125rem] text-fg-muted">
-              {dateTimeFmt.format(new Date(appt.startAt))}
-              {appt.professionalName ? ` · ${appt.professionalName}` : ''}
-            </p>
+      <Card className="shadow-xs border-brand-primary/20 bg-brand-primary/5 transition-colors hover:bg-brand-primary/10">
+        <CardContent className="py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-[1.25rem] font-semibold leading-tight tracking-tight text-fg">
+                {appt.serviceName ?? 'Serviço'}
+              </p>
+              <p className="mt-1 text-[0.875rem] capitalize text-fg-muted">{dateLabel}</p>
+              <p className="mt-0.5 font-display text-[1.125rem] font-semibold tracking-tight text-fg">
+                {timeLabel}
+              </p>
+              {appt.professionalName ? (
+                <p className="mt-1 text-[0.8125rem] text-fg-muted">
+                  com <span className="text-fg">{appt.professionalName}</span>
+                </p>
+              ) : null}
+            </div>
+            <span
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
+            >
+              {STATUS_LABELS[appt.status]}
+            </span>
           </div>
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
-          >
-            {STATUS_LABELS[appt.status]}
-          </span>
         </CardContent>
       </Card>
     </Link>

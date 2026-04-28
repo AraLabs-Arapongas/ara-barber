@@ -38,30 +38,34 @@ URLs locais:
 
 ---
 
-## 1. Home pública do tenant
+## 1. Home pública do tenant (revamp 2026-04-28)
+
+Ordem de blocos: Logo → **Próxima reserva** (se houver) → CTA "Nova
+reserva" → Ações rápidas (chips) → Funcionamento (accordion fechado).
+Anônimo vê só logo + CTA + funcionamento + "Entrar".
 
 **Visitante deslogado:**
 
 - [ ] Abrir `/` em anônimo carrega sem erro.
-- [ ] Logo do tenant aparece em tamanho compacto (não ocupa a tela inteira).
-- [ ] Headline aparece (texto do tenant se setado, fallback genérico caso contrário).
-- [ ] CTA "Agendar agora" leva pra `/book`.
-- [ ] Bloco "Serviços" mostra até 4 serviços ativos com nome, duração e preço. Clicar leva pra `/book`.
-- [ ] Bloco "Horário de funcionamento" mostra os 7 dias da semana com `HH:MM – HH:MM` ou "Fechado".
+- [ ] Logo do tenant aparece em tamanho compacto (~120px, não ocupa tela inteira).
+- [ ] CTA "Nova reserva" (com ícone de calendário) leva pra `/book`.
+- [ ] Bloco "Funcionamento" aparece como accordion fechado mostrando status do dia ("Hoje 09:00–18:00" ou "Fechado hoje"); clicar expande os 7 dias.
 - [ ] "Já sou cliente? Entrar" abre bottom sheet com login OTP.
 - [ ] **Tab bar do cliente NÃO aparece** (só após login).
 
 **Visitante logado (sem reserva futura):**
 
-- [ ] Mesmos blocos da versão deslogada.
-- [ ] CustomerAccess mostra "Bem-vindo, [nome]" + botão "Minhas reservas".
+- [ ] Bloco "Sua próxima reserva" NÃO aparece.
+- [ ] CTA "Nova reserva" aparece.
+- [ ] Ações rápidas mostram pelo menos "Reservas" (sempre); + "Falar"/"Ligar" se tenant tem `contact_phone`/`whatsapp`.
 - [ ] **Tab bar do cliente aparece**: Início / Agendar / Reservas / Perfil.
 
 **Visitante logado (com reserva futura):**
 
-- [ ] Bloco "Sua próxima reserva" aparece logo após o hero, com horário + serviço + profissional + badge de status.
-- [ ] Clicar na próxima reserva abre `/meus-agendamentos/[id]` direto.
-- [ ] CTA principal muda pra "Agendar novamente".
+- [ ] Bloco "Sua próxima reserva" aparece em destaque (card com fundo brand-primary/5, borda brand) com: serviço, dia por extenso, horário, profissional e badge de status.
+- [ ] Clicar na próxima reserva abre `/meus-agendamentos/[id]`.
+- [ ] Ações rápidas mostram "Reagendar" (vai pro wizard pré-preenchido com serviço+profissional+step=datetime), "Falar"/"Ligar" (se há contato), "Reservas".
+- [ ] Reagendar NÃO cancela o appointment original — cliente confirma o novo e cancela o velho manualmente depois.
 
 ## 2. Wizard de booking (cliente novo)
 
@@ -110,7 +114,22 @@ URL search params (`?step=service|professional|datetime|confirm` +
 - [ ] `/politica-privacidade` mostra seções: o que guardamos, base legal LGPD, retenção, hospedagem (transferência internacional), cookies, segurança, DPO, atualizações.
 - [ ] `/termos-uso` mostra seções: quem somos, conta, reservas, conduta proibida, disponibilidade, limitação de responsabilidade, lei aplicável (foro Arapongas/PR).
 - [ ] Step "Confirmar" do wizard `/book` mostra link pros termos + política antes do botão "Confirmar reserva".
-- [ ] `/perfil` tem botões "Política de privacidade" + "Termos de uso" + "Baixar meus dados" + "Apagar conta".
+- [ ] `/perfil` tem 2 grupos: "Conta" (Sair, Excluir minha conta) e "Privacidade" (Baixar meus dados, Política de privacidade, Termos de uso). Header compacto: avatar + nome + email + telefone (se houver). NÃO tem mais botão "Minhas reservas" (redundante com tab Reservas).
+- [ ] "Excluir minha conta" abre confirm typed (digitar APAGAR) com copy nova ("Apaga seu cadastro neste estabelecimento, cancela reservas futuras...").
+
+## 4d. Reservas (revamp 2026-04-28)
+
+- [ ] `/meus-agendamentos` topo limpo: só botão "Nova reserva" (sem ícone solto de logout).
+- [ ] Tabs "Próximos (N)" / "Histórico (M)" continuam funcionando.
+- [ ] Status badges com cores sólidas: SCHEDULED âmbar, CONFIRMED verde, COMPLETED cinza, CANCELED cinza com line-through, NO_SHOW vermelho.
+- [ ] Cada card futuro elegível pra cancelar mostra 2 ações lado-a-lado: "Reagendar" (link pro wizard pré-preenchido) e "Cancelar" (à direita, vermelho).
+- [ ] Empty state em "Próximos": "Você ainda não tem reservas. Agende seu próximo atendimento em poucos toques." + link "Fazer nova reserva".
+
+## 4e. Wizard /book — feedback visual (revamp 2026-04-28)
+
+- [ ] Step "Serviço" tem título "Escolha um serviço" + subtítulo "O que você quer fazer hoje?".
+- [ ] Card de serviço selecionado: borda brand + fundo brand-primary/10 + ring + ícone de check à direita.
+- [ ] Step "Profissional" idem: opção "Qualquer profissional" e cada profissional ficam com mesmo padrão visual quando selecionados.
 
 ## 5. Staff — agenda
 

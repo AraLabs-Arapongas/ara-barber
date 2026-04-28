@@ -43,6 +43,8 @@ export type TenantContext = {
   slotIntervalMinutes: number
   customerCanCancel: boolean
   bookingWindowDays: number
+  contactPhone: string | null
+  whatsapp: string | null
 }
 
 export async function getCurrentTenantId(): Promise<string | null> {
@@ -79,7 +81,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -106,5 +108,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     slotIntervalMinutes: data.slot_interval_minutes ?? 15,
     customerCanCancel: data.customer_can_cancel ?? true,
     bookingWindowDays: data.booking_window_days ?? 14,
+    contactPhone: data.contact_phone,
+    whatsapp: data.whatsapp,
   }
 })

@@ -433,7 +433,7 @@ function validateStepAccess(
 function titleFor(step: Step): string {
   switch (step) {
     case 'service':
-      return 'O que você quer fazer?'
+      return 'Escolha um serviço'
     case 'professional':
       return 'Com quem?'
     case 'datetime':
@@ -446,7 +446,7 @@ function titleFor(step: Step): string {
 function subtitleFor(step: Step): string {
   switch (step) {
     case 'service':
-      return 'Escolha o serviço pra começar.'
+      return 'O que você quer fazer hoje?'
     case 'professional':
       return 'Selecione o profissional ou deixe que sugerimos.'
     case 'datetime':

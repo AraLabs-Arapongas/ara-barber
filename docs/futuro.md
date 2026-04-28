@@ -17,6 +17,18 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-28 — UX revamp da área cliente (4 telas).**
+  Home reordenada (próxima reserva > CTA > ações rápidas > funcionamento
+  em accordion). Wizard `/book` com seleção visual mais clara
+  (ring + check). Reservas com cores de status sólidas + ação
+  "Reagendar" (link pré-preenchido pro wizard). Perfil agrupado em
+  Conta + Privacidade, header compacto, copy mais leve. Sem mexer
+  em backend — feature inteira é UI/copy.
+  - "Reagendar" não cancela automaticamente; só redireciona pro
+    wizard com serviço+profissional pré-preenchidos. Cliente cancela
+    o original manualmente quando confirmar o novo. Mais seguro
+    contra perda de slot.
+
 - **2026-04-28 — Booking rules aplicadas no runtime.**
   `min_advance_hours` + `slot_interval_minutes` agora enforçados no
   `computeSlots()` (cliente respeita; staff respeita só o interval —

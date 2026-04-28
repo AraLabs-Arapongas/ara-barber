@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, Clock, Hourglass, LogOut, User, X } from 'lucide-react'
+import { CalendarPlus, Clock, Hourglass, RefreshCw, User, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
@@ -76,17 +76,12 @@ export function MyAppointmentsList({ appointments }: Props) {
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 pt-6 pb-16 sm:px-6">
-      <div className="mb-5 flex gap-2">
-        <Link href="/book" className="flex-1">
-          <Button variant="secondary" fullWidth>
+      <div className="mb-5">
+        <Link href="/book">
+          <Button fullWidth>
             <CalendarPlus className="h-4 w-4" /> Nova reserva
           </Button>
         </Link>
-        <form action="/auth/logout" method="post">
-          <Button variant="ghost" size="md" type="submit" aria-label="Sair">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
 
       <div className="mb-4 inline-flex rounded-lg bg-bg-subtle p-1">
@@ -141,9 +136,22 @@ export function MyAppointmentsList({ appointments }: Props) {
       ) : (
         <Card className="shadow-xs">
           <CardContent className="py-10 text-center">
-            <p className="text-[0.9375rem] text-fg-muted">
-              {tab === 'futuros' ? 'Nenhuma reserva marcada.' : 'Sem histórico ainda.'}
+            <p className="text-[0.9375rem] font-medium text-fg">
+              {tab === 'futuros' ? 'Você ainda não tem reservas.' : 'Sem histórico ainda.'}
             </p>
+            <p className="mt-1 text-[0.875rem] text-fg-muted">
+              {tab === 'futuros'
+                ? 'Agende seu próximo atendimento em poucos toques.'
+                : 'Suas reservas concluídas aparecerão aqui.'}
+            </p>
+            {tab === 'futuros' ? (
+              <Link
+                href="/book"
+                className="mt-4 inline-block text-[0.875rem] font-medium text-brand-primary hover:underline"
+              >
+                Fazer nova reserva
+              </Link>
+            ) : null}
           </CardContent>
         </Card>
       )}
@@ -201,12 +209,23 @@ function AppointmentCard({
         </CardContent>
       </Link>
       {canCancel ? (
-        <div className="border-t border-border/60 px-4 py-2">
+        <div className="flex items-center gap-1 border-t border-border/60 px-2 py-1.5">
+          {/* Reagendar: redireciona pro wizard pré-preenchido com mesmo
+              serviço + profissional. Cliente cancela o original depois
+              manualmente — escolha consciente, não cancela antes de ter
+              o novo horário garantido. */}
+          <Link
+            href={`/book?step=datetime&serviceId=${appt.serviceId}&professionalId=${appt.professionalId}`}
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[0.8125rem] font-medium text-fg hover:bg-bg-subtle"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Reagendar
+          </Link>
           <button
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[0.8125rem] text-error hover:bg-error-bg disabled:opacity-50"
+            className="ml-auto inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[0.8125rem] font-medium text-error hover:bg-error-bg disabled:opacity-50"
           >
             <X className="h-3.5 w-3.5" />
             {pending ? 'Cancelando...' : 'Cancelar'}
