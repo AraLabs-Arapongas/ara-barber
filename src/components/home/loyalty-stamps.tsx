@@ -63,11 +63,11 @@ export function LoyaltyStamps() {
     <Card className="shadow-xs overflow-hidden">
       <CardContent className="py-4">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
               Programa de pontos
             </p>
-            <p className="mt-0.5 text-[0.9375rem] font-medium text-fg">
+            <p className="mt-0.5 text-[0.875rem] font-medium leading-tight text-fg">
               {completed
                 ? `Você ganhou: ${reward}`
                 : remaining === 1
@@ -80,22 +80,30 @@ export function LoyaltyStamps() {
           </span>
         </div>
 
-        {/* Cartela de stamps em linha única (10 em uma row). Stamps
-            pequenos (28px) — referência: ícones da bottom tab. */}
-        <div className="flex items-center gap-1">
+        {/* Cartela de stamps em linha única, fluid: cada stamp ocupa
+            1/goal da largura disponível e mantém círculo via
+            aspect-square. Em telas estreitas eles encolhem juntos
+            sem quebrar layout; em telas largas crescem até o limite
+            do card. Gap proporcional via gap-1.5 (~6px). */}
+        <div
+          className="grid items-center gap-1.5"
+          style={{ gridTemplateColumns: `repeat(${goal}, minmax(0, 1fr))` }}
+        >
           {Array.from({ length: goal }).map((_, i) => {
             const filled = i < current
             return (
               <span
                 key={i}
                 aria-label={filled ? 'Stamp conquistado' : 'Stamp vazio'}
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+                className={`flex aspect-square w-full items-center justify-center rounded-full border ${
                   filled
                     ? 'border-brand-primary bg-brand-primary text-brand-primary-fg'
                     : 'border-dashed border-border bg-bg-subtle text-fg-subtle'
                 }`}
               >
-                {filled ? <Check className="h-3 w-3" aria-hidden="true" /> : null}
+                {filled ? (
+                  <Check className="h-[55%] w-[55%]" aria-hidden="true" />
+                ) : null}
               </span>
             )
           })}
