@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent, ReactNode } from 'react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { TenantAssetUploader } from '@/components/dashboard/tenant-asset-uploader'
 import { updateTenantBrand } from '@/app/admin/(authenticated)/actions/tenant-profile'
 
 type Initial = {
@@ -56,28 +57,25 @@ export function BrandEditor({ initial }: { initial: Initial }) {
         />
       </fieldset>
 
-      <fieldset className="space-y-3">
-        <legend className="mb-1 text-sm font-medium text-fg">Imagens (URL)</legend>
-        <Field label="Logo (URL)">
-          <Input
-            type="url"
-            value={data.logo_url}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setData((d) => ({ ...d, logo_url: e.target.value }))
-            }
-            placeholder="https://..."
-          />
-        </Field>
-        <Field label="Favicon (URL)">
-          <Input
-            type="url"
-            value={data.favicon_url}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setData((d) => ({ ...d, favicon_url: e.target.value }))
-            }
-            placeholder="https://..."
-          />
-        </Field>
+      {/* Logo + favicon usam upload direto (Supabase Storage). O salvar
+          do form abaixo só persiste cores e headlines — assets são
+          gravados imediatamente pelo uploader, sem precisar Submit. */}
+      <fieldset className="space-y-4">
+        <legend className="mb-1 text-sm font-medium text-fg">Imagens</legend>
+        <TenantAssetUploader
+          kind="logo"
+          label="Logo"
+          hint="PNG, JPG, WebP ou SVG. Até 5 MB. Aparece na home pública e telas de login."
+          currentUrl={data.logo_url || null}
+          previewSize={88}
+        />
+        <TenantAssetUploader
+          kind="favicon"
+          label="Favicon"
+          hint="Ícone que aparece na aba do navegador. ICO, PNG ou SVG, idealmente quadrado e pequeno."
+          currentUrl={data.favicon_url || null}
+          previewSize={48}
+        />
       </fieldset>
 
       <fieldset className="space-y-3">

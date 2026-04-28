@@ -13,6 +13,18 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+
+  // next/image whitelist. Como uploads de logo/favicon vão pro nosso
+  // bucket Supabase Storage (`tenant-assets`), todas as imagens
+  // renderizadas vivem em domínios que nós controlamos. Permitimos
+  // qualquer subdomínio supabase.co (cloud) + 127.0.0.1 (Docker local).
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
+      { protocol: 'http', hostname: '127.0.0.1', port: '54321', pathname: '/storage/v1/object/public/**' },
+      { protocol: 'http', hostname: 'localhost', port: '54321', pathname: '/storage/v1/object/public/**' },
+    ],
+  },
 }
 
 /**

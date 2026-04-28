@@ -17,6 +17,14 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-28 — Upload de logo/favicon via Supabase Storage.**
+  Antes era input de URL — exigia whitelist do domínio externo no
+  `next.config.ts` (toda vez que tenant trocava o host quebrava).
+  Agora: file upload pra bucket `tenant-assets` (público), URL
+  pública sempre vive em `*.supabase.co/storage/...` (já whitelisted
+  uma vez). Server action `uploadTenantAsset` valida role + tenant +
+  mime + tamanho (5 MB). Path: `tenants/{id}/{kind}-{ts}.{ext}`.
+
 - **2026-04-28 — UX revamp da área cliente (4 telas).**
   Home reordenada (próxima reserva > CTA > ações rápidas > funcionamento
   em accordion). Wizard `/book` com seleção visual mais clara
