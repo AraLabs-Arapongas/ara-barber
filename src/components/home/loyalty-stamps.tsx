@@ -80,29 +80,28 @@ export function LoyaltyStamps() {
           </span>
         </div>
 
-        {/* Cartela de stamps. Em telas estreitas o grid quebra
-            naturalmente; mantém max 5 por linha pra não ficar
-            apertado. */}
-        <div className="grid grid-cols-5 gap-1.5">
+        {/* Cartela de stamps em linha única (10 em uma row). Stamps
+            pequenos (28px) — referência: ícones da bottom tab. */}
+        <div className="flex items-center gap-1">
           {Array.from({ length: goal }).map((_, i) => {
             const filled = i < current
             return (
               <span
                 key={i}
                 aria-label={filled ? 'Stamp conquistado' : 'Stamp vazio'}
-                className={`flex aspect-square items-center justify-center rounded-full border-2 ${
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
                   filled
                     ? 'border-brand-primary bg-brand-primary text-brand-primary-fg'
                     : 'border-dashed border-border bg-bg-subtle text-fg-subtle'
                 }`}
               >
-                {filled ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                {filled ? <Check className="h-3 w-3" aria-hidden="true" /> : null}
               </span>
             )
           })}
         </div>
 
-        <p className="mt-3 text-[0.75rem] text-fg-muted">
+        <p className="mt-2 text-[0.75rem] text-fg-muted">
           {current} de {goal} atendimentos
         </p>
       </CardContent>
