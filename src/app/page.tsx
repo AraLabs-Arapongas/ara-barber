@@ -14,8 +14,9 @@ import { CustomerAccess } from '@/components/home/customer-access'
 import { CustomerQuickActions } from '@/components/home/customer-quick-actions'
 import { BusinessHoursAccordion } from '@/components/home/business-hours-accordion'
 import { LoyaltyStamps } from '@/components/home/loyalty-stamps'
-import { NextAppointmentCardHero } from '@/components/home/next-appointment-card'
+import { UpcomingAppointmentsCarousel } from '@/components/home/upcoming-appointments-carousel'
 import { CustomerShell } from '@/components/customer/customer-shell'
+import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
 import { getBusinessHours } from '@/lib/booking/queries'
@@ -152,11 +153,20 @@ async function TenantPublicHome() {
 
   // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const nowMs = Date.now()
-  const nextAppointment =
-    myAppointments.find(
+  // `getMyCustomerAppointments` retorna DESC (mais recente primeiro). Pra
+  // home queremos PRÓXIMAS reservas em ordem CRONOLÓGICA (a mais próxima
+  // primeiro). Filtra futuras + ativas, depois ordena ASC, pega top 5
+  // pro carousel.
+  const upcomingAppointments = myAppointments
+    .filter(
       (a) =>
-        new Date(a.startAt).getTime() >= nowMs && a.status !== 'CANCELED' && a.status !== 'NO_SHOW',
-    ) ?? null
+        new Date(a.startAt).getTime() >= nowMs &&
+        a.status !== 'CANCELED' &&
+        a.status !== 'NO_SHOW',
+    )
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+    .slice(0, 5)
+  const nextAppointment = upcomingAppointments[0] ?? null
 
   return (
     <>
@@ -167,6 +177,13 @@ async function TenantPublicHome() {
           accentColor: tenant.accentColor,
         }}
       />
+
+      {/* Realtime: re-fetcha a home quando appointments do cliente
+          mudam (staff confirma/cancela, cliente cancela em outra aba).
+          Só pra logado — anon não tem JWT pra autorizar broadcast. */}
+      {loggedIn ? (
+        <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="customer-home" />
+      ) : null}
 
       <CustomerShell showTabBar={loggedIn}>
         <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5 pt-6 pb-12 sm:px-6">
@@ -199,24 +216,26 @@ async function TenantPublicHome() {
             </section>
           ) : null}
 
-          {/* Bloco 1 — Próxima reserva: hero card com ações inline
-              (Ver detalhes / Reagendar / Cancelar). Substituiu o card
-              clicável inteiro — agora cada ação é dedicada. */}
-          {nextAppointment ? (
+          {/* Bloco 1 — Próximas reservas: carousel quando há 2+; card
+              único quando há só 1. Cada card tem ações inline (Ver
+              detalhes / Reagendar / Cancelar). */}
+          {upcomingAppointments.length > 0 ? (
             <section>
               <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-                Sua próxima reserva
+                {upcomingAppointments.length === 1
+                  ? 'Sua próxima reserva'
+                  : `Suas próximas reservas (${upcomingAppointments.length})`}
               </p>
-              <NextAppointmentCardHero
-                appointment={{
-                  id: nextAppointment.id,
-                  serviceId: nextAppointment.serviceId,
-                  serviceName: nextAppointment.serviceName,
-                  professionalId: nextAppointment.professionalId,
-                  professionalName: nextAppointment.professionalName,
-                  startAt: nextAppointment.startAt,
-                  status: nextAppointment.status,
-                }}
+              <UpcomingAppointmentsCarousel
+                appointments={upcomingAppointments.map((a) => ({
+                  id: a.id,
+                  serviceId: a.serviceId,
+                  serviceName: a.serviceName,
+                  professionalId: a.professionalId,
+                  professionalName: a.professionalName,
+                  startAt: a.startAt,
+                  status: a.status,
+                }))}
                 tenantTimezone={tenant.timezone}
                 cancellationWindowHours={tenant.cancellationWindowHours}
                 customerCanCancel={tenant.customerCanCancel}

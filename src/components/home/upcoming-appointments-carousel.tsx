@@ -1,0 +1,121 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+
+import { NextAppointmentCardHero } from './next-appointment-card'
+import type { AppointmentStatus } from '@/lib/appointments/status-rules'
+
+type Appointment = {
+  id: string
+  serviceId: string
+  serviceName: string | null
+  professionalId: string
+  professionalName: string | null
+  startAt: string
+  status: AppointmentStatus
+}
+
+type Props = {
+  appointments: Appointment[]
+  tenantTimezone: string
+  cancellationWindowHours: number
+  customerCanCancel: boolean
+}
+
+/**
+ * Carousel horizontal de próximas reservas do cliente. Cada card é o
+ * mesmo `NextAppointmentCardHero` usado em outros lugares — aqui só
+ * empilhamos N deles em scroll horizontal com snap.
+ *
+ * UX:
+ *   - 1 reserva → sem carousel chrome (renderiza só o card).
+ *   - 2+ reservas → scroll horizontal com snap-mandatory + dots
+ *     embaixo indicando posição. Mobile-first: swipe natural.
+ *
+ * Implementação CSS-only pra scroll (sem libs). A posição atual vem
+ * do scrollLeft do container, calculada em scroll handler com
+ * requestAnimationFrame pra throttle.
+ */
+export function UpcomingAppointmentsCarousel({
+  appointments,
+  tenantTimezone,
+  cancellationWindowHours,
+  customerCanCancel,
+}: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || appointments.length <= 1) return
+
+    let raf = 0
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        // Cada card ocupa 100% da largura do container; o índice ativo
+        // é round(scrollLeft / cardWidth).
+        const cardWidth = el.clientWidth
+        if (cardWidth === 0) return
+        const idx = Math.round(el.scrollLeft / cardWidth)
+        setActiveIdx(idx)
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(raf)
+    }
+  }, [appointments.length])
+
+  if (appointments.length === 0) return null
+
+  // 1 reserva: sem carousel chrome.
+  if (appointments.length === 1) {
+    const a = appointments[0]
+    return (
+      <NextAppointmentCardHero
+        appointment={a}
+        tenantTimezone={tenantTimezone}
+        cancellationWindowHours={cancellationWindowHours}
+        customerCanCancel={customerCanCancel}
+      />
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <div
+        ref={containerRef}
+        className="-mx-5 flex snap-x snap-mandatory overflow-x-auto scroll-smooth px-5 sm:-mx-6 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {appointments.map((a) => (
+          <div key={a.id} className="w-full shrink-0 snap-start pr-3 last:pr-0">
+            <NextAppointmentCardHero
+              appointment={a}
+              tenantTimezone={tenantTimezone}
+              cancellationWindowHours={cancellationWindowHours}
+              customerCanCancel={customerCanCancel}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center gap-1.5">
+        {appointments.map((a, i) => (
+          <button
+            key={a.id}
+            type="button"
+            aria-label={`Ir pra reserva ${i + 1}`}
+            onClick={() => {
+              const el = containerRef.current
+              if (el) el.scrollTo({ left: el.clientWidth * i, behavior: 'smooth' })
+            }}
+            className={`h-1.5 rounded-full transition-all ${
+              i === activeIdx ? 'w-6 bg-brand-primary' : 'w-1.5 bg-border'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
