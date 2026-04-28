@@ -8,7 +8,7 @@ import { ListChecks, RefreshCw, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert } from '@/components/ui/alert'
 import { useConfirm } from '@/components/ui/confirm/provider'
-import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
+import { StatusDot } from '@/components/appointments/status-dot'
 import type { AppointmentStatus } from '@/lib/appointments/status-rules'
 import { cancelCustomerAppointment } from '@/lib/appointments/server-actions'
 
@@ -108,11 +108,7 @@ export function NextAppointmentCardHero({
               </p>
             ) : null}
           </div>
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appointment.status]}`}
-          >
-            {STATUS_LABELS[appointment.status]}
-          </span>
+          <StatusDot status={appointment.status} />
         </div>
       </CardContent>
 
@@ -130,7 +126,7 @@ export function NextAppointmentCardHero({
           className="flex items-center justify-center gap-1.5 py-3 text-[0.875rem] font-medium text-brand-primary hover:bg-brand-primary/5"
         >
           <ListChecks className="h-4 w-4" aria-hidden="true" />
-          Ver detalhes
+          Detalhes
         </Link>
         <span aria-hidden="true" className="my-2 w-px bg-brand-primary/15" />
         <Link

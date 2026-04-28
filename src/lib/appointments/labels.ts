@@ -9,6 +9,18 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
 }
 
 /**
+ * Cor sólida da bolinha de status (badge sem texto). Usado em cards
+ * onde o chip cheio quebraria layout.
+ */
+export const STATUS_DOT: Record<AppointmentStatus, string> = {
+  SCHEDULED: 'bg-warning',
+  CONFIRMED: 'bg-success',
+  COMPLETED: 'bg-fg-muted',
+  CANCELED: 'bg-fg-subtle',
+  NO_SHOW: 'bg-error',
+}
+
+/**
  * Tons (badge bg + text) por status. Mais sólidos pra dar leitura
  * imediata em listas com muitos cards. Em ordem de "intensidade":
  *   - SCHEDULED (âmbar): aguardando ação do staff — chama atenção sem alarmar.

@@ -20,7 +20,7 @@ import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
 import { getBusinessHours } from '@/lib/booking/queries'
-import { getMyCustomerAppointments, type AgendaAppointment } from '@/lib/appointments/queries'
+import { getMyCustomerAppointments } from '@/lib/appointments/queries'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -166,7 +166,6 @@ async function TenantPublicHome() {
     )
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
     .slice(0, 5)
-  const nextAppointment = upcomingAppointments[0] ?? null
 
   return (
     <>
@@ -210,9 +209,6 @@ async function TenantPublicHome() {
               <h2 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
                 Olá, {firstName(displayName ?? '')}
               </h2>
-              <p className="mt-1 text-[0.9375rem] text-fg-muted">
-                {greetingSubtitle(nextAppointment)}
-              </p>
             </section>
           ) : null}
 
@@ -296,13 +292,6 @@ function firstName(full: string): string {
   const trimmed = full.trim()
   if (!trimmed) return ''
   return trimmed.split(/\s+/)[0]
-}
-
-function greetingSubtitle(next: AgendaAppointment | null): string {
-  if (!next) return 'Que tal agendar seu próximo horário?'
-  if (next.status === 'CONFIRMED') return 'Sua próxima reserva está confirmada.'
-  if (next.status === 'SCHEDULED') return 'Sua próxima reserva aguarda confirmação.'
-  return 'Veja sua próxima reserva abaixo.'
 }
 
 /**

@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import Link from 'next/link'
-import { CalendarCheck, MapPin, MessageCircle, Phone } from 'lucide-react'
+import { MapPin, MessageCircle, Phone } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -73,15 +73,9 @@ export function CustomerQuickActions({ contactPhone, whatsapp, address }: Props)
     })
   }
 
-  // Fallback: se não há nem contato nem endereço, mostra "Reservas"
-  // pra não retornar null e quebrar o ritmo visual da home.
-  if (items.length === 0) {
-    items.push({
-      href: '/meus-agendamentos',
-      label: 'Reservas',
-      icon: CalendarCheck,
-    })
-  }
+  // Tenant sem WhatsApp + sem endereço: omite o bloco. "Reservas"
+  // já existe na tab bar, então um card sozinho seria redundante.
+  if (items.length === 0) return null
 
   // Layout: até 2 ações ficam lado-a-lado divididas por separador
   // vertical, igual ao mockup. 1 ação ocupa a linha inteira.
