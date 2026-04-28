@@ -20,7 +20,12 @@ next-env.d.ts
 .vscode/
 .idea/
 *.log
-.claude/
+.claude/*
+# Skills do projeto são versionadas (qualquer pessoa que abrir o
+# repo no Claude Code ganha o trigger automático). Settings,
+# worktrees e plans locais continuam ignorados.
+!.claude/skills/
+!.claude/skills/**
 
 # referência local de contas (nunca comitar)
 docs/accounts.md
