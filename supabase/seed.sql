@@ -42,7 +42,10 @@ on conflict (id) do nothing;
 insert into public.tenants (
   id, slug, name, subdomain, timezone,
   primary_color, accent_color,
-  current_plan_id, billing_status, billing_model
+  current_plan_id, billing_status, billing_model,
+  contact_phone, whatsapp,
+  address_line1, address_line2, city, state, postal_code,
+  home_headline_accent
 )
 values (
   'c699b22a-c663-4831-862e-a61c474802ae',
@@ -54,7 +57,15 @@ values (
   '#e6c8a0',
   '00000000-0000-0000-0000-000000000002',
   'TRIALING',
-  'TRIAL'
+  'TRIAL',
+  '(43) 3252-0000',
+  '5543999990000',
+  'Av. Arapongas, 1234',
+  'Sala 5',
+  'Arapongas',
+  'PR',
+  '86700-000',
+  'Centro de beleza'
 )
 on conflict (id) do nothing;
 
