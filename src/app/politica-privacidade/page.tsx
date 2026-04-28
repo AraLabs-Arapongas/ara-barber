@@ -111,6 +111,120 @@ export default async function PrivacyPolicyPage() {
               </section>
 
               <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Base legal (LGPD)
+                </h2>
+                <p className="mt-2 text-fg-muted">
+                  Tratamos seus dados pessoais com fundamento nas seguintes bases legais da Lei
+                  Geral de Proteção de Dados (Lei 13.709/2018):
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
+                  <li>
+                    <strong className="text-fg">Execução de contrato:</strong> realizar e gerenciar
+                    sua reserva (art. 7º, V).
+                  </li>
+                  <li>
+                    <strong className="text-fg">Consentimento:</strong> envio de lembretes e
+                    confirmações por e-mail/WhatsApp (art. 7º, I).
+                  </li>
+                  <li>
+                    <strong className="text-fg">Legítimo interesse:</strong> prevenção de fraude e
+                    melhoria do serviço (art. 7º, IX).
+                  </li>
+                  <li>
+                    <strong className="text-fg">Cumprimento de obrigação legal:</strong> retenção
+                    fiscal e atendimento a autoridades (art. 7º, II).
+                  </li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Por quanto tempo guardamos
+                </h2>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
+                  <li>
+                    <strong className="text-fg">Reservas e histórico:</strong> 5 anos a contar do
+                    último atendimento, para fins fiscais e contábeis.
+                  </li>
+                  <li>
+                    <strong className="text-fg">Dados de cadastro (nome, telefone, e-mail):</strong>{' '}
+                    enquanto sua conta estiver ativa neste estabelecimento.
+                  </li>
+                  <li>
+                    <strong className="text-fg">Após exclusão:</strong> seus dados pessoais são
+                    apagados em até 30 dias; reservas passadas ficam anonimizadas (sem nome,
+                    telefone ou e-mail) apenas para estatísticas internas do estabelecimento.
+                  </li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Onde os dados ficam armazenados
+                </h2>
+                <p className="mt-2 text-fg-muted">
+                  A infraestrutura técnica (banco de dados, autenticação) é hospedada na Supabase,
+                  com servidores fisicamente localizados nos Estados Unidos (AWS US-East). A
+                  transferência internacional ocorre com base no art. 33, II da LGPD (cláusulas
+                  contratuais padrão e medidas técnicas adequadas). Não há transferência dos seus
+                  dados para outros países além desta hospedagem.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Cookies e armazenamento local
+                </h2>
+                <p className="mt-2 text-fg-muted">
+                  Usamos apenas cookies estritamente necessários para manter você logado (cookie de
+                  sessão) e armazenamento local do navegador para preferências de interface (ex:
+                  tema). Não usamos cookies de rastreamento publicitário nem compartilhamos com
+                  redes de anúncios.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Segurança
+                </h2>
+                <p className="mt-2 text-fg-muted">
+                  Aplicamos isolamento por estabelecimento no banco (Row-Level Security do
+                  PostgreSQL), criptografia em trânsito (HTTPS/TLS) e em repouso (criptografia do
+                  banco). Acessos de equipe são auditados. Em caso de incidente de segurança que
+                  afete seus dados, comunicaremos você e a ANPD conforme art. 48 da LGPD.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Encarregado pelo tratamento de dados (DPO)
+                </h2>
+                <p className="mt-2 text-fg-muted">
+                  Para exercer seus direitos como titular ou esclarecer dúvidas sobre o tratamento
+                  de dados, o encarregado da AraLabs pode ser contatado em{' '}
+                  <a
+                    href="mailto:dpo@aralabs.com.br"
+                    className="font-medium text-brand-primary hover:underline"
+                  >
+                    dpo@aralabs.com.br
+                  </a>
+                  . Resposta em até 15 dias úteis.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">
+                  Atualizações desta política
+                </h2>
+                <p className="mt-2 text-fg-muted">
+                  Mudanças relevantes serão comunicadas no seu próximo acesso. Mudanças menores
+                  (correção de redação) podem ocorrer sem aviso, mas a data de &ldquo;última
+                  atualização&rdquo; abaixo é sempre mantida.
+                </p>
+              </section>
+
+              <section>
                 <h2 className="mt-6 font-display text-[1.125rem] font-semibold text-fg">Contato</h2>
                 <p className="mt-2 text-fg-muted">
                   Fale diretamente com o estabelecimento para dúvidas sobre o atendimento, ou com a
@@ -121,11 +235,15 @@ export default async function PrivacyPolicyPage() {
                   >
                     contato@aralabs.com.br
                   </a>{' '}
-                  para questões sobre a plataforma.
+                  para questões sobre a plataforma. Veja também os{' '}
+                  <Link href="/termos-uso" className="font-medium text-brand-primary hover:underline">
+                    Termos de uso
+                  </Link>
+                  .
                 </p>
               </section>
 
-              <p className="mt-8 text-[0.75rem] text-fg-subtle">Última atualização: 2026-04-19.</p>
+              <p className="mt-8 text-[0.75rem] text-fg-subtle">Última atualização: 2026-04-28.</p>
             </article>
           </main>
         </CustomerShell>

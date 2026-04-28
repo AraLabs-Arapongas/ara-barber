@@ -26,6 +26,8 @@ export function DateTimeStep({
   onNext,
   maxDateISO,
   initialDateISO,
+  stepMinutes,
+  minAdvanceHours,
 }: {
   context: SharedBookingContext
   serviceId: string
@@ -39,6 +41,10 @@ export function DateTimeStep({
   maxDateISO?: string
   /** Override do dia inicial (default: hoje no fuso do tenant). */
   initialDateISO?: string
+  /** Granularidade do grid em minutos (vem de tenants.slot_interval_minutes). */
+  stepMinutes?: number
+  /** Antecedência mínima em horas (vem de tenants.min_advance_hours). */
+  minAdvanceHours?: number
 }) {
   const todayISO = todayISOInTZ(context.tenantTimezone)
   const [date, setDate] = useState<string>(initialDateISO ?? todayISO)
@@ -64,8 +70,10 @@ export function DateTimeStep({
       blocks: context.blocks,
       existingAppointments: context.existingAppointments,
       now: new Date(),
+      stepMinutes,
+      minAdvanceHours,
     })
-  }, [date, service, candidateIds, context])
+  }, [date, service, candidateIds, context, stepMinutes, minAdvanceHours])
 
   return (
     <section className="space-y-4">

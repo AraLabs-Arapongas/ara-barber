@@ -84,6 +84,12 @@ export default async function PerfilPage() {
               Política de privacidade
             </Button>
           </Link>
+          <Link href="/termos-uso">
+            <Button variant="ghost" size="lg" fullWidth>
+              <Shield className="h-4 w-4" aria-hidden="true" />
+              Termos de uso
+            </Button>
+          </Link>
           <DeleteAccountButton />
         </div>
       </section>

@@ -24,6 +24,12 @@ export type BookingContextInput = z.infer<typeof Input>
 export type BookingContext = {
   tenantId: string
   tenantTimezone: string
+  /**
+   * Granularidade do grid em minutos. Staff respeita pra UI consistente
+   * com o cliente, mas NÃO respeita `min_advance_hours` (pode bookar
+   * walk-in pra agora).
+   */
+  slotIntervalMinutes: number
   services: BookingService[]
   professionals: BookingProfessional[]
   professionalServices: Array<{ professionalId: string; serviceId: string }>
@@ -105,6 +111,7 @@ export async function getBookingContext(
     context: {
       tenantId: tenant.id,
       tenantTimezone: tenant.timezone,
+      slotIntervalMinutes: tenant.slotIntervalMinutes,
       services: (services.data ?? []).map((s) => ({
         id: s.id,
         name: s.name,

@@ -172,6 +172,8 @@ export function ManualBookingWizard({
           onChange={(startAtISO) => setState((s) => ({ ...s, startAtISO }))}
           onBack={back}
           onNext={next}
+          stepMinutes={context.slotIntervalMinutes}
+          // Staff não respeita min_advance_hours — pode bookar walk-in.
         />
       ) : null}
       {step === 5 ? (

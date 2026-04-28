@@ -14,9 +14,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:rls": "supabase db test"
+    "test:rls": "supabase db test",
+    "provision-tenant": "node --env-file=.env.local scripts/provision-tenant.ts"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.50.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.3",
     "class-variance-authority": "^0.7.1",

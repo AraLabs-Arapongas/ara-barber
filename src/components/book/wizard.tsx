@@ -155,6 +155,8 @@ export function CustomerBookingWizard({ context, initial, initialCustomer, isAut
       blocks: context.blocks,
       existingAppointments: context.existingAppointments,
       now: new Date(),
+      stepMinutes: context.slotIntervalMinutes,
+      minAdvanceHours: context.minAdvanceHours,
     })
     return slots.find((s) => s.startISO === startAtISO) ?? null
   }, [service, startAtISO, professionalId, context])
@@ -278,6 +280,8 @@ export function CustomerBookingWizard({ context, initial, initialCustomer, isAut
           onBack={back}
           onNext={next}
           maxDateISO={context.rangeEndDate}
+          stepMinutes={context.slotIntervalMinutes}
+          minAdvanceHours={context.minAdvanceHours}
         />
       ) : null}
 
@@ -365,6 +369,27 @@ export function CustomerBookingWizard({ context, initial, initialCustomer, isAut
                     maxLength={16}
                     hint="Pro estabelecimento te avisar em caso de mudança."
                   />
+                  <p className="text-[0.75rem] leading-relaxed text-fg-subtle">
+                    Ao confirmar, você concorda com os{' '}
+                    <a
+                      href="/termos-uso"
+                      target="_blank"
+                      rel="noopener"
+                      className="font-medium text-brand-primary hover:underline"
+                    >
+                      Termos de uso
+                    </a>{' '}
+                    e a{' '}
+                    <a
+                      href="/politica-privacidade"
+                      target="_blank"
+                      rel="noopener"
+                      className="font-medium text-brand-primary hover:underline"
+                    >
+                      Política de privacidade
+                    </a>
+                    .
+                  </p>
                   <Button
                     type="submit"
                     size="lg"

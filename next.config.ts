@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withSentryConfig } from '@sentry/nextjs'
 
 const nextConfig: NextConfig = {
   // Dev: permite que o HMR funcione em hosts customizados (lvh.me e subdomínios
@@ -14,4 +15,29 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+/**
+ * Wrapper Sentry. Funciona mesmo sem envs setadas:
+ *   - Sem `NEXT_PUBLIC_SENTRY_DSN`: init é no-op, nada é enviado.
+ *   - Sem `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT`: source maps
+ *     não sobem (stack trace fica minificado em prod), mas captura segue ok.
+ *
+ * Setar em Vercel pra prod:
+ *   - NEXT_PUBLIC_SENTRY_DSN — público, vai no client bundle
+ *   - SENTRY_AUTH_TOKEN — secret, só pra build (upload de source maps)
+ *   - SENTRY_ORG, SENTRY_PROJECT — nome da org/projeto Sentry
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Silencia logs do plugin no build local quando envs não estão setadas.
+  silent: !process.env.CI,
+  // Inclui chunks da raiz pra cobrir RSC/middleware nos source maps.
+  widenClientFileUpload: true,
+  // Remove código de logger em prod pra reduzir bundle.
+  disableLogger: true,
+  // Sourcemaps: sobem pro Sentry quando SENTRY_AUTH_TOKEN está presente,
+  // sem expor publicamente (default do plugin).
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+})

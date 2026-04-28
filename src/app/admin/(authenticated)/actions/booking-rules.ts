@@ -45,10 +45,15 @@ export type UpdateBookingRulesResult = { ok: true } | { ok: false; error: string
  * policy `tenants_owner_update_own`). Checamos linhas afetadas pra detectar
  * silent denial caso a policy seja modificada no futuro.
  *
- * TODO(follow-up): aplicar `min_advance_hours`, `slot_interval_minutes` e
- * `customer_can_cancel` no cálculo de slots e na ação de cancelamento. Esta
- * fase só persiste a configuração — runtime enforcement vem em commit
- * separado pra evitar mexer no slot calculator junto com a UI.
+ * Runtime enforcement das regras:
+ *   - `min_advance_hours` + `slot_interval_minutes`: aplicados no
+ *     `computeSlots()` (`src/lib/booking/slots.ts`) — staff IGNORA
+ *     `min_advance_hours` (pode bookar walk-in pra agora).
+ *   - `customer_can_cancel`: validado em `cancelCustomerAppointment()`
+ *     (`src/lib/appointments/server-actions.ts`).
+ *   - `cancellation_window_hours`: validado em `cancelCustomerAppointment()`.
+ *   - `booking_window_days`: aplicado no `getCustomerBookingContext()`
+ *     (`src/lib/booking/customer-context.ts`).
  */
 export async function updateBookingRules(
   raw: UpdateBookingRulesInput,

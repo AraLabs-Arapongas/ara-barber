@@ -17,6 +17,28 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-28 — Booking rules aplicadas no runtime.**
+  `min_advance_hours` + `slot_interval_minutes` agora enforçados no
+  `computeSlots()` (cliente respeita; staff respeita só o interval —
+  pode bookar walk-in pra agora). `customer_can_cancel` validado em
+  `cancelCustomerAppointment()`. Era TODO declarado em
+  `booking-rules.ts:43`.
+
+- **2026-04-28 — Sentry instalado pro monitoring de erros prod.**
+  Free tier (5K errors/mês). Captura client + server + edge errors,
+  source maps via `SENTRY_AUTH_TOKEN` quando setado. Sem performance
+  tracing (Vercel Analytics cobre). Sem replay (custa quota separada).
+
+- **2026-04-28 — Termos de uso criados + política de privacidade
+  reforçada (LGPD).** Novas rotas `/termos-uso` + atualização de
+  `/politica-privacidade` com bases legais, retenção, transferência
+  internacional, cookies, DPO. Consent checkbox implícito no botão
+  "Confirmar reserva" do wizard.
+
+- **2026-04-28 — Script `pnpm provision-tenant` pra novos tenants.**
+  Cria tenant + business_hours defaults + auth user + user_profile
+  BUSINESS_OWNER + envia reset de senha. Substitui SQL manual via MCP.
+
 - **2026-04-28 — Mobile nativo: não fazer no horizonte previsível.**
   PWA atual cobre 90% dos casos (push, install prompt, wake lock,
   câmera). Custo de manter 2-3 stacks paralelas + fee de app store
@@ -33,13 +55,6 @@ _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão
 ## Backlog priorizado (próximos 3-6 meses pós-MVP)
 
 ### Tier 1 — Alto valor, baixo-médio esforço
-
-- **Aplicar booking rules no slot calculator.**
-  `min_advance_hours`, `slot_interval_minutes`, `customer_can_cancel`
-  hoje só persistem em `tenants` mas o `computeSlots()` ignora. TODO
-  declarado em `src/app/admin/(authenticated)/actions/booking-rules.ts:43`.
-  Sem isso, configurar regra em "Mais → Regras" não tem efeito visível.
-  Esforço: ~2-3h.
 
 - **Audit log de mutations sensíveis.**
   Cancelamento de appointment, edit de regras, mudança de role,

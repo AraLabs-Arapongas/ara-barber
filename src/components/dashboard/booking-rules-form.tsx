@@ -20,10 +20,6 @@ type Props = {
   initial: BookingRules
 }
 
-// TODO(follow-up): essas regras hoje só persistem na tabela `tenants`. O
-// `computeSlots` e a action `cancelCustomerAppointment` ainda não consultam
-// `min_advance_hours` / `slot_interval_minutes` / `customer_can_cancel`.
-// Integração no slot calculator entra num commit separado.
 export function BookingRulesForm({ initial }: Props) {
   const [data, setData] = useState<BookingRules>(initial)
   const [pending, startTransition] = useTransition()

@@ -14,7 +14,17 @@ export type SlotInput = {
   blocks: AvailabilityBlock[]
   existingAppointments: Array<{ professionalId: string; startAt: string; endAt: string }>
   now: Date
+  /**
+   * Granularidade do grid em minutos. Vem de `tenants.slot_interval_minutes`
+   * (5/10/15/20/30/60). Default 30 quando não passado (compat com testes).
+   */
   stepMinutes?: number
+  /**
+   * Antecedência mínima pra agendar (em horas). Slots cujo `startAt` é
+   * anterior a `now + minAdvanceHours` são omitidos. Vem de
+   * `tenants.min_advance_hours`. Default 0.
+   */
+  minAdvanceHours?: number
 }
 
 export type Slot = {
@@ -116,6 +126,8 @@ export function weekdayInTenantTZ(dateISO: string, tenantTimezone: string): numb
  */
 export function computeSlots(input: SlotInput): Slot[] {
   const step = input.stepMinutes ?? 30
+  const minAdvanceMs = (input.minAdvanceHours ?? 0) * 60 * 60_000
+  const earliestAllowed = input.now.getTime() + minAdvanceMs
   const weekday = weekdayInTenantTZ(input.dateISO, input.tenantTimezone)
 
   const weekdayHours = input.businessHours.find((h) => h.weekday === weekday)
@@ -130,7 +142,9 @@ export function computeSlots(input: SlotInput): Slot[] {
     const slotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
     const slotEnd = new Date(slotStart.getTime() + input.serviceDurationMinutes * 60_000)
 
-    if (slotStart.getTime() < input.now.getTime()) continue
+    // Respeita antecedência mínima: slot precisa ser >= agora + minAdvance.
+    // (minAdvance=0 reduz à checagem original "não no passado".)
+    if (slotStart.getTime() < earliestAllowed) continue
 
     let availableProId: string | undefined
     for (const profId of input.candidateProfessionalIds) {

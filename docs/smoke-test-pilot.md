@@ -91,11 +91,26 @@ URL search params (`?step=service|professional|datetime|confirm` +
 - [ ] Cancelar pelo card na lista dentro da janela → status vira `CANCELED`.
 - [ ] Cancelar pelo botão na tela de detalhe dentro da janela → redireciona pra lista, status `CANCELED`.
 - [ ] Cancelar fora da janela (ajustar `cancellation_window_hours` pra forçar) → erro com copy clara da janela de horas.
+- [ ] Desligar `customer_can_cancel` em "Mais → Regras" → tentar cancelar no `/meus-agendamentos` → erro "Esse estabelecimento não permite cancelamento online".
 
 ## 4. Conflito de horário
 
 - [ ] Com reserva existente às 15:00 pro profissional X, no step "Data e horário" do wizard `/book` o slot 15:00 fica desabilitado pra X.
 - [ ] Tentativa forçada via request direto → `createAppointment` retorna "Horário não disponível".
+
+## 4b. Booking rules respeitadas (revamp 2026-04-28)
+
+- [ ] Setar `min_advance_hours = 4` em "Mais → Regras" → no wizard `/book`, slots nas próximas 4h ficam ocultos.
+- [ ] Setar `slot_interval_minutes = 60` → grid mostra horários de hora em hora (não 15min).
+- [ ] Staff em `/admin/dashboard/agenda/novo` IGNORA `min_advance_hours` (vê slots agora-mesmo) mas RESPEITA `slot_interval_minutes` (UI consistente).
+- [ ] Setar `booking_window_days = 3` → date picker do wizard limita máx em 3 dias à frente.
+
+## 4c. Legal / LGPD (revamp 2026-04-28)
+
+- [ ] `/politica-privacidade` mostra seções: o que guardamos, base legal LGPD, retenção, hospedagem (transferência internacional), cookies, segurança, DPO, atualizações.
+- [ ] `/termos-uso` mostra seções: quem somos, conta, reservas, conduta proibida, disponibilidade, limitação de responsabilidade, lei aplicável (foro Arapongas/PR).
+- [ ] Step "Confirmar" do wizard `/book` mostra link pros termos + política antes do botão "Confirmar reserva".
+- [ ] `/perfil` tem botões "Política de privacidade" + "Termos de uso" + "Baixar meus dados" + "Apagar conta".
 
 ## 5. Staff — agenda
 

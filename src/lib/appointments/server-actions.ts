@@ -105,9 +105,18 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('cancellation_window_hours')
+    .select('cancellation_window_hours, customer_can_cancel')
     .eq('id', appt.tenant_id)
     .maybeSingle()
+
+  // Tenant pode desligar cancelamento self-service. Cliente nesse caso
+  // tem que falar com o estabelecimento direto.
+  if (tenant?.customer_can_cancel === false) {
+    return {
+      ok: false,
+      error: 'Esse estabelecimento não permite cancelamento online — entre em contato direto.',
+    }
+  }
 
   const windowHours = tenant?.cancellation_window_hours ?? 2
   const cutoff = new Date(appt.start_at).getTime() - windowHours * 60 * 60 * 1000
