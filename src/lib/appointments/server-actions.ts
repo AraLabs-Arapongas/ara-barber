@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { recordAudit } from '@/lib/audit/log'
 import type { AgendaAppointment, AppointmentStatus } from '@/lib/appointments/queries'
 
 const CreateInput = z.object({
@@ -67,6 +68,26 @@ export async function createAppointment(
     console.error('createAppointment insert error:', error)
     return { ok: false, error: 'Falha ao criar reserva.' }
   }
+
+  // Audit: cliente criou reserva. Lemos user só pra capturar actor;
+  // RLS já garantiu autoria no insert acima.
+  const {
+    data: { user: actorUser },
+  } = await supabase.auth.getUser()
+  await recordAudit({
+    tenantId: input.tenantId,
+    actorUserId: actorUser?.id ?? null,
+    actorRole: 'CUSTOMER',
+    action: 'appointment.create',
+    entityType: 'appointment',
+    entityId: data.id,
+    changes: {
+      service_id: input.serviceId,
+      professional_id: input.professionalId,
+      start_at: input.startAt,
+      end_at: input.endAt,
+    },
+  })
 
   revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/meus-agendamentos')
@@ -139,6 +160,19 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
     .eq('id', appt.id)
 
   if (updateErr) return { ok: false, error: 'Falha ao cancelar.' }
+
+  await recordAudit({
+    tenantId: appt.tenant_id,
+    actorUserId: user.id,
+    actorRole: 'CUSTOMER',
+    action: 'appointment.cancel',
+    entityType: 'appointment',
+    entityId: appt.id,
+    changes: {
+      status_before: appt.status,
+      reason: parsed.data.reason ?? null,
+    },
+  })
 
   revalidatePath('/meus-agendamentos')
   return { ok: true }

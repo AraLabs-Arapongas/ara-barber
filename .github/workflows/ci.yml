@@ -38,23 +38,28 @@ jobs:
           NEXT_PUBLIC_DEV_BASE_HOST: lvh.me
           NEXT_PUBLIC_ENV: test
 
-  # Job E2E desativado temporariamente (2026-04-19, fim do Épico 1).
-  # Reativar quando tivermos:
-  # - Setup script que cria usuários de teste via Supabase Admin API (idempotente).
-  # - Credenciais reais do projeto dev como GitHub secrets (ou projeto dedicado de CI).
-  # - Decisão sobre rodar contra cloud dev ou stack local via supabase CLI.
-  # e2e:
-  #   name: Playwright smoke
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: 10
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         cache: 'pnpm'
-  #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm exec playwright install --with-deps chromium webkit
-  #     - run: pnpm test:e2e
+  # E2E smoke — escopo mínimo (proxy + render do dev index). Não toca DB
+  # nem auth real; usa env dummy. Cobertura full-stack (login OTP, criar
+  # appointment) entra quando tivermos projeto Supabase dedicado pra CI.
+  e2e:
+    name: Playwright smoke
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

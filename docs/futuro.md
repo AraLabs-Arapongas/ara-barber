@@ -17,6 +17,24 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-28 — Tech debt sweep: 4 itens fechados.**
+  (1) **RLS perf optim**: wrap `auth.uid()` em `(select auth.uid())` em
+  14 policies + indexa 4 FKs sem cobertura. Resolve advisor flags
+  `auth_rls_initplan` e `unindexed_foreign_keys`. Migration 0027.
+  (2) **Audit log**: tabela `audit_log` (RLS staff-only read; só
+  service-role escreve) + helper `lib/audit/log.recordAudit()` integrado
+  em createAppointment, cancelCustomerAppointment, createManualAppointment,
+  updateBookingRules, deleteMyAccountForTenant. Migration 0028.
+  (3) **pgTAP RLS isolation tests**: extensão habilitada (migration
+  0029) + suite `supabase/tests/database/rls_isolation.sql` com 11
+  asserções cross-tenant (customer A não vê/altera dados de B). Roda
+  via `pnpm test:rls`.
+  (4) **Playwright em CI reabilitado**: smoke mínimo (proxy header +
+  dev root index render) sem dependência de DB real. Job `e2e` no
+  ci.yml com upload de report como artifact. Cobertura full-stack
+  (login OTP, criar reserva) ainda é tech debt — exige projeto
+  Supabase dedicado pra CI com secrets.
+
 - **2026-04-28 — Upload de logo/favicon via Supabase Storage.**
   Antes era input de URL — exigia whitelist do domínio externo no
   `next.config.ts` (toda vez que tenant trocava o host quebrava).
@@ -76,16 +94,7 @@ _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão
 
 ### Tier 1 — Alto valor, baixo-médio esforço
 
-- **Audit log de mutations sensíveis.**
-  Cancelamento de appointment, edit de regras, mudança de role,
-  exclusão de cliente/profissional. Épico 9 incompleto. Importante
-  pra "quem fez o quê" em piloto. Esforço: ~3-4h (migration + helper
-  + chamadas nas mutations).
-
-- **Reabilitar Playwright em CI.**
-  Hoje E2E desativado (épico 10). Regressão silenciosa é risco real
-  conforme produto cresce. Esforço: ~1-2h, mas exige fazer testes
-  passarem primeiro.
+_(Vazio — itens anteriores resolvidos no sweep de 2026-04-28; ver Decisões.)_
 
 ### Tier 2 — Alto valor, alto esforço
 

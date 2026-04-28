@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { recordAudit } from '@/lib/audit/log'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 
@@ -42,8 +43,9 @@ export type CreateManualAppointmentResult = { ok: true; id: string } | { ok: fal
 export async function createManualAppointment(
   raw: CreateManualAppointmentInput,
 ): Promise<CreateManualAppointmentResult> {
+  let actor: Awaited<ReturnType<typeof assertStaff>> | null = null
   try {
-    await assertStaff()
+    actor = await assertStaff()
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
@@ -155,6 +157,21 @@ export async function createManualAppointment(
   if (insertErr || !appt) {
     return { ok: false, error: insertErr?.message ?? 'Falha ao criar agendamento.' }
   }
+
+  await recordAudit({
+    tenantId: tenant.id,
+    actorUserId: actor?.id ?? null,
+    actorRole: actor?.profile.role ?? null,
+    action: 'appointment.create_manual',
+    entityType: 'appointment',
+    entityId: appt.id,
+    changes: {
+      service_id: parsed.data.serviceId,
+      professional_id: parsed.data.professionalId,
+      start_at: parsed.data.startAtISO,
+      customer_kind: parsed.data.customerId ? 'existing' : 'new',
+    },
+  })
 
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/dashboard/agenda')

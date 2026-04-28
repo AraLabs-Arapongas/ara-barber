@@ -334,7 +334,7 @@ function DevRootIndex() {
             <AraLabsMark className="h-10 w-auto text-brand-primary" />
             <div>
               <p className="text-[0.7rem] font-medium uppercase tracking-[0.2em] text-fg-subtle">
-                Ara Barber · dev
+                ara-agenda · dev
               </p>
               <h1 className="font-display text-[1.5rem] font-semibold tracking-tight text-fg">
                 Índice local

@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { recordAudit } from '@/lib/audit/log'
 import { createClient } from '@/lib/supabase/server'
 import { createSecretClient } from '@/lib/supabase/secret'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
@@ -67,6 +68,16 @@ export async function deleteMyAccountForTenant(): Promise<DeleteAccountResult> {
     })
     .eq('id', customer.id)
   if (delErr) return { ok: false, error: 'Falha ao remover cadastro.' }
+
+  await recordAudit({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    actorRole: 'CUSTOMER',
+    action: 'customer.delete',
+    entityType: 'customer',
+    entityId: customer.id,
+    changes: { reason: 'lgpd_self_delete' },
+  })
 
   // 4. Sign out desta sessão (outros tenants mantêm seus próprios customers)
   await supabase.auth.signOut()

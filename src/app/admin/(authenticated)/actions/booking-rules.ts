@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { recordAudit } from '@/lib/audit/log'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 
@@ -90,6 +91,16 @@ export async function updateBookingRules(
   if (!data || data.length === 0) {
     return { ok: false, error: 'Não foi possível salvar (sem permissão).' }
   }
+
+  await recordAudit({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    actorRole: user.profile.role,
+    action: 'tenant.rules.update',
+    entityType: 'tenant',
+    entityId: tenant.id,
+    changes: parsed.data,
+  })
 
   revalidatePath('/admin/dashboard/regras')
   return { ok: true }
