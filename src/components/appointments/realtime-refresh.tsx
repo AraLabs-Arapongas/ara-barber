@@ -131,13 +131,17 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
       }
     })
 
-    // Tab voltou pro foreground: browsers (Chrome/Safari) podem ter matado o
-    // WebSocket em background. Refaz setAuth + force refresh dos dados (caso
-    // tenhamos perdido events) e o auto-resubscribe cuida do channel se
-    // estiver morto.
-    const handleVisibility = () => {
-      if (document.visibilityState !== 'visible') return
-      console.warn('[realtime] tab visível, revalidando')
+    // Reage a 3 eventos diferentes de "tela voltou ativa" pra cobrir todos
+    // os cenários:
+    //   - visibilitychange: tab passa de hidden→visible (mudou de aba, voltou).
+    //   - focus: janela ganhou foco de teclado (split-screen, duas janelas
+    //     lado-a-lado — nenhuma fica "hidden", visibilitychange não fira).
+    //   - pageshow: página voltou do bfcache (back/forward do browser).
+    // Todos disparam o mesmo handler: re-setAuth + router.refresh() pra
+    // garantir dados frescos mesmo se um event de realtime foi perdido.
+    const handleResume = (origin: string) => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+      console.warn('[realtime] resume', origin)
       void (async () => {
         const { data } = await supabase.auth.getSession()
         if (data.session?.access_token) {
@@ -146,12 +150,19 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
         router.refresh()
       })()
     }
-    document.addEventListener('visibilitychange', handleVisibility)
+    const onVisibility = () => handleResume('visibilitychange')
+    const onFocus = () => handleResume('focus')
+    const onPageShow = () => handleResume('pageshow')
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('pageshow', onPageShow)
 
     return () => {
       cancelled = true
       clearReconnectTimer()
-      document.removeEventListener('visibilitychange', handleVisibility)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pageshow', onPageShow)
       authSub.subscription.unsubscribe()
       if (channel) void supabase.removeChannel(channel)
     }

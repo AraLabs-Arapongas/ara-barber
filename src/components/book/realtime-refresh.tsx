@@ -155,9 +155,14 @@ export function RealtimeBookingRefresh({ tenantId }: Props) {
       }
     })
 
-    const handleVisibility = () => {
-      if (document.visibilityState !== 'visible') return
-      console.warn('[realtime/book] tab visível, revalidando')
+    // Cobre 3 cenários de "tela voltou ativa":
+    //   - visibilitychange: tab passa de hidden→visible.
+    //   - focus: janela ganhou foco (split-screen / 2 janelas lado-a-lado —
+    //     nenhuma fica hidden, só visibilitychange não fira).
+    //   - pageshow: bfcache (back/forward).
+    const handleResume = (origin: string) => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+      console.warn('[realtime/book] resume', origin)
       void (async () => {
         const { data } = await supabase.auth.getSession()
         if (data.session?.access_token) {
@@ -166,12 +171,19 @@ export function RealtimeBookingRefresh({ tenantId }: Props) {
         router.refresh()
       })()
     }
-    document.addEventListener('visibilitychange', handleVisibility)
+    const onVisibility = () => handleResume('visibilitychange')
+    const onFocus = () => handleResume('focus')
+    const onPageShow = () => handleResume('pageshow')
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('pageshow', onPageShow)
 
     return () => {
       cancelled = true
       clearReconnectTimer()
-      document.removeEventListener('visibilitychange', handleVisibility)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pageshow', onPageShow)
       authSub.subscription.unsubscribe()
       if (channel) void supabase.removeChannel(channel)
     }
