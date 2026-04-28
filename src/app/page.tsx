@@ -10,17 +10,16 @@ import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { CustomerAccess } from '@/components/home/customer-access'
 import { CustomerQuickActions } from '@/components/home/customer-quick-actions'
 import { BusinessHoursAccordion } from '@/components/home/business-hours-accordion'
 import { LoyaltyStamps } from '@/components/home/loyalty-stamps'
+import { NextAppointmentCardHero } from '@/components/home/next-appointment-card'
 import { CustomerShell } from '@/components/customer/customer-shell'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
 import { getBusinessHours } from '@/lib/booking/queries'
 import { getMyCustomerAppointments, type AgendaAppointment } from '@/lib/appointments/queries'
-import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -171,26 +170,62 @@ async function TenantPublicHome() {
 
       <CustomerShell showTabBar={loggedIn}>
         <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5 pt-6 pb-12 sm:px-6">
-          {/* Logo do tenant — compacto pra deixar a próxima reserva ganhar
-              destaque. Antes era 350px e empurrava todo o conteúdo. */}
-          <header className="flex flex-col items-center gap-2 text-center">
-            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={120} />
+          {/* Header horizontal: logo + nome + tagline/subtítulo.
+              Substituiu o logo gigante centralizado (350→64px ao lado
+              do nome) — visual mais "app" e menos "landing". */}
+          <header className="flex items-center gap-3">
+            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={56} />
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
+                {tenant.name}
+              </h1>
+              {tenant.tagline ? (
+                <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">{tenant.tagline}</p>
+              ) : null}
+            </div>
           </header>
 
-          {/* Bloco 1 — Próxima reserva: prioridade máxima quando existe.
-              Cliente quase sempre abre o app pra ver "tenho algo marcado?" */}
+          {/* Greeting personalizado pra logado: "Olá, [primeiro nome]"
+              + status contextual da próxima reserva. Cliente que abre
+              o app sente reconhecimento imediato. */}
+          {loggedIn ? (
+            <section className="mt-2">
+              <h2 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
+                Olá, {firstName(displayName ?? '')}
+              </h2>
+              <p className="mt-1 text-[0.9375rem] text-fg-muted">
+                {greetingSubtitle(nextAppointment)}
+              </p>
+            </section>
+          ) : null}
+
+          {/* Bloco 1 — Próxima reserva: hero card com ações inline
+              (Ver detalhes / Reagendar / Cancelar). Substituiu o card
+              clicável inteiro — agora cada ação é dedicada. */}
           {nextAppointment ? (
             <section>
               <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
                 Sua próxima reserva
               </p>
-              <NextAppointmentCard appt={nextAppointment} tenantTimezone={tenant.timezone} />
+              <NextAppointmentCardHero
+                appointment={{
+                  id: nextAppointment.id,
+                  serviceId: nextAppointment.serviceId,
+                  serviceName: nextAppointment.serviceName,
+                  professionalId: nextAppointment.professionalId,
+                  professionalName: nextAppointment.professionalName,
+                  startAt: nextAppointment.startAt,
+                  status: nextAppointment.status,
+                }}
+                tenantTimezone={tenant.timezone}
+                cancellationWindowHours={tenant.cancellationWindowHours}
+                customerCanCancel={tenant.customerCanCancel}
+              />
             </section>
           ) : null}
 
-          {/* Bloco 2 — CTA principal (Nova reserva). Vira "Agendar agora"
-              quando ainda não há histórico, mas sempre conceito é o mesmo. */}
-          <section className="text-center">
+          {/* Bloco 2 — CTA principal: Nova reserva. */}
+          <section>
             <Link href="/book" className="inline-block w-full">
               <Button size="lg" fullWidth>
                 <Calendar className="h-4 w-4" aria-hidden="true" />
@@ -200,34 +235,29 @@ async function TenantPublicHome() {
             </Link>
           </section>
 
-          {/* Bloco 3 — Ações rápidas: aparece se há próxima reserva
-              (Reagendar) OU se tenant tem contato (Falar/Ligar).
-              "Ver reservas" sempre presente quando logado. */}
+          {/* Bloco 3 — Ações rápidas: WhatsApp + Como chegar.
+              "Reagendar" agora vive dentro do card da próxima reserva. */}
           {loggedIn ? (
             <CustomerQuickActions
-              nextAppointment={
-                nextAppointment
-                  ? {
-                      id: nextAppointment.id,
-                      serviceId: nextAppointment.serviceId,
-                      professionalId: nextAppointment.professionalId,
-                    }
-                  : null
-              }
               contactPhone={tenant.contactPhone}
               whatsapp={tenant.whatsapp}
+              address={{
+                line1: tenant.addressLine1,
+                line2: tenant.addressLine2,
+                city: tenant.city,
+                state: tenant.state,
+                postalCode: tenant.postalCode,
+              }}
             />
           ) : null}
 
-          {/* Bloco 4 — Programa de pontos (mockado, feature flag).
-              Só renderiza pra logado. */}
+          {/* Bloco 4 — Programa de pontos (mockado, feature flag). */}
           {loggedIn ? <LoyaltyStamps /> : null}
 
-          {/* Bloco 5 — Funcionamento: accordion fechado por default.
-              Útil mas não disputa protagonismo com a reserva. */}
+          {/* Bloco 5 — Funcionamento: accordion com status "agora". */}
           {businessHours.length > 0 ? <BusinessHoursAccordion hours={businessHours} /> : null}
 
-          {/* Login / signup pra anônimos. Logged-in não vê (já está dentro). */}
+          {/* Login / signup pra anônimos. */}
           {!loggedIn ? (
             <div className="mt-2 flex flex-col items-center">
               <CustomerAccess loggedIn={loggedIn} displayName={displayName} email={emailForHome} />
@@ -243,61 +273,17 @@ async function TenantPublicHome() {
   )
 }
 
-/**
- * Card "Sua próxima reserva" — versão hero, mais alta visualmente.
- * Mostra serviço grande, data por extenso, profissional e status.
- * É o primeiro elemento da home (depois do logo) — onde o cliente
- * pousa primeiro o olho.
- */
-function NextAppointmentCard({
-  appt,
-  tenantTimezone,
-}: {
-  appt: AgendaAppointment
-  tenantTimezone: string
-}) {
-  const date = new Date(appt.startAt)
-  const dateLabel = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: tenantTimezone,
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-  }).format(date)
-  const timeLabel = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: tenantTimezone,
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
+function firstName(full: string): string {
+  const trimmed = full.trim()
+  if (!trimmed) return ''
+  return trimmed.split(/\s+/)[0]
+}
 
-  return (
-    <Link href={`/meus-agendamentos/${appt.id}`} className="block">
-      <Card className="shadow-xs border-brand-primary/20 bg-brand-primary/5 transition-colors hover:bg-brand-primary/10">
-        <CardContent className="py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="font-display text-[1.25rem] font-semibold leading-tight tracking-tight text-fg">
-                {appt.serviceName ?? 'Serviço'}
-              </p>
-              <p className="mt-1 text-[0.875rem] capitalize text-fg-muted">{dateLabel}</p>
-              <p className="mt-0.5 font-display text-[1.125rem] font-semibold tracking-tight text-fg">
-                {timeLabel}
-              </p>
-              {appt.professionalName ? (
-                <p className="mt-1 text-[0.8125rem] text-fg-muted">
-                  com <span className="text-fg">{appt.professionalName}</span>
-                </p>
-              ) : null}
-            </div>
-            <span
-              className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[appt.status]}`}
-            >
-              {STATUS_LABELS[appt.status]}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  )
+function greetingSubtitle(next: AgendaAppointment | null): string {
+  if (!next) return 'Que tal agendar seu próximo horário?'
+  if (next.status === 'CONFIRMED') return 'Sua próxima reserva está confirmada.'
+  if (next.status === 'SCHEDULED') return 'Sua próxima reserva aguarda confirmação.'
+  return 'Veja sua próxima reserva abaixo.'
 }
 
 /**

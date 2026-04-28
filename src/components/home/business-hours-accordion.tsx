@@ -11,19 +11,37 @@ const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as con
 
 /**
  * Horário de funcionamento em accordion. Por default fechado e mostra
- * só status de hoje (Aberto/Fechado + janela). Clica pra ver semana
- * inteira. Mantém a home enxuta sem perder a info quando precisar.
+ * status atual (Aberto agora · até HH:MM / Fechado agora / Abre HH:MM).
+ * Clica pra ver semana inteira. Mantém a home enxuta sem perder a
+ * info quando precisar.
+ *
+ * "Agora" calculado client-side via Date — bom o suficiente; se o
+ * relógio do device estiver errado, o status fica errado mas a janela
+ * de horários (HH:MM) continua certa.
  */
 export function BusinessHoursAccordion({ hours }: { hours: Hour[] }) {
   const [open, setOpen] = useState(false)
-  const todayWeekday = new Date().getDay()
+  const now = new Date()
+  const todayWeekday = now.getDay()
   const today = hours.find((h) => h.weekday === todayWeekday)
 
-  const todaySummary = today
-    ? today.isOpen
-      ? `Hoje ${today.startTime.slice(0, 5)}–${today.endTime.slice(0, 5)}`
-      : 'Fechado hoje'
-    : 'Horário não cadastrado'
+  // "HH:MM" do agora — comparação string-based pra simplicidade.
+  const nowHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+  const todayLine = (() => {
+    if (!today || !today.isOpen) {
+      return { label: 'Fechado hoje', tone: 'muted' as const }
+    }
+    const start = today.startTime.slice(0, 5)
+    const end = today.endTime.slice(0, 5)
+    if (nowHHMM < start) {
+      return { label: `Abre às ${start}`, tone: 'muted' as const }
+    }
+    if (nowHHMM >= end) {
+      return { label: `Fechado · abre amanhã`, tone: 'muted' as const }
+    }
+    return { label: `Aberto agora · até ${end}`, tone: 'success' as const }
+  })()
 
   // Ordena de Seg a Dom (mais natural pra leitura).
   const sorted = [...hours].sort((a, b) => {
@@ -44,7 +62,11 @@ export function BusinessHoursAccordion({ hours }: { hours: Hour[] }) {
           <p className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
             Funcionamento
           </p>
-          <p className="mt-0.5 text-[0.875rem] font-medium text-fg">{todaySummary}</p>
+          <p
+            className={`mt-0.5 text-[0.875rem] font-medium ${todayLine.tone === 'success' ? 'text-success' : 'text-fg-muted'}`}
+          >
+            {todayLine.label}
+          </p>
         </div>
         <ChevronDown
           className={`h-4 w-4 text-fg-muted transition-transform ${open ? 'rotate-180' : ''}`}

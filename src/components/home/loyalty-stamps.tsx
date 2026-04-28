@@ -35,7 +35,7 @@ type StampData = {
 const MOCK_DATA: StampData = {
   current: 4,
   goal: 10,
-  reward: 'Atendimento grátis',
+  reward: 'atendimento grátis',
 }
 
 export function LoyaltyStamps() {
@@ -68,11 +68,23 @@ export function LoyaltyStamps() {
               Programa de pontos
             </p>
             <p className="mt-0.5 text-[0.875rem] font-medium leading-tight text-fg">
-              {completed
-                ? `Você ganhou: ${reward}`
-                : remaining === 1
-                  ? `Falta 1 pra ${reward.toLowerCase()}`
-                  : `Faltam ${remaining} pra ${reward.toLowerCase()}`}
+              {completed ? (
+                <>
+                  Você ganhou:{' '}
+                  <span className="text-brand-primary">{reward}</span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    {remaining === 1
+                      ? 'Falta 1 visita'
+                      : `Faltam ${remaining} visitas`}
+                  </span>{' '}
+                  <span className="font-normal text-fg-muted">
+                    para ganhar 1 {reward.toLowerCase()}
+                  </span>
+                </>
+              )}
             </p>
           </div>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
@@ -110,7 +122,7 @@ export function LoyaltyStamps() {
         </div>
 
         <p className="mt-2 text-[0.75rem] text-fg-muted">
-          {current} de {goal} atendimentos
+          Progresso: {current} de {goal}
         </p>
       </CardContent>
     </Card>
