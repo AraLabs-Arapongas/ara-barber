@@ -158,26 +158,22 @@ export default async function DashboardHome() {
         <MoneyVisibilityToggle className="mt-1" />
       </header>
 
-      {next ? (
-        <Card className="mb-4 overflow-hidden">
-          <div className="bg-brand-primary/10 px-5 py-3 text-[0.75rem] font-medium uppercase tracking-[0.14em] text-brand-primary">
-            Próximo atendimento
-          </div>
-          <CardContent className="pt-4 pb-5">
-            <p className="text-[0.8125rem] text-fg-muted">
-              {timeLabel(next.startAt, tenant.timezone)}
-            </p>
-            <p className="mt-1 font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
-              {next.serviceName ?? 'Serviço'}
-            </p>
-            <p className="mt-0.5 text-[0.875rem] text-fg-muted">
-              com {next.professionalName ?? 'profissional'} · {next.customerName ?? 'cliente'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
+      <AgendaPreview
+        appointments={active.sort(
+          (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+        )}
+        tenantTimezone={tenant.timezone}
+      />
 
-      <div className="grid grid-cols-2 gap-3">
+      <QuickActions publicUrl={publicUrl} />
+
+      <PendingConfirmations appointments={pending} tenantTimezone={tenant.timezone} />
+
+      <AttentionSection items={attentionItems} />
+
+      <WeekAgendaStrip days={weekDays} todayISO={dateISO} />
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
         <StatCard
           icon={<Calendar className="h-4 w-4" />}
           label="Agenda hoje"
@@ -203,20 +199,24 @@ export default async function DashboardHome() {
         />
       </div>
 
-      <QuickActions publicUrl={publicUrl} />
-
-      <PendingConfirmations appointments={pending} tenantTimezone={tenant.timezone} />
-
-      <AttentionSection items={attentionItems} />
-
-      <WeekAgendaStrip days={weekDays} todayISO={dateISO} />
-
-      <AgendaPreview
-        appointments={active.sort(
-          (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
-        )}
-        tenantTimezone={tenant.timezone}
-      />
+      {next ? (
+        <Card className="mt-4 overflow-hidden">
+          <div className="bg-brand-primary/10 px-5 py-3 text-[0.75rem] font-medium uppercase tracking-[0.14em] text-brand-primary">
+            Próximo atendimento
+          </div>
+          <CardContent className="pt-4 pb-5">
+            <p className="text-[0.8125rem] text-fg-muted">
+              {timeLabel(next.startAt, tenant.timezone)}
+            </p>
+            <p className="mt-1 font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
+              {next.serviceName ?? 'Serviço'}
+            </p>
+            <p className="mt-0.5 text-[0.875rem] text-fg-muted">
+              com {next.professionalName ?? 'profissional'} · {next.customerName ?? 'cliente'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
     </main>
   )
 }
