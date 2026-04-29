@@ -1,5 +1,4 @@
 import { formatCentsToBrl } from '@/lib/money'
-import { isLate } from '@/lib/admin/derivations'
 import { MoneyValue } from '@/components/ui/money-value'
 import type { Database } from '@/lib/supabase/types'
 
@@ -27,14 +26,11 @@ export function DaySummary({
     (sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0),
     0,
   )
-  const now = new Date()
-  const late = active.filter((a) => isLate({ status: a.status, startAt: a.startAt }, now)).length
 
   return (
     <p className="my-2 text-[0.8125rem] text-fg-muted">
       {active.length} {active.length === 1 ? 'agendamento' : 'agendamentos'} ·{' '}
       <MoneyValue value={formatCentsToBrl(revenue)} /> previsto
-      {late > 0 ? ` · ${late} ${late === 1 ? 'atraso' : 'atrasos'}` : ''}
     </p>
   )
 }

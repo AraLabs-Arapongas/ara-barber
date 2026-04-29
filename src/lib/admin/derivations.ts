@@ -2,28 +2,10 @@ import type { Database } from '@/lib/supabase/types'
 
 type AppointmentStatus = Database['public']['Enums']['appointment_status']
 
-/**
- * Considera atrasado quando o appointment ainda está em estado "pendente"
- * (SCHEDULED ou CONFIRMED) e o horário de início já passou.
- */
-export function isLate(
-  appointment: { status: AppointmentStatus; startAt: string },
-  now: Date = new Date(),
-): boolean {
-  if (appointment.status !== 'SCHEDULED' && appointment.status !== 'CONFIRMED') return false
-  return new Date(appointment.startAt).getTime() < now.getTime()
-}
-
-/**
- * Retorna minutos de atraso (ou 0 se não está atrasado).
- */
-export function lateMinutes(
-  appointment: { status: AppointmentStatus; startAt: string },
-  now: Date = new Date(),
-): number {
-  if (!isLate(appointment, now)) return 0
-  return Math.floor((now.getTime() - new Date(appointment.startAt).getTime()) / 60000)
-}
+// Funções `isLate`/`lateMinutes` removidas em 2026-04-29: sem estado
+// ARRIVED no enum, todo CONFIRMED com horário passado virava "atrasado"
+// — incluindo cliente já sentado na cadeira sendo atendido. Confundia
+// o staff. Reabilitar quando ARRIVED/IN_PROGRESS entrarem (épico 10 #31).
 
 export type WorkingWindow = { startTime: string; endTime: string }
 

@@ -18,7 +18,7 @@ import { AttentionSection, type AttentionItem } from '@/components/home/attentio
 import { MoneyStatCard } from '@/components/home/money-stat-card'
 import { WeekAgendaStrip, type WeekDay } from '@/components/home/week-agenda-strip'
 import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
-import { hasNoSchedule, isLate, lateMinutes } from '@/lib/admin/derivations'
+import { hasNoSchedule } from '@/lib/admin/derivations'
 import { dateTimeInTenantTZ } from '@/lib/booking/slots'
 
 function todayISO(tenantTimezone: string): string {
@@ -108,7 +108,6 @@ export default async function DashboardHome() {
 
   // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
   const now = Date.now()
-  const nowDate = new Date(now)
   const active = today.filter((a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW')
   const next = active
     .filter((a) => new Date(a.startAt).getTime() >= now - 30 * 60000)
@@ -124,29 +123,17 @@ export default async function DashboardHome() {
   const completed = today.filter((a) => a.status === 'COMPLETED').length
   const canceled = today.filter((a) => a.status === 'CANCELED' || a.status === 'NO_SHOW').length
   const pendingActive = active.filter((a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED')
-  const lateAppointments = active.filter((a) =>
-    isLate({ status: a.status, startAt: a.startAt }, nowDate),
-  )
-
-  const lateItems: AttentionItem[] = lateAppointments.map((a) => ({
-    kind: 'late',
-    appointmentId: a.id,
-    customerName: a.customerName ?? 'Cliente',
-    minutes: lateMinutes({ status: a.status, startAt: a.startAt }, nowDate),
-  }))
 
   const availability = (availRes.data ?? []).map((a) => ({
     professionalId: a.professional_id,
   }))
-  const noScheduleItems: AttentionItem[] = (profsRes.data ?? [])
+  const attentionItems: AttentionItem[] = (profsRes.data ?? [])
     .filter((p) => hasNoSchedule(availability, p.id))
     .map((p) => ({
       kind: 'no-schedule',
       professionalId: p.id,
       professionalName: p.name,
     }))
-
-  const attentionItems: AttentionItem[] = [...lateItems, ...noScheduleItems]
   const publicUrl = await getTenantBookingUrl(tenant)
 
   const headerDate = new Intl.DateTimeFormat('pt-BR', {
@@ -206,11 +193,7 @@ export default async function DashboardHome() {
           icon={<Clock className="h-4 w-4" />}
           label="Pendentes"
           value={String(pendingActive.length)}
-          hint={
-            lateAppointments.length > 0
-              ? `${lateAppointments.length} ${lateAppointments.length === 1 ? 'atrasado' : 'atrasados'}`
-              : 'no horário'
-          }
+          hint={pendingActive.length === 0 ? 'tudo em dia' : 'aguardando'}
         />
         <StatCard
           icon={<CheckCircle2 className="h-4 w-4" />}
