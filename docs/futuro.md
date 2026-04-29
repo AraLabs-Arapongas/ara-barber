@@ -17,6 +17,34 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-29 — Admin AraLabs storefront: design multi-produto.**
+  Decisão arquitetural antes do trabalho começar no repo
+  `aralabs-storefront`. Padrão: **product switcher global no topo**
+  (estilo Vercel/GitHub) + rota especial `/admin/overview` pra
+  visão consolidada (MRR total, trials/churn cross-product). Sidebar
+  contextual ao produto selecionado (Dashboard, Tenants, Plans,
+  Users, Audit). URL: `/admin/[product]/...`. Audit log fica **por
+  produto** (storefront lê direto `audit_log` de cada Supabase via
+  secret key) — sem agregação cross-product por enquanto; reabrir
+  via webhooks → tabela agregada se virar dor. Permissões:
+  SUPER_ADMIN / PRODUCT_ADMIN (mapeado em `admin_user_products`) /
+  SUPPORT. Horizonte planejado: 3-5 produtos em 12-18 meses.
+  Spec full vive no repo do storefront:
+  `aralabs-storefront/docs/superpowers/specs/2026-04-29-admin-multiproduct-design.md`
+  (commit `1d1071c`). Aqui só registra a decisão pra rastreabilidade
+  cross-repo. Spec antigo do hand-off
+  (`docs/superpowers/specs/2026-04-19-platform-admin-handoff.md`)
+  permanece válido pro backend; o novo spec é complemento sobre o
+  shape da UI multi-produto.
+
+- **2026-04-29 — Sinalização "atrasado" removida da home staff.**
+  Sem estado ARRIVED no enum, todo CONFIRMED com horário passado
+  virava "atrasado" — incluindo cliente já sentado na cadeira sendo
+  atendido. Confundia o staff. Removido `isLate`/`lateMinutes` em
+  `lib/admin/derivations.ts`, kind `late` em `AttentionItem`, badge
+  no DaySummary. Reabilitar quando ARRIVED/IN_PROGRESS entrarem
+  no enum (épico 10 #31). Commit `96833e8`.
+
 - **2026-04-29 — Combo bookings: cliente reserva N serviços numa
   ação.** Schema novo (`appointment_groups` + `appointments.group_id`/
   `position`); backward compat 100% (single bookings têm group_id null).
