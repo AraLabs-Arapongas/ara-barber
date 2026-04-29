@@ -23,8 +23,10 @@ export type Database = {
           customer_id: string | null
           customer_name_snapshot: string | null
           end_at: string
+          group_id: string | null
           id: string
           notes: string | null
+          position: number | null
           price_cents_snapshot: number | null
           professional_id: string
           reminder_24h_sent_at: string | null
@@ -43,8 +45,10 @@ export type Database = {
           customer_id?: string | null
           customer_name_snapshot?: string | null
           end_at: string
+          group_id?: string | null
           id?: string
           notes?: string | null
+          position?: number | null
           price_cents_snapshot?: number | null
           professional_id: string
           reminder_24h_sent_at?: string | null
@@ -63,8 +67,10 @@ export type Database = {
           customer_id?: string | null
           customer_name_snapshot?: string | null
           end_at?: string
+          group_id?: string | null
           id?: string
           notes?: string | null
+          position?: number | null
           price_cents_snapshot?: number | null
           professional_id?: string
           reminder_24h_sent_at?: string | null
@@ -84,6 +90,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "appointments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointments_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
@@ -99,6 +112,54 @@ export type Database = {
           },
           {
             foreignKeyName: "appointments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_groups: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          tenant_id: string
+          total_duration_minutes: number
+          total_price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          tenant_id: string
+          total_duration_minutes: number
+          total_price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          tenant_id?: string
+          total_duration_minutes?: number
+          total_price_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_groups_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_groups_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -701,6 +762,7 @@ export type Database = {
           booking_window_days: number
           cancellation_window_hours: number
           city: string | null
+          combo_buffer_minutes: number
           contact_phone: string | null
           created_at: string
           current_plan_id: string | null
@@ -748,6 +810,7 @@ export type Database = {
           booking_window_days?: number
           cancellation_window_hours?: number
           city?: string | null
+          combo_buffer_minutes?: number
           contact_phone?: string | null
           created_at?: string
           current_plan_id?: string | null
@@ -795,6 +858,7 @@ export type Database = {
           booking_window_days?: number
           cancellation_window_hours?: number
           city?: string | null
+          combo_buffer_minutes?: number
           contact_phone?: string | null
           created_at?: string
           current_plan_id?: string | null
@@ -889,6 +953,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_appointment_group: {
+        Args: { p_canceled_by: string; p_group_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      create_combo_booking: {
+        Args: {
+          p_customer_id: string
+          p_customer_name_snapshot: string
+          p_segments: Json
+          p_tenant_id: string
+          p_total_duration_minutes: number
+          p_total_price_cents: number
+        }
+        Returns: string
+      }
       current_tenant_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never

@@ -33,6 +33,11 @@ const Input = z.object({
     .int('Janela de agendamento deve ser um inteiro.')
     .min(1, 'Mínimo 1 dia.')
     .max(365, 'Máximo 365 dias.'),
+  combo_buffer_minutes: z
+    .number()
+    .int('Buffer deve ser um inteiro.')
+    .min(0, 'Mínimo 0 min.')
+    .max(60, 'Máximo 60 min.'),
 })
 
 export type UpdateBookingRulesInput = z.infer<typeof Input>

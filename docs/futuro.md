@@ -17,6 +17,28 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-29 — Combo bookings: cliente reserva N serviços numa
+  ação.** Schema novo (`appointment_groups` + `appointments.group_id`/
+  `position`); backward compat 100% (single bookings têm group_id null).
+  Wizard cliente ganha steps "Ordem" (>1 serviço) e "Profissional"
+  vira N pickers (1 por serviço). DateTime usa `computeComboSlots`
+  novo que encadeia segments com buffer entre profs diferentes
+  (`tenants.combo_buffer_minutes`, default 10, configurável). Confirm
+  via RPC atômica `create_combo_booking` (valida conflito de cada
+  segment antes de qualquer insert). Cancel via RPC
+  `cancel_appointment_group` (cascata em transação). Cliente lista
+  combo como 1 card com badge "🔗 Combo · N serviços". Spec:
+  `docs/superpowers/specs/2026-04-29-combo-bookings-design.md`.
+
+  **Fora do escopo desta entrega (registrar como tech debt):**
+  - Detail page dedicada `/meus-agendamentos/combo/[groupId]` (combo
+    hoje só tem card agregado na lista; click no card vai pra primeiro
+    appointment do detail page atual).
+  - Badge "🔗 Combo" nos cards do staff em `/admin/dashboard/agenda`.
+  - Email único agregando segments do combo (hoje 1 email/segment).
+  - Cancelamento parcial (Fase 2 — schema já comporta com `is_canceled`
+    em `appointment_services` se virar feature).
+
 - **2026-04-28 — Tech debt sweep: 4 itens fechados.**
   (1) **RLS perf optim**: wrap `auth.uid()` em `(select auth.uid())` em
   14 policies + indexa 4 FKs sem cobertura. Resolve advisor flags

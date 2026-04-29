@@ -99,6 +99,11 @@ const CancelByCustomerInput = z.object({
   reason: z.string().max(500).optional(),
 })
 
+const CancelGroupByCustomerInput = z.object({
+  groupId: z.string().uuid(),
+  reason: z.string().max(500).optional(),
+})
+
 export type CancelByCustomerInput = z.infer<typeof CancelByCustomerInput>
 export type CancelResult = { ok: true } | { ok: false; error: string }
 
@@ -178,6 +183,86 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
   return { ok: true }
 }
 
+/**
+ * Cancela combo inteiro (todos appointments do group).
+ * Valida ownership do group + janela de cancelamento contra o
+ * `start_at` mais cedo. Em transação atômica via RPC
+ * `cancel_appointment_group`.
+ */
+export async function cancelCustomerGroupBooking(
+  raw: z.infer<typeof CancelGroupByCustomerInput>,
+): Promise<CancelResult> {
+  const parsed = CancelGroupByCustomerInput.safeParse(raw)
+  if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Não autenticado.' }
+
+  // RLS já bloqueia leitura de group de outro customer; double-check aqui.
+  const { data: group } = await supabase
+    .from('appointment_groups')
+    .select('id, tenant_id, customer_id, status')
+    .eq('id', parsed.data.groupId)
+    .maybeSingle()
+  if (!group) return { ok: false, error: 'Combo não encontrado.' }
+  if (group.status !== 'SCHEDULED' && group.status !== 'CONFIRMED') {
+    return { ok: false, error: 'Esse combo não pode mais ser cancelado.' }
+  }
+
+  // Validate cancellation window contra o appointment mais cedo do group.
+  const { data: earliest } = await supabase
+    .from('appointments')
+    .select('start_at')
+    .eq('group_id', group.id)
+    .order('start_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (!earliest) return { ok: false, error: 'Combo sem reservas.' }
+
+  const { data: tenantData } = await supabase
+    .from('tenants')
+    .select('cancellation_window_hours, customer_can_cancel')
+    .eq('id', group.tenant_id)
+    .maybeSingle()
+
+  if (tenantData?.customer_can_cancel === false) {
+    return {
+      ok: false,
+      error: 'Esse estabelecimento não permite cancelamento online — entre em contato direto.',
+    }
+  }
+
+  const windowHours = tenantData?.cancellation_window_hours ?? 2
+  const cutoff = new Date(earliest.start_at).getTime() - windowHours * 60 * 60 * 1000
+  if (Date.now() > cutoff) {
+    return { ok: false, error: `Cancelamento só até ${windowHours}h antes.` }
+  }
+
+  // Cascata atômica via RPC.
+  const { error: rpcErr } = await supabase.rpc('cancel_appointment_group', {
+    p_group_id: group.id,
+    p_canceled_by: user.id,
+    p_reason: parsed.data.reason ?? undefined,
+  })
+  if (rpcErr) return { ok: false, error: 'Falha ao cancelar combo.' }
+
+  await recordAudit({
+    tenantId: group.tenant_id,
+    actorUserId: user.id,
+    actorRole: 'CUSTOMER',
+    action: 'booking_group.cancel',
+    entityType: 'appointment_group',
+    entityId: group.id,
+    changes: { reason: parsed.data.reason ?? null },
+  })
+
+  revalidatePath('/meus-agendamentos')
+  return { ok: true }
+}
+
 type FetchRow = {
   id: string
   start_at: string
@@ -189,6 +274,8 @@ type FetchRow = {
   customer_name_snapshot: string | null
   price_cents_snapshot: number | null
   notes: string | null
+  group_id: string | null
+  position: number | null
   customer: { name: string | null } | null
   service: { name: string } | null
   professional: { name: string } | null
@@ -214,7 +301,7 @@ export async function fetchCustomerAppointment(
     .from('appointments')
     .select(
       `id, start_at, end_at, status, customer_id, professional_id, service_id,
-       customer_name_snapshot, price_cents_snapshot, notes,
+       customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
        customer:customers(name),
        service:services(name),
        professional:professionals(name)`,
@@ -240,6 +327,8 @@ export async function fetchCustomerAppointment(
       serviceId: row.service_id,
       priceCentsSnapshot: row.price_cents_snapshot,
       notes: row.notes,
+      groupId: row.group_id,
+      position: row.position,
     },
   }
 }

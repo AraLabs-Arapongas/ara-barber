@@ -43,6 +43,7 @@ export type TenantContext = {
   slotIntervalMinutes: number
   customerCanCancel: boolean
   bookingWindowDays: number
+  comboBufferMinutes: number
   contactPhone: string | null
   whatsapp: string | null
   /** Tagline/subtítulo curto exibido sob o nome no header (ex: "Centro de beleza"). */
@@ -88,7 +89,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -115,6 +116,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     slotIntervalMinutes: data.slot_interval_minutes ?? 15,
     customerCanCancel: data.customer_can_cancel ?? true,
     bookingWindowDays: data.booking_window_days ?? 14,
+    comboBufferMinutes: data.combo_buffer_minutes ?? 10,
     contactPhone: data.contact_phone,
     whatsapp: data.whatsapp,
     // Tagline reusa `home_headline_accent` por enquanto. Não tem campo

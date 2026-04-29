@@ -14,6 +14,7 @@ export type BookingRules = {
   cancellation_window_hours: number
   customer_can_cancel: boolean
   booking_window_days: number
+  combo_buffer_minutes: number
 }
 
 type Props = {
@@ -86,6 +87,28 @@ export function BookingRulesForm({ initial }: Props) {
                 </option>
               ))}
             </select>
+          </Field>
+
+          <Field
+            id="combo-buffer"
+            label="Buffer entre serviços do combo (minutos)"
+            hint="Tempo extra entre dois serviços com profissionais diferentes (transição). Mesmo profissional não usa buffer."
+          >
+            <input
+              id="combo-buffer"
+              type="number"
+              min={0}
+              max={60}
+              step={1}
+              value={data.combo_buffer_minutes}
+              onChange={(e) =>
+                setData((d) => ({
+                  ...d,
+                  combo_buffer_minutes: clampInt(e.target.value, 0, 60),
+                }))
+              }
+              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+            />
           </Field>
 
           <Field

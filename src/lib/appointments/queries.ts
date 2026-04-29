@@ -18,6 +18,10 @@ export type AgendaAppointment = {
   serviceId: string
   priceCentsSnapshot: number | null
   notes: string | null
+  /** Quando NOT NULL, este appointment pertence a um combo. */
+  groupId: string | null
+  /** Ordem dentro do combo (0-indexed). NULL pra single bookings. */
+  position: number | null
 }
 
 type Row = {
@@ -31,6 +35,8 @@ type Row = {
   customer_name_snapshot: string | null
   price_cents_snapshot: number | null
   notes: string | null
+  group_id: string | null
+  position: number | null
   customer: { name: string | null } | null
   service: { name: string } | null
   professional: { name: string } | null
@@ -50,6 +56,8 @@ function rowToAppointment(row: Row): AgendaAppointment {
     serviceId: row.service_id,
     priceCentsSnapshot: row.price_cents_snapshot,
     notes: row.notes,
+    groupId: row.group_id,
+    position: row.position,
   }
 }
 
@@ -79,7 +87,7 @@ export async function getAgendaForDay(
     .select(
       `
       id, start_at, end_at, status, customer_id, professional_id, service_id,
-      customer_name_snapshot, price_cents_snapshot, notes,
+      customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
       customer:customers(name),
       service:services(name),
       professional:professionals(name)
@@ -110,7 +118,7 @@ export async function getPendingConfirmations(
     .select(
       `
       id, start_at, end_at, status, customer_id, professional_id, service_id,
-      customer_name_snapshot, price_cents_snapshot, notes,
+      customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
       customer:customers(name),
       service:services(name),
       professional:professionals(name)
@@ -137,7 +145,7 @@ export async function getMyCustomerAppointments(tenantId?: string): Promise<Agen
     .select(
       `
       id, start_at, end_at, status, customer_id, professional_id, service_id,
-      customer_name_snapshot, price_cents_snapshot, notes,
+      customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
       customer:customers(name),
       service:services(name),
       professional:professionals(name)

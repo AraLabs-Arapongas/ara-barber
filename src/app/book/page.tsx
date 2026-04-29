@@ -4,8 +4,14 @@ import { getCustomerForTenant } from '@/lib/customers/ensure'
 import { createClient } from '@/lib/supabase/server'
 import { CustomerBookingWizard } from '@/components/book/wizard'
 
-type Step = 'service' | 'professional' | 'datetime' | 'confirm'
-const VALID_STEPS = new Set<Step>(['service', 'professional', 'datetime', 'confirm'])
+type Step = 'service' | 'order' | 'professional' | 'datetime' | 'confirm'
+const VALID_STEPS = new Set<Step>([
+  'service',
+  'order',
+  'professional',
+  'datetime',
+  'confirm',
+])
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -16,14 +22,28 @@ function pickString(v: string | string[] | undefined): string | null {
   return v ?? null
 }
 
+function parseCsv(v: string | string[] | undefined): string[] {
+  const s = pickString(v)
+  if (!s) return []
+  return s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+}
+
 /**
- * Wizard único de booking. Substitui o multi-route antigo
- * (`/book/{servico,profissional,data,horario,login,confirmar}`).
+ * Wizard único de booking. Suporta combo (N serviços) e single (1 serviço).
  *
- * Dados de contexto (services, professionals, blocks, appointments do
- * range) são fetched aqui no server e passados de uma vez pro wizard
- * client-side. URL search params (`step`, `serviceId`, `professionalId`,
- * `startAt`) preservam estado em deep-link/back/forward.
+ * URL params (deep-link friendly):
+ *   step=service|order|professional|datetime|confirm
+ *   serviceIds=<csv>
+ *   order=<csv>          (default = serviceIds)
+ *   profIds=<csv>        (paralelo a `order`, posicional)
+ *   startAt=<ISO>        (slot inicial)
+ *
+ * Compat: aceita também URL legada `serviceId=X&professionalId=Y` e
+ * normaliza pra serviceIds=X&profIds=Y. Vale pra "Reagendar" links
+ * antigos.
  */
 export default async function BookPage({ searchParams }: PageProps) {
   const tenant = await getCurrentTenantOrNotFound()
@@ -31,6 +51,30 @@ export default async function BookPage({ searchParams }: PageProps) {
 
   const stepParam = pickString(sp.step) as Step | null
   const initialStep = stepParam && VALID_STEPS.has(stepParam) ? stepParam : null
+
+  // Multi-svc preferido; cai pra legado se vazio.
+  let serviceIds = parseCsv(sp.serviceIds)
+  if (serviceIds.length === 0) {
+    const legacy = pickString(sp.serviceId)
+    if (legacy) serviceIds = [legacy]
+  }
+  let order = parseCsv(sp.order)
+  if (order.length === 0) order = serviceIds
+
+  // profIds posicional ao order. Se vazio, tenta legado professionalId.
+  const profIds = parseCsv(sp.profIds)
+  let professionalByService: Record<string, string> = {}
+  if (profIds.length > 0) {
+    order.forEach((sid, i) => {
+      const p = profIds[i]
+      if (p) professionalByService[sid] = p
+    })
+  } else {
+    const legacyProf = pickString(sp.professionalId)
+    if (legacyProf && order.length === 1) {
+      professionalByService = { [order[0]]: legacyProf }
+    }
+  }
 
   const [context, customer, supabase] = await Promise.all([
     getCustomerBookingContext(tenant),
@@ -46,9 +90,9 @@ export default async function BookPage({ searchParams }: PageProps) {
       context={context}
       initial={{
         step: initialStep,
-        serviceId: pickString(sp.serviceId),
-        professionalId: pickString(sp.professionalId),
-        startAtISO: pickString(sp.startAt),
+        serviceIds,
+        order,
+        professionalByService,
       }}
       initialCustomer={
         customer

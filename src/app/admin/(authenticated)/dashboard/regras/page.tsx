@@ -23,6 +23,7 @@ export default async function RegrasPage() {
           cancellation_window_hours: tenant.cancellationWindowHours,
           customer_can_cancel: tenant.customerCanCancel,
           booking_window_days: tenant.bookingWindowDays,
+          combo_buffer_minutes: tenant.comboBufferMinutes,
         }}
       />
     </main>

@@ -3,14 +3,18 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, Clock, Hourglass, RefreshCw, User, X } from 'lucide-react'
+import { CalendarPlus, Clock, Hourglass, Link2, RefreshCw, User, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { STATUS_LABELS, STATUS_TONE, fullDateTimeLabel } from '@/lib/appointments/labels'
 import type { AgendaAppointment } from '@/lib/appointments/queries'
-import { cancelCustomerAppointment } from '@/lib/appointments/server-actions'
+import {
+  cancelCustomerAppointment,
+  cancelCustomerGroupBooking,
+} from '@/lib/appointments/server-actions'
 import { cacheAppointments } from '@/lib/appointments/client-cache'
+import { groupBookings, type ComboGroup, type DisplayBooking } from '@/lib/appointments/grouping'
 import { useCustomerTenant } from '@/components/customer/customer-tenant-provider'
 import { useConfirm } from '@/components/ui/confirm/provider'
 
@@ -31,30 +35,32 @@ export function MyAppointmentsList({ appointments }: Props) {
     cacheAppointments(appointments)
   }, [appointments])
 
+  // Agrupa antes de filtrar — assim combo conta como 1 entry e
+  // futuros/passados é decidido pelo startAt mínimo do combo.
+  const grouped = useMemo(() => groupBookings(appointments), [appointments])
+
   const futuros = useMemo(
     () =>
-      appointments.filter(
-        (a) =>
-          new Date(a.startAt).getTime() >= nowMs &&
-          a.status !== 'CANCELED' &&
-          a.status !== 'NO_SHOW',
-      ),
-    [appointments, nowMs],
+      grouped.filter((b) => {
+        const start = bookingStart(b)
+        const status = bookingStatus(b)
+        return start >= nowMs && status !== 'CANCELED' && status !== 'NO_SHOW'
+      }),
+    [grouped, nowMs],
   )
   const passados = useMemo(
     () =>
-      appointments.filter(
-        (a) =>
-          new Date(a.startAt).getTime() < nowMs ||
-          a.status === 'CANCELED' ||
-          a.status === 'NO_SHOW',
-      ),
-    [appointments, nowMs],
+      grouped.filter((b) => {
+        const start = bookingStart(b)
+        const status = bookingStatus(b)
+        return start < nowMs || status === 'CANCELED' || status === 'NO_SHOW'
+      }),
+    [grouped, nowMs],
   )
 
   const shown = tab === 'futuros' ? futuros : passados
 
-  async function cancel(id: string) {
+  async function cancelSingle(id: string) {
     const ok = await confirm({
       title: 'Cancelar esta reserva?',
       description: 'Seu horário será liberado pra outros clientes.',
@@ -66,6 +72,26 @@ export function MyAppointmentsList({ appointments }: Props) {
     setError(null)
     startTransition(async () => {
       const result = await cancelCustomerAppointment({ appointmentId: id })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  async function cancelCombo(groupId: string, serviceCount: number) {
+    const ok = await confirm({
+      title: `Cancelar combo de ${serviceCount} serviços?`,
+      description: 'Todos os serviços do combo serão cancelados.',
+      confirmLabel: 'Cancelar combo',
+      cancelLabel: 'Voltar',
+      destructive: true,
+    })
+    if (!ok) return
+    setError(null)
+    startTransition(async () => {
+      const result = await cancelCustomerGroupBooking({ groupId })
       if (!result.ok) {
         setError(result.error)
         return
@@ -113,20 +139,34 @@ export function MyAppointmentsList({ appointments }: Props) {
 
       {shown.length > 0 ? (
         <ul className="space-y-2">
-          {shown.map((a) => {
-            const startMs = new Date(a.startAt).getTime()
-            const cutoff = startMs - cancellationWindowHours * 60 * 60 * 1000
+          {shown.map((b) => {
+            const start = bookingStart(b)
+            const cutoff = start - cancellationWindowHours * 60 * 60 * 1000
             const canCancel =
               tab === 'futuros' &&
-              (a.status === 'SCHEDULED' || a.status === 'CONFIRMED') &&
+              ['SCHEDULED', 'CONFIRMED'].includes(bookingStatus(b)) &&
               nowMs <= cutoff
+
+            if (b.kind === 'single') {
+              return (
+                <li key={`single-${b.appointment.id}`}>
+                  <AppointmentCard
+                    appt={b.appointment}
+                    canCancel={canCancel}
+                    pending={pending}
+                    onCancel={() => cancelSingle(b.appointment.id)}
+                    tenantTimezone={tenantTimezone}
+                  />
+                </li>
+              )
+            }
             return (
-              <li key={a.id}>
-                <AppointmentCard
-                  appt={a}
+              <li key={`combo-${b.group.id}`}>
+                <ComboCard
+                  group={b.group}
                   canCancel={canCancel}
                   pending={pending}
-                  onCancel={() => cancel(a.id)}
+                  onCancel={() => cancelCombo(b.group.id, b.group.segments.length)}
                   tenantTimezone={tenantTimezone}
                 />
               </li>
@@ -157,6 +197,13 @@ export function MyAppointmentsList({ appointments }: Props) {
       )}
     </main>
   )
+}
+
+function bookingStart(b: DisplayBooking): number {
+  return new Date(b.kind === 'single' ? b.appointment.startAt : b.group.startAt).getTime()
+}
+function bookingStatus(b: DisplayBooking) {
+  return b.kind === 'single' ? b.appointment.status : b.group.status
 }
 
 function AppointmentCard({
@@ -210,12 +257,8 @@ function AppointmentCard({
       </Link>
       {canCancel ? (
         <div className="flex items-center gap-1 border-t border-border/60 px-2 py-1.5">
-          {/* Reagendar: redireciona pro wizard pré-preenchido com mesmo
-              serviço + profissional. Cliente cancela o original depois
-              manualmente — escolha consciente, não cancela antes de ter
-              o novo horário garantido. */}
           <Link
-            href={`/book?step=datetime&serviceId=${appt.serviceId}&professionalId=${appt.professionalId}`}
+            href={`/book?step=datetime&serviceIds=${appt.serviceId}&profIds=${appt.professionalId}`}
             className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[0.8125rem] font-medium text-fg hover:bg-bg-subtle"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -229,6 +272,79 @@ function AppointmentCard({
           >
             <X className="h-3.5 w-3.5" />
             {pending ? 'Cancelando...' : 'Cancelar'}
+          </button>
+        </div>
+      ) : null}
+    </Card>
+  )
+}
+
+function ComboCard({
+  group,
+  canCancel,
+  pending,
+  onCancel,
+  tenantTimezone,
+}: {
+  group: ComboGroup
+  canCancel: boolean
+  pending: boolean
+  onCancel: () => void
+  tenantTimezone: string
+}) {
+  const totalDuration = Math.round(
+    (new Date(group.endAt).getTime() - new Date(group.startAt).getTime()) / 60000,
+  )
+  const services = group.segments.map((s) => s.serviceName ?? 'Serviço').join(' + ')
+  const profs = Array.from(
+    new Set(group.segments.map((s) => s.professionalName).filter(Boolean)),
+  ).join(' e ')
+  return (
+    <Card className="shadow-xs overflow-hidden">
+      <CardContent className="py-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand-primary/10 px-2 py-0.5 text-[0.6875rem] font-medium uppercase tracking-wide text-brand-primary">
+              <Link2 className="h-3 w-3" aria-hidden="true" />
+              Combo · {group.segments.length} serviços
+            </span>
+            <p className="mt-1.5 font-display text-[1.0625rem] font-semibold leading-tight tracking-tight text-fg">
+              {services}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[group.status]}`}
+          >
+            {STATUS_LABELS[group.status]}
+          </span>
+        </div>
+        <dl className="mt-3 space-y-1 text-[0.875rem] text-fg-muted">
+          <div className="flex items-center gap-2">
+            <Clock className="h-3.5 w-3.5" />
+            {fullDateTimeLabel(group.startAt, tenantTimezone)}
+          </div>
+          {profs ? (
+            <div className="flex items-center gap-2">
+              <User className="h-3.5 w-3.5" />
+              {profs}
+            </div>
+          ) : null}
+          <div className="flex items-center gap-2">
+            <Hourglass className="h-3.5 w-3.5" />
+            {totalDuration} min
+          </div>
+        </dl>
+      </CardContent>
+      {canCancel ? (
+        <div className="flex items-center gap-1 border-t border-border/60 px-2 py-1.5">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+            className="ml-auto inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[0.8125rem] font-medium text-error hover:bg-error-bg disabled:opacity-50"
+          >
+            <X className="h-3.5 w-3.5" />
+            {pending ? 'Cancelando...' : 'Cancelar combo'}
           </button>
         </div>
       ) : null}

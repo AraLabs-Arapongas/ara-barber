@@ -188,3 +188,207 @@ export function computeSlots(input: SlotInput): Slot[] {
 
   return results
 }
+
+// ============================================================================
+// Combo slots: cliente reserva N serviços back-to-back numa única ação.
+// ============================================================================
+
+/** Sentinel pra "qualquer profissional" — replicado de booking/shared/types
+ * pra evitar dependência cruzada (slots.ts é puro, sem React). */
+export const ANY_PROFESSIONAL_SENTINEL = 'any' as const
+
+export type ComboService = {
+  /** UUID do serviço (ou identificador único pra dedupe). */
+  serviceId: string
+  durationMinutes: number
+  /** UUID do profissional escolhido OU 'any'. */
+  professionalId: string
+  /**
+   * IDs dos profs candidatos quando `professionalId === 'any'`.
+   * (Quem atende esse serviço.) Quando profissional fixo, ignorado.
+   */
+  candidateProfessionalIds: string[]
+}
+
+export type ComboSlotInput = {
+  /** Lista ordenada — primeira é o serviço inicial. */
+  services: ComboService[]
+  /** `tenants.combo_buffer_minutes`. Aplica entre serviços com profs DIFERENTES. */
+  bufferMinutes: number
+  dateISO: string
+  tenantTimezone: string
+  businessHours: BusinessHour[]
+  availability: ProfessionalAvailabilityEntry[]
+  blocks: AvailabilityBlock[]
+  /** Appointments já existentes (pra detectar conflito). Inclui combos
+   *  já reservados como N entradas separadas. */
+  existingAppointments: Array<{ professionalId: string; startAt: string; endAt: string }>
+  now: Date
+  stepMinutes?: number
+  minAdvanceHours?: number
+}
+
+export type ComboSegment = {
+  serviceId: string
+  /** Resolvido (pra 'any' vira o real). */
+  professionalId: string
+  startISO: string
+  endISO: string
+}
+
+export type ComboSlot = {
+  /** Horário do início do PRIMEIRO serviço. */
+  time: string
+  startISO: string
+  /** Fim do ÚLTIMO serviço (inclui buffers acumulados). */
+  endISO: string
+  available: boolean
+  /** Detalhes de cada serviço (prof resolvido, tempo de cada). */
+  segments: ComboSegment[]
+}
+
+/**
+ * Calcula slots pra combo de serviços back-to-back.
+ *
+ * Pra cada candidato T no dia, tenta encaixar a sequência inteira:
+ *   serviço 0 em [T, T+dur0]
+ *   serviço 1 em [T+dur0+buf?, T+dur0+buf?+dur1]
+ *   ...
+ *
+ * Buffer aplica APENAS entre serviços com profissionais diferentes
+ * (mesmo prof não precisa transição). Quando 'any', o prof resolvido
+ * é o primeiro candidato livre.
+ *
+ * Slot é `available` quando todos os serviços encaixam sem conflito,
+ * dentro de business_hours, dentro de professional_availability,
+ * sem availability_blocks e sem appointment ativo.
+ */
+export function computeComboSlots(input: ComboSlotInput): ComboSlot[] {
+  if (input.services.length === 0) return []
+
+  const step = input.stepMinutes ?? 30
+  const minAdvanceMs = (input.minAdvanceHours ?? 0) * 60 * 60_000
+  const earliestAllowed = input.now.getTime() + minAdvanceMs
+  const weekday = weekdayInTenantTZ(input.dateISO, input.tenantTimezone)
+
+  const weekdayHours = input.businessHours.find((h) => h.weekday === weekday)
+  if (!weekdayHours || !weekdayHours.isOpen) return []
+  const businessStart = timeToMinutes(weekdayHours.startTime)
+  const businessEnd = timeToMinutes(weekdayHours.endTime)
+
+  // Pré-calcula a duração total mínima da sequência (sem buffer ainda) pra
+  // pular Ts impossíveis cedo.
+  const minTotalMinutes = input.services.reduce((sum, s) => sum + s.durationMinutes, 0)
+
+  const results: ComboSlot[] = []
+
+  outer: for (let t = businessStart; t + minTotalMinutes <= businessEnd; t += step) {
+    const time = minutesToTime(t)
+    const firstSlotStart = dateTimeInTenantTZ(input.dateISO, time, input.tenantTimezone)
+    if (firstSlotStart.getTime() < earliestAllowed) continue
+
+    // Walk a sequência. `cursor` é o instante em minutos (relativo ao dia)
+    // onde o próximo serviço começa.
+    let cursor = t
+    let prevProf: string | null = null
+    const segments: ComboSegment[] = []
+
+    for (let i = 0; i < input.services.length; i++) {
+      const svc = input.services[i]
+
+      // Buffer aplica antes do serviço i (i > 0) se o prof do anterior
+      // for diferente do que vai atender este. Pra 'any', resolveremos o
+      // prof abaixo, mas precisamos decidir o cursor agora; então usamos
+      // a heurística: se o anterior teve prof X e este tem prof Y fixo
+      // (Y != X), aplica buffer; se este é 'any', tentamos primeiro sem
+      // buffer (mesmo prof) e depois com buffer (prof diferente) — mas
+      // isso multiplica complexidade. Solução prática: SEMPRE aplica buffer
+      // quando i>0 e (prevProf != svc.professionalId fixo) OU svc é 'any'
+      // (assume que pode dar prof diferente). Exceção: se i>0 e prevProf
+      // === svc.professionalId fixo, sem buffer.
+      let segmentStartMin = cursor
+      if (i > 0) {
+        const sameAsPrev =
+          svc.professionalId !== ANY_PROFESSIONAL_SENTINEL &&
+          prevProf !== null &&
+          svc.professionalId === prevProf
+        if (!sameAsPrev) segmentStartMin = cursor + input.bufferMinutes
+      }
+
+      const segmentEndMin = segmentStartMin + svc.durationMinutes
+      if (segmentEndMin > businessEnd) continue outer
+
+      const segStart = dateTimeInTenantTZ(
+        input.dateISO,
+        minutesToTime(segmentStartMin),
+        input.tenantTimezone,
+      )
+      const segEnd = new Date(segStart.getTime() + svc.durationMinutes * 60_000)
+
+      // Lista de profs candidatos pra este serviço.
+      const candidates =
+        svc.professionalId === ANY_PROFESSIONAL_SENTINEL
+          ? svc.candidateProfessionalIds
+          : [svc.professionalId]
+
+      // Acha primeiro candidato disponível pra este segment.
+      let chosen: string | undefined
+      for (const profId of candidates) {
+        const withinJourney = input.availability.some(
+          (a) =>
+            a.professionalId === profId &&
+            a.weekday === weekday &&
+            timeToMinutes(a.startTime) <= segmentStartMin &&
+            timeToMinutes(a.endTime) >= segmentEndMin,
+        )
+        if (!withinJourney) continue
+
+        const blocked = input.blocks.some(
+          (b) =>
+            (b.professionalId === profId || b.professionalId === null) &&
+            new Date(b.startAt).getTime() < segEnd.getTime() &&
+            new Date(b.endAt).getTime() > segStart.getTime(),
+        )
+        if (blocked) continue
+
+        const conflict = input.existingAppointments.some(
+          (a) =>
+            a.professionalId === profId &&
+            new Date(a.startAt).getTime() < segEnd.getTime() &&
+            new Date(a.endAt).getTime() > segStart.getTime(),
+        )
+        if (conflict) continue
+
+        chosen = profId
+        break
+      }
+
+      if (!chosen) continue outer // sequência quebra aqui, próximo T
+
+      segments.push({
+        serviceId: svc.serviceId,
+        professionalId: chosen,
+        startISO: segStart.toISOString(),
+        endISO: segEnd.toISOString(),
+      })
+
+      cursor = segmentEndMin
+      prevProf = chosen
+    }
+
+    // Sequência inteira encaixou. Slot disponível.
+    results.push({
+      time,
+      startISO: firstSlotStart.toISOString(),
+      endISO: dateTimeInTenantTZ(
+        input.dateISO,
+        minutesToTime(cursor),
+        input.tenantTimezone,
+      ).toISOString(),
+      available: true,
+      segments,
+    })
+  }
+
+  return results
+}

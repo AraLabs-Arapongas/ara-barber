@@ -34,6 +34,7 @@ export type CustomerBookingContext = {
   bookingWindowDays: number
   minAdvanceHours: number
   slotIntervalMinutes: number
+  comboBufferMinutes: number
   /** Date YYYY-MM-DD do primeiro dia disponível (hoje no fuso do tenant). */
   rangeStartDate: string
   /** Date YYYY-MM-DD do último dia disponível (hoje + window-1). */
@@ -124,6 +125,7 @@ export async function getCustomerBookingContext(
     bookingWindowDays: windowDays,
     minAdvanceHours: tenant.minAdvanceHours,
     slotIntervalMinutes: tenant.slotIntervalMinutes,
+    comboBufferMinutes: tenant.comboBufferMinutes,
     rangeStartDate: localToday,
     rangeEndDate: localLast,
     services,

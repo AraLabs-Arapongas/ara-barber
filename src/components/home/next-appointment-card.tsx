@@ -67,7 +67,7 @@ export function NextAppointmentCardHero({
     minute: '2-digit',
   }).format(new Date(appointment.startAt))
 
-  const reagendarHref = `/book?step=datetime&serviceId=${appointment.serviceId}&professionalId=${appointment.professionalId}`
+  const reagendarHref = `/book?step=datetime&serviceIds=${appointment.serviceId}&profIds=${appointment.professionalId}`
 
   async function handleCancel() {
     const ok = await confirm({
