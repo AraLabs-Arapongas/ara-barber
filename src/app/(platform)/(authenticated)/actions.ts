@@ -170,3 +170,69 @@ export async function setTenantStatusAction(
   revalidatePath(`/tenants/${parsed.data.tenantId}`)
   return { ok: true }
 }
+
+const UserActionSchema = z.object({
+  profileId: z.string().uuid(),
+  userId: z.string().uuid(),
+  email: z.string().email(),
+})
+
+export type UserActionState = { error?: string; ok?: boolean }
+
+export async function deactivateUserAction(
+  _prev: UserActionState,
+  formData: FormData,
+): Promise<UserActionState> {
+  const actor = await assertPlatformAdmin()
+  const parsed = UserActionSchema.safeParse({
+    profileId: formData.get('profileId'),
+    userId: formData.get('userId'),
+    email: formData.get('email'),
+  })
+  if (!parsed.success) return { error: 'Input inválido' }
+  const supabase = createSecretClient()
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({ is_active: false })
+    .eq('id', parsed.data.profileId)
+  if (error) return { error: error.message }
+  await recordAudit({
+    tenantId: null,
+    actorUserId: actor.id,
+    actorRole: 'PLATFORM_ADMIN',
+    action: 'user.deactivate',
+    entityType: 'user_profile',
+    entityId: parsed.data.profileId,
+    changes: { email: parsed.data.email },
+  })
+  revalidatePath('/users')
+  return { ok: true }
+}
+
+export async function sendPasswordResetAction(
+  _prev: UserActionState,
+  formData: FormData,
+): Promise<UserActionState> {
+  const actor = await assertPlatformAdmin()
+  const parsed = UserActionSchema.safeParse({
+    profileId: formData.get('profileId'),
+    userId: formData.get('userId'),
+    email: formData.get('email'),
+  })
+  if (!parsed.success) return { error: 'Input inválido' }
+  const supabase = createSecretClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `https://aralabs.com.br/admin/reset-password`,
+  })
+  if (error) return { error: error.message }
+  await recordAudit({
+    tenantId: null,
+    actorUserId: actor.id,
+    actorRole: 'PLATFORM_ADMIN',
+    action: 'user.password_reset_sent',
+    entityType: 'user_profile',
+    entityId: parsed.data.profileId,
+    changes: { email: parsed.data.email },
+  })
+  return { ok: true }
+}
