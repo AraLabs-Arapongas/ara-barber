@@ -1,4 +1,5 @@
 import 'server-only'
+import { assertPlatformAdmin } from '@/lib/auth/guards'
 import { createSecretClient } from '@/lib/supabase/secret'
 import type { Database } from '@/lib/supabase/types'
 
@@ -25,6 +26,7 @@ const TENANT_COLUMNS =
   'id, slug, name, subdomain, status, billing_status, current_plan_id, monthly_price_cents, trial_ends_at, created_at, primary_color, secondary_color, accent_color, logo_url, favicon_url'
 
 export async function listAllTenants(): Promise<AdminTenantRow[]> {
+  await assertPlatformAdmin()
   const supabase = createSecretClient()
   const { data, error } = await supabase
     .from('tenants')
@@ -36,6 +38,7 @@ export async function listAllTenants(): Promise<AdminTenantRow[]> {
 }
 
 export async function getTenantById(id: string): Promise<AdminTenantRow | null> {
+  await assertPlatformAdmin()
   const supabase = createSecretClient()
   const { data, error } = await supabase
     .from('tenants')

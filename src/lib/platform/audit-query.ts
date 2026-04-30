@@ -1,4 +1,5 @@
 import 'server-only'
+import { assertPlatformAdmin } from '@/lib/auth/guards'
 import { createSecretClient } from '@/lib/supabase/secret'
 import type { Database } from '@/lib/supabase/types'
 
@@ -8,6 +9,7 @@ export type AuditEntry = Database['public']['Tables']['audit_log']['Row'] & {
 }
 
 export async function listRecentAudit(limit = 100): Promise<AuditEntry[]> {
+  await assertPlatformAdmin()
   const supabase = createSecretClient()
   const { data, error } = await supabase
     .from('audit_log')

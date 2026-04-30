@@ -45,6 +45,18 @@ export async function createTenantAction(
       changes: { slug: parsed.data.slug, ownerEmail: parsed.data.ownerEmail },
     })
   } catch (e) {
+    // If `redirect()` ever ends up inside this try block, Next throws a
+    // special error whose `digest` starts with NEXT_REDIRECT. That MUST
+    // propagate, otherwise the redirect is silently swallowed.
+    if (
+      e &&
+      typeof e === 'object' &&
+      'digest' in e &&
+      typeof (e as { digest: unknown }).digest === 'string' &&
+      (e as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+    ) {
+      throw e
+    }
     return { error: e instanceof Error ? e.message : String(e) }
   }
 

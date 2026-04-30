@@ -1,4 +1,5 @@
 import 'server-only'
+import { assertPlatformAdmin } from '@/lib/auth/guards'
 import { createSecretClient } from '@/lib/supabase/secret'
 import type { Database } from '@/lib/supabase/types'
 
@@ -15,6 +16,7 @@ export type AdminUserRow = {
 }
 
 export async function listAllUsers(): Promise<AdminUserRow[]> {
+  await assertPlatformAdmin()
   const supabase = createSecretClient()
   const [{ data: profiles, error: profErr }, { data: authData }] = await Promise.all([
     supabase

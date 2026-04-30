@@ -6,6 +6,17 @@ import { z } from 'zod'
 import { createSecretClient } from '@/lib/supabase/secret'
 import type { Database } from '@/lib/supabase/types'
 
+/**
+ * Caller MUST enforce auth before invoking `provisionTenant`. This function
+ * does NOT check auth itself because it's called from two contexts:
+ *   1. Server Action `createTenantAction` — calls `assertPlatformAdmin()`
+ *      before delegating here.
+ *   2. CLI script `scripts/provision-tenant.ts` — runs with the service-role
+ *      key in a no-session environment, so a session-based guard would break it.
+ *
+ * If you add a new caller, ensure it enforces auth (or is service-role only).
+ */
+
 export const ProvisionTenantInputSchema = z.object({
   slug: z
     .string()
