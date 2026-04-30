@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { getTenantById } from '@/lib/platform/tenants'
 import { formatCentsToBrl } from '@/lib/money'
+import { BrandingForm, StatusActions } from './edit-forms'
 
 export default async function TenantDetailPage({
   params,
@@ -58,6 +59,15 @@ export default async function TenantDetailPage({
       <Card>
         <CardContent className="space-y-3 py-4">
           <h2 className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+            Mudar status
+          </h2>
+          <StatusActions tenantId={tenant.id} current={tenant.status} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 py-4">
+          <h2 className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
             Branding
           </h2>
           <Row label="Cor primária" value={tenant.primary_color ?? '—'} />
@@ -65,6 +75,20 @@ export default async function TenantDetailPage({
           <Row label="Cor accent" value={tenant.accent_color ?? '—'} />
           <Row label="Logo" value={tenant.logo_url ?? '—'} />
           <Row label="Favicon" value={tenant.favicon_url ?? '—'} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 py-4">
+          <h2 className="text-[0.75rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
+            Editar branding
+          </h2>
+          <BrandingForm
+            tenantId={tenant.id}
+            primaryColor={tenant.primary_color}
+            secondaryColor={tenant.secondary_color}
+            accentColor={tenant.accent_color}
+          />
         </CardContent>
       </Card>
     </div>

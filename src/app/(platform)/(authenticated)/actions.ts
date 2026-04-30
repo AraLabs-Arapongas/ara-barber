@@ -2,10 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { z } from 'zod'
 
 import { recordAudit } from '@/lib/audit/log'
 import { assertPlatformAdmin } from '@/lib/auth/guards'
 import { provisionTenant, ProvisionTenantInputSchema } from '@/lib/platform/provision'
+import { createSecretClient } from '@/lib/supabase/secret'
 
 export type CreateTenantState = { error?: string }
 
@@ -48,4 +50,84 @@ export async function createTenantAction(
 
   revalidatePath('/tenants')
   redirect(`/tenants/${tenantId}`)
+}
+
+const UpdateBrandingSchema = z.object({
+  tenantId: z.string().uuid(),
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
+  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
+})
+
+export type UpdateBrandingState = { error?: string; ok?: boolean }
+
+export async function updateTenantBrandingAction(
+  _prev: UpdateBrandingState,
+  formData: FormData,
+): Promise<UpdateBrandingState> {
+  const user = await assertPlatformAdmin()
+  const parsed = UpdateBrandingSchema.safeParse({
+    tenantId: formData.get('tenantId'),
+    primaryColor: formData.get('primaryColor') || null,
+    secondaryColor: formData.get('secondaryColor') || null,
+    accentColor: formData.get('accentColor') || null,
+  })
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join('; ') }
+  const supabase = createSecretClient()
+  const { error } = await supabase
+    .from('tenants')
+    .update({
+      primary_color: parsed.data.primaryColor,
+      secondary_color: parsed.data.secondaryColor,
+      accent_color: parsed.data.accentColor,
+    })
+    .eq('id', parsed.data.tenantId)
+  if (error) return { error: error.message }
+  await recordAudit({
+    tenantId: parsed.data.tenantId,
+    actorUserId: user.id,
+    actorRole: 'PLATFORM_ADMIN',
+    action: 'tenant.branding.update',
+    entityType: 'tenant',
+    entityId: parsed.data.tenantId,
+    changes: parsed.data,
+  })
+  revalidatePath(`/tenants/${parsed.data.tenantId}`)
+  return { ok: true }
+}
+
+const SetStatusSchema = z.object({
+  tenantId: z.string().uuid(),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'ARCHIVED']),
+})
+
+export type SetStatusState = { error?: string; ok?: boolean }
+
+export async function setTenantStatusAction(
+  _prev: SetStatusState,
+  formData: FormData,
+): Promise<SetStatusState> {
+  const user = await assertPlatformAdmin()
+  const parsed = SetStatusSchema.safeParse({
+    tenantId: formData.get('tenantId'),
+    status: formData.get('status'),
+  })
+  if (!parsed.success) return { error: 'Status inválido' }
+  const supabase = createSecretClient()
+  const { error } = await supabase
+    .from('tenants')
+    .update({ status: parsed.data.status })
+    .eq('id', parsed.data.tenantId)
+  if (error) return { error: error.message }
+  await recordAudit({
+    tenantId: parsed.data.tenantId,
+    actorUserId: user.id,
+    actorRole: 'PLATFORM_ADMIN',
+    action: `tenant.status.${parsed.data.status.toLowerCase()}`,
+    entityType: 'tenant',
+    entityId: parsed.data.tenantId,
+    changes: { status: parsed.data.status },
+  })
+  revalidatePath(`/tenants/${parsed.data.tenantId}`)
+  return { ok: true }
 }
