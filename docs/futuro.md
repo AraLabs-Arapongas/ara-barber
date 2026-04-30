@@ -17,20 +17,35 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
-- **2026-04-29 — Platform admin implementado dentro do `ara-agenda`.**
-  Admin cross-tenant (dashboard, tenants CRUD, plans CRUD, users
-  cross, audit log) implementado no subdomínio `admin.aralabs.com.br`
-  via route group `src/app/(platform)/`. Auth com magic link
-  (Supabase OTP), guard `assertPlatformAdmin()` no layout
-  autenticado, todas mutations gravam em `audit_log`. Lógica de
-  provisionar tenant extraída de `scripts/provision-tenant.ts` pra
-  `lib/platform/provision.ts` (CLI vira thin wrapper). Plano de
-  execução em
+- **2026-04-30 — Platform admin em produção.**
+  `https://admin.aralabs.com.br` operacional com user
+  `admin@aralabs.com.br` (role `PLATFORM_ADMIN`). Telas: Dashboard
+  (MRR, counts, trials vencendo), Tenants (list/new/detail/edit
+  branding/change status), Plans CRUD inline, Users cross-tenant
+  (reset senha, desativar), Audit log viewer. Subdomínio dedicado
+  via route group `src/app/(platform)/`, auth com magic link
+  (Supabase OTP via `signInWithOtp` PKCE), guard
+  `assertPlatformAdmin()` em layer dupla (layout + cada
+  `lib/platform/*` query/mutation), todas mutations gravam em
+  `audit_log`. Provisioning de tenant extraído de
+  `scripts/provision-tenant.ts` pra `lib/platform/provision.ts`
+  compartilhado entre CLI e UI. Substitui a entrada anterior "Admin
+  AraLabs no storefront: postergado" — agora postergado é só o **hub
+  multi-produto** (gatilho de reabrir: chegada do `ara-X`); UI
+  cross-tenant pro ara-agenda existe aqui. Plano executado:
   `docs/superpowers/plans/2026-04-29-platform-admin.md`.
-  Substitui a entrada anterior "Admin AraLabs no storefront:
-  postergado" — agora postergado é só o **hub multi-produto** no
-  storefront (gatilho: chegada do `ara-X`); a UI cross-tenant
-  pra ara-agenda existe aqui.
+
+  **Gotchas registrados pra próxima vez:**
+  - Não criar `auth.users` via SQL direto — falta de
+    `auth.identities` properly populated leva a 422 "Signups not
+    allowed for otp" mesmo com user existindo. Use
+    `auth.admin.createUser()` via script JS ou MCP/dashboard.
+  - Em dev local, `supabase/config.toml` precisa
+    `additional_redirect_urls = ["http://*.lvh.me:3008/**", ...]`
+    com glob pra Supabase aceitar redirect pra subdomínios.
+  - Subdomínio `admin` foi removido da lista
+    `RESERVED_SUBDOMAINS` em `lib/tenant/resolve.ts` pra resolver
+    em area `platform`.
 
 - **2026-04-29 — Admin AraLabs no storefront: postergado.**
   Brainstorm de design multi-produto rolou (switcher + Overview
