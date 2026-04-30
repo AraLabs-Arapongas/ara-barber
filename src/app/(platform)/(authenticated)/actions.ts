@@ -96,6 +96,45 @@ export async function updateTenantBrandingAction(
   return { ok: true }
 }
 
+const UpsertPlanSchema = z.object({
+  id: z.string().uuid().optional(),
+  code: z.string().min(1).max(40),
+  name: z.string().min(1).max(80),
+  monthly_price_cents: z.coerce.number().int().nonnegative(),
+  trial_days_default: z.coerce.number().int().nonnegative().default(0),
+})
+
+export type UpsertPlanState = { error?: string; ok?: boolean }
+
+export async function upsertPlanAction(
+  _prev: UpsertPlanState,
+  formData: FormData,
+): Promise<UpsertPlanState> {
+  const user = await assertPlatformAdmin()
+  const parsed = UpsertPlanSchema.safeParse({
+    id: formData.get('id') || undefined,
+    code: formData.get('code'),
+    name: formData.get('name'),
+    monthly_price_cents: formData.get('monthly_price_cents'),
+    trial_days_default: formData.get('trial_days_default'),
+  })
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join('; ') }
+  const supabase = createSecretClient()
+  const { error } = await supabase.from('plans').upsert(parsed.data)
+  if (error) return { error: error.message }
+  await recordAudit({
+    tenantId: null,
+    actorUserId: user.id,
+    actorRole: 'PLATFORM_ADMIN',
+    action: parsed.data.id ? 'plan.update' : 'plan.create',
+    entityType: 'plan',
+    entityId: parsed.data.id ?? null,
+    changes: parsed.data,
+  })
+  revalidatePath('/plans')
+  return { ok: true }
+}
+
 const SetStatusSchema = z.object({
   tenantId: z.string().uuid(),
   status: z.enum(['ACTIVE', 'SUSPENDED', 'ARCHIVED']),
