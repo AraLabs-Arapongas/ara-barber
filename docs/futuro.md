@@ -17,25 +17,23 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
-- **2026-04-29 — Admin AraLabs storefront: design multi-produto.**
-  Decisão arquitetural antes do trabalho começar no repo
-  `aralabs-storefront`. Padrão: **product switcher global no topo**
-  (estilo Vercel/GitHub) + rota especial `/admin/overview` pra
-  visão consolidada (MRR total, trials/churn cross-product). Sidebar
-  contextual ao produto selecionado (Dashboard, Tenants, Plans,
-  Users, Audit). URL: `/admin/[product]/...`. Audit log fica **por
-  produto** (storefront lê direto `audit_log` de cada Supabase via
-  secret key) — sem agregação cross-product por enquanto; reabrir
-  via webhooks → tabela agregada se virar dor. Permissões:
-  SUPER_ADMIN / PRODUCT_ADMIN (mapeado em `admin_user_products`) /
-  SUPPORT. Horizonte planejado: 3-5 produtos em 12-18 meses.
-  Spec full vive no repo do storefront:
+- **2026-04-29 — Admin AraLabs no storefront: postergado.**
+  Brainstorm de design multi-produto rolou (switcher + Overview
+  consolidado + audit por produto), mas implementação foi
+  **postergada** porque hoje só existe 1 produto (`ara-agenda`).
+  Construir hub multi-produto agora = infra nova (auth próprio,
+  N secret clients, `admin_users` table) pra resolver problema que
+  ainda não existe. Enquanto for produto único, **admin mora dentro
+  do próprio `ara-agenda`** sob `/admin/platform/*` com guard
+  `assertPlatformAdmin` — zero infra nova, lógica de write
+  co-localizada com o produto. Spec da arquitetura multi-produto
+  fica como análise de terreno em
   `aralabs-storefront/docs/superpowers/specs/2026-04-29-admin-multiproduct-design.md`
-  (commit `1d1071c`). Aqui só registra a decisão pra rastreabilidade
-  cross-repo. Spec antigo do hand-off
+  (commit `1d1071c`, status "Postergado"); reabrir quando `ara-X`
+  entrar em planejamento. Spec antigo do hand-off
   (`docs/superpowers/specs/2026-04-19-platform-admin-handoff.md`)
-  permanece válido pro backend; o novo spec é complemento sobre o
-  shape da UI multi-produto.
+  fica como referência de longo prazo. Ver também: "Decisões
+  adiadas" abaixo.
 
 - **2026-04-29 — Sinalização "atrasado" removida da home staff.**
   Sem estado ARRIVED no enum, todo CONFIRMED com horário passado
@@ -191,6 +189,20 @@ _(Vazio — itens anteriores resolvidos no sweep de 2026-04-28; ver Decisões.)_
 - **Branding white-label completo.** Campo `tenants.custom_domain` já
   existe no schema, falta wiring (cert SSL automático, DNS
   validation). Apelo principalmente de vaidade do dono.
+
+---
+
+## Decisões adiadas
+
+_Coisas que viraram spec/análise mas a implementação foi adiada por razão concreta. Diferente de "Não vamos fazer" — aqui o gatilho de reabrir é claro._
+
+- **2026-04-29 — Hub admin AraLabs no `aralabs-storefront`.**
+  Spec pronta (switcher + Overview + audit por produto). Postergado
+  enquanto só existe 1 produto — admin mora dentro do `ara-agenda`
+  até o segundo produto justificar o hub. **Gatilho pra reabrir:**
+  início do planejamento de `ara-X` (ou qualquer produto AraLabs #2).
+  Spec:
+  `aralabs-storefront/docs/superpowers/specs/2026-04-29-admin-multiproduct-design.md`.
 
 ---
 
