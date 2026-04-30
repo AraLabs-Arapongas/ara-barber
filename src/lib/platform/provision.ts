@@ -1,0 +1,105 @@
+import 'server-only'
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+
+import { createSecretClient } from '@/lib/supabase/secret'
+import type { Database } from '@/lib/supabase/types'
+
+export const ProvisionTenantInputSchema = z.object({
+  slug: z
+    .string()
+    .regex(/^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/, 'Use só [a-z0-9-]'),
+  name: z.string().min(1).max(120),
+  ownerEmail: z.string().email(),
+  ownerName: z.string().min(1).max(120),
+  timezone: z.string().default('America/Sao_Paulo'),
+  subdomain: z.string().optional(),
+  skipHours: z.boolean().default(false),
+})
+
+export type ProvisionTenantInput = z.infer<typeof ProvisionTenantInputSchema>
+
+export type ProvisionResult = {
+  tenantId: string
+  ownerUserId: string
+  resetEmailSent: boolean
+}
+
+export async function provisionTenant(
+  input: ProvisionTenantInput,
+  supabase: SupabaseClient<Database> = createSecretClient(),
+): Promise<ProvisionResult> {
+  const subdomain = input.subdomain ?? input.slug
+
+  // 1. Tenant
+  const { data: tenant, error: tenantErr } = await supabase
+    .from('tenants')
+    .insert({
+      slug: input.slug,
+      name: input.name,
+      subdomain,
+      timezone: input.timezone,
+      primary_color: '#0f172a',
+      billing_status: 'TRIALING',
+      booking_window_days: 14,
+      min_advance_hours: 0,
+      slot_interval_minutes: 15,
+      cancellation_window_hours: 2,
+      customer_can_cancel: true,
+    })
+    .select('id')
+    .single()
+  if (tenantErr || !tenant) throw new Error(`tenant insert: ${tenantErr?.message}`)
+
+  // 2. business_hours (Seg=1 a Sáb=6 abertos 9-18, Dom=0 fechado)
+  if (!input.skipHours) {
+    const hours = Array.from({ length: 7 }, (_, weekday) => ({
+      tenant_id: tenant.id,
+      weekday,
+      is_open: weekday !== 0,
+      start_time: '09:00:00',
+      end_time: '18:00:00',
+    }))
+    const { error: hoursErr } = await supabase.from('business_hours').insert(hours)
+    if (hoursErr) throw new Error(`business_hours: ${hoursErr.message}`)
+  }
+
+  // 3. Auth user — cria ou reusa
+  let userId: string
+  const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  const existing = existingUsers?.users.find((u) => u.email === input.ownerEmail)
+
+  if (existing) {
+    userId = existing.id
+  } else {
+    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+      email: input.ownerEmail,
+      email_confirm: true,
+      user_metadata: { name: input.ownerName },
+    })
+    if (createErr || !created.user) throw new Error(`auth.createUser: ${createErr?.message}`)
+    userId = created.user.id
+  }
+
+  // 4. user_profiles → BUSINESS_OWNER do tenant
+  const { error: profileErr } = await supabase.from('user_profiles').insert({
+    user_id: userId,
+    tenant_id: tenant.id,
+    role: 'BUSINESS_OWNER',
+    name: input.ownerName,
+    is_active: true,
+  })
+  if (profileErr) throw new Error(`user_profiles: ${profileErr.message}`)
+
+  // 5. Reset password email
+  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(input.ownerEmail, {
+    redirectTo: `https://${subdomain}.aralabs.com.br/admin/reset-password`,
+  })
+
+  return {
+    tenantId: tenant.id,
+    ownerUserId: userId,
+    resetEmailSent: !resetErr,
+  }
+}
