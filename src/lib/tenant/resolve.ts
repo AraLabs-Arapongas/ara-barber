@@ -7,15 +7,18 @@ const DEV_BASE_HOST = (process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me').toLowe
 
 /**
  * Subdomínios reservados — não podem virar tenant slug.
- * `admin` pertence ao storefront AraLabs (outro repo). Se chegar aqui, tratamos
- * como `root` (área não gerida por este app).
  */
-const RESERVED_SUBDOMAINS = new Set(['admin', 'www', 'api', 'app'])
+const RESERVED_SUBDOMAINS = new Set(['www', 'api', 'app'])
+
+const PLATFORM_SUBDOMAIN = 'admin'
 
 // Slug: 1-50 chars, lowercase alfanumérico, hífen interno permitido.
 const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/
 
-export type ParsedHost = { area: 'tenant'; slug: string } | { area: 'root'; slug: null }
+export type ParsedHost =
+  | { area: 'tenant'; slug: string }
+  | { area: 'platform'; slug: null }
+  | { area: 'root'; slug: null }
 
 export function parseHostToSlug(host: string): ParsedHost {
   const clean = host.split(':')[0].toLowerCase()
@@ -24,6 +27,7 @@ export function parseHostToSlug(host: string): ParsedHost {
     const suffix = `.${base}`
     if (clean.endsWith(suffix)) {
       const slug = clean.slice(0, -suffix.length)
+      if (slug === PLATFORM_SUBDOMAIN) return { area: 'platform', slug: null }
       if (!SLUG_REGEX.test(slug)) return { area: 'root', slug: null }
       if (RESERVED_SUBDOMAINS.has(slug)) return { area: 'root', slug: null }
       return { area: 'tenant', slug }
