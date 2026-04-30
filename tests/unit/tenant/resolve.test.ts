@@ -16,13 +16,13 @@ describe('parseHostToSlug', () => {
     })
   })
 
-  it('reserva admin como root (pertence ao storefront AraLabs)', () => {
+  it('subdomínio admin resolve em área platform', () => {
     expect(parseHostToSlug('admin.aralabs.com.br')).toEqual({
-      area: 'root',
+      area: 'platform',
       slug: null,
     })
     expect(parseHostToSlug('admin.lvh.me')).toEqual({
-      area: 'root',
+      area: 'platform',
       slug: null,
     })
   })
