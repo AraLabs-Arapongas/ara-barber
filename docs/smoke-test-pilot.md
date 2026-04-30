@@ -431,6 +431,24 @@ Marca e aparência (`/admin/dashboard/marca`):
 
 - [ ] Rota `/admin/dashboard/operacao` retorna placeholder sem quebrar.
 
+## 12b. Platform admin (admin.aralabs.com.br)
+
+**Pré-condição:** usuário com `user_profiles.role='PLATFORM_ADMIN'` (ex: `thiago@aralabs.com.br`). Em prod precisa do subdomínio `admin` configurado no DNS+Vercel; em dev usar `http://admin.lvh.me:3008/`.
+
+- [ ] Acessar `http://admin.lvh.me:3008/login` → form "AraLabs Admin" carrega.
+- [ ] Inserir email institucional → "Enviar link mágico" → mensagem "Enviamos link...".
+- [ ] Abrir email, clicar link → cair em `/dashboard` autenticado (sidebar visível).
+- [ ] Cards do dashboard (Tenants, MRR, Em trial, Trials vencendo 7d) com números coerentes.
+- [ ] Sidebar "Tenants" → tabela carrega, busca por slug funciona, filtros status/billing funcionam.
+- [ ] "+ Novo tenant" → preencher form com slug único → submit → redirect pra detalhe.
+- [ ] No detalhe: trocar status pra SUSPENDED → confirmar mudança. Voltar pra ACTIVE.
+- [ ] Editar branding (cor primária pra `#ff0000`) → "Salvar branding" → mensagem "Salvo".
+- [ ] Sidebar "Plans" → editar `monthly_price_cents` de algum plano → "Salvar".
+- [ ] Sidebar "Users" → buscar por email → "Reset senha" → confirmar mensagem ✓.
+- [ ] Sidebar "Audit" → confirmar que ações dos passos anteriores aparecem.
+- [ ] User menu → "Sair" → cair em `/login`.
+- [ ] **Falha esperada:** logar com user que NÃO é PLATFORM_ADMIN → cair em `/login?error=forbidden`.
+
 ## 13. Smoke técnico
 
 - [ ] `pnpm typecheck` limpo.

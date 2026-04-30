@@ -17,6 +17,21 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-29 — Platform admin implementado dentro do `ara-agenda`.**
+  Admin cross-tenant (dashboard, tenants CRUD, plans CRUD, users
+  cross, audit log) implementado no subdomínio `admin.aralabs.com.br`
+  via route group `src/app/(platform)/`. Auth com magic link
+  (Supabase OTP), guard `assertPlatformAdmin()` no layout
+  autenticado, todas mutations gravam em `audit_log`. Lógica de
+  provisionar tenant extraída de `scripts/provision-tenant.ts` pra
+  `lib/platform/provision.ts` (CLI vira thin wrapper). Plano de
+  execução em
+  `docs/superpowers/plans/2026-04-29-platform-admin.md`.
+  Substitui a entrada anterior "Admin AraLabs no storefront:
+  postergado" — agora postergado é só o **hub multi-produto** no
+  storefront (gatilho: chegada do `ara-X`); a UI cross-tenant
+  pra ara-agenda existe aqui.
+
 - **2026-04-29 — Admin AraLabs no storefront: postergado.**
   Brainstorm de design multi-produto rolou (switcher + Overview
   consolidado + audit por produto), mas implementação foi
