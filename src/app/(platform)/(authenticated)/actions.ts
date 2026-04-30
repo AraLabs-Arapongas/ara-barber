@@ -132,7 +132,11 @@ export async function upsertPlanAction(
   })
   if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join('; ') }
   const supabase = createSecretClient()
-  const { error } = await supabase.from('plans').upsert(parsed.data)
+  const { data: row, error } = await supabase
+    .from('plans')
+    .upsert(parsed.data)
+    .select('id')
+    .single()
   if (error) return { error: error.message }
   await recordAudit({
     tenantId: null,
@@ -140,7 +144,7 @@ export async function upsertPlanAction(
     actorRole: 'PLATFORM_ADMIN',
     action: parsed.data.id ? 'plan.update' : 'plan.create',
     entityType: 'plan',
-    entityId: parsed.data.id ?? null,
+    entityId: parsed.data.id ?? row.id,
     changes: parsed.data,
   })
   revalidatePath('/plans')
@@ -233,8 +237,28 @@ export async function sendPasswordResetAction(
   })
   if (!parsed.success) return { error: 'Input inválido' }
   const supabase = createSecretClient()
+
+  // Resolve the right reset URL: tenant staff land on their own subdomain;
+  // platform admins (no tenant) land on the apex admin host.
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('tenant_id, tenants(subdomain)')
+    .eq('user_id', parsed.data.userId)
+    .maybeSingle()
+  const tenants = profile?.tenants as
+    | { subdomain: string | null }
+    | { subdomain: string | null }[]
+    | null
+    | undefined
+  const subdomain = Array.isArray(tenants)
+    ? (tenants[0]?.subdomain ?? null)
+    : (tenants?.subdomain ?? null)
+  const resetUrl = subdomain
+    ? `https://${subdomain}.aralabs.com.br/admin/reset-password`
+    : `https://admin.aralabs.com.br/reset-password`
+
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `https://aralabs.com.br/admin/reset-password`,
+    redirectTo: resetUrl,
   })
   if (error) return { error: error.message }
   await recordAudit({
