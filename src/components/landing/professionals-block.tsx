@@ -15,10 +15,10 @@ export function ProfessionalsBlock({ professionals }: Props) {
       <h2 className="mt-3 font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
         Nossa <span className="font-light italic text-brand-accent">equipe</span>
       </h2>
-      <ul className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6">
+      <ul className="mt-10 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 lg:grid-cols-5">
         {professionals.map((p) => (
-          <li key={p.id} className="flex flex-col gap-3">
-            <div className="relative aspect-[3/4] overflow-hidden bg-bg-subtle">
+          <li key={p.id} className="flex flex-col gap-2">
+            <div className="relative aspect-square overflow-hidden rounded-2xl bg-bg-subtle">
               {p.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -28,11 +28,11 @@ export function ProfessionalsBlock({ professionals }: Props) {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-fg-subtle">
-                  <User className="h-12 w-12" aria-hidden="true" strokeWidth={1} />
+                  <User className="h-8 w-8" aria-hidden="true" strokeWidth={1} />
                 </div>
               )}
             </div>
-            <p className="font-display text-[1rem] font-medium leading-tight text-fg sm:text-[1.125rem]">
+            <p className="text-center text-[0.8125rem] font-medium leading-tight text-fg sm:text-[0.875rem]">
               {p.displayName ?? p.name}
             </p>
           </li>
