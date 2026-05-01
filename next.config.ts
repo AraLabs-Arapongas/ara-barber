@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   // dispara warnings infinitos no console.
   allowedDevOrigins: ['lvh.me', '*.lvh.me'],
 
+  // Server Actions têm limite default de 1MB pro FormData. Subimos pra 5MB
+  // pra cobrir uploads de imagem (hero, logo, etc) — bucket tenant-assets
+  // já tem o mesmo teto.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '5mb',
+    },
+  },
+
   // Worktrees do .claude/ duplicam pnpm-workspace.yaml, e Turbopack escolhe o
   // ancestral errado por padrão (pasta do repo principal). Fixa o root no cwd
   // do processo (= pasta deste worktree quando rodando `pnpm dev` aqui).

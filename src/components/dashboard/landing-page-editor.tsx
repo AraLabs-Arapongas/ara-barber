@@ -336,6 +336,24 @@ function HeroImageSlot({
     e.target.value = ''
     if (!file) return
     onMessage(null)
+
+    // Pre-checks no cliente — evita server action explodindo o limite de
+    // 5MB sem feedback (ou rodando upload de algo inválido).
+    const MAX_BYTES = 5 * 1024 * 1024
+    const ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
+    if (!ALLOWED.includes(file.type)) {
+      onMessage({ kind: 'error', text: 'Formato não suportado (use PNG, JPG ou WebP).' })
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1)
+      onMessage({
+        kind: 'error',
+        text: `Imagem grande demais (${mb} MB). Máx 5 MB — comprime antes de enviar.`,
+      })
+      return
+    }
+
     const fd = new FormData()
     fd.set('file', file)
     fd.set('variant', variant)
