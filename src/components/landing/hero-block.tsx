@@ -6,7 +6,10 @@ type Props = {
   headlineTop: string | null
   headlineAccent: string | null
   subheadline: string | null
+  /** Imagem retrato 9:16 — usada em mobile (<lg). */
   imageUrl: string | null
+  /** Imagem paisagem 16:9 — usada em desktop (>=lg). Fallback pra mobile. */
+  imageUrlDesktop: string | null
 }
 
 export function HeroBlock({
@@ -15,30 +18,48 @@ export function HeroBlock({
   headlineAccent,
   subheadline,
   imageUrl,
+  imageUrlDesktop,
 }: Props) {
   const eb = eyebrow?.trim() || null
   const top = headlineTop?.trim() || null
   const accent = headlineAccent?.trim() || null
   const sub = subheadline?.trim() || null
   const hasHeadline = !!(top || accent)
+  const desktopSrc = imageUrlDesktop || imageUrl
+  const mobileSrc = imageUrl
 
   return (
     <section className="relative -mx-4 overflow-hidden sm:-mx-6">
-      <div className="relative min-h-[80vh]">
-        {imageUrl ? (
+      {/* Container: portrait em mobile (80vh), 16:9 em desktop pra
+          aproveitar a paisagem sem ocupar a tela toda. */}
+      <div className="relative min-h-[80vh] lg:aspect-[16/9] lg:min-h-0">
+        {/* Imagem mobile (portrait). Some em lg+. */}
+        {mobileSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={imageUrl}
+            src={mobileSrc}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover lg:hidden"
           />
-        ) : (
+        ) : null}
+        {/* Imagem desktop (landscape). Visível só em lg+. Fallback pra mobile. */}
+        {desktopSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={desktopSrc}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 hidden h-full w-full object-cover lg:block"
+          />
+        ) : null}
+        {/* Gradient placeholder se nenhuma imagem */}
+        {!mobileSrc && !desktopSrc ? (
           <div className="absolute inset-0 bg-gradient-to-br from-brand-primary via-brand-primary to-brand-primary/60" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/40 to-black/85" />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/40 to-black/85 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/55 lg:to-transparent" />
 
-        <div className="relative z-10 flex min-h-[80vh] flex-col justify-end px-6 pb-16 pt-28 sm:px-10 sm:pb-24 sm:pt-36">
+        <div className="relative z-10 flex min-h-[80vh] flex-col justify-end px-6 pb-16 pt-28 sm:px-10 sm:pb-24 sm:pt-36 lg:min-h-0 lg:max-w-[55%] lg:justify-center lg:px-16 lg:py-24 xl:px-24 xl:py-28">
           {eb ? (
             <p className="mb-5 text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
               {eb}

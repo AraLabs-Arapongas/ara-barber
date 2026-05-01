@@ -55,6 +55,7 @@ export type TenantContext = {
   postalCode: string | null
   heroEyebrow: string | null
   heroImageUrl: string | null
+  heroImageUrlDesktop: string | null
   heroSubheadline: string | null
   instagramUrl: string | null
   facebookUrl: string | null
@@ -96,7 +97,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -137,6 +138,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     postalCode: data.postal_code,
     heroEyebrow: data.hero_eyebrow,
     heroImageUrl: data.hero_image_url,
+    heroImageUrlDesktop: data.hero_image_url_desktop,
     heroSubheadline: data.hero_subheadline,
     instagramUrl: data.instagram_url,
     facebookUrl: data.facebook_url,

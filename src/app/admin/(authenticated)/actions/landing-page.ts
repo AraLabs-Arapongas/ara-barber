@@ -140,10 +140,20 @@ export async function updateHeroText(raw: UpdateHeroInput): Promise<SimpleResult
   return { ok: true }
 }
 
+type HeroVariant = 'mobile' | 'desktop'
+
+const HERO_COLUMN: Record<HeroVariant, 'hero_image_url' | 'hero_image_url_desktop'> = {
+  mobile: 'hero_image_url',
+  desktop: 'hero_image_url_desktop',
+}
+
 export async function uploadHeroImage(formData: FormData): Promise<DataResult<{ url: string }>> {
   const guard = await ensureOwner()
   if (!guard.ok) return { ok: false, error: guard.error }
   const tenant = await getCurrentTenantOrNotFound()
+
+  const variantRaw = formData.get('variant')
+  const variant: HeroVariant = variantRaw === 'desktop' ? 'desktop' : 'mobile'
 
   const file = formData.get('file')
   if (!(file instanceof File)) return { ok: false, error: 'Arquivo não enviado.' }
@@ -156,7 +166,7 @@ export async function uploadHeroImage(formData: FormData): Promise<DataResult<{ 
   }
 
   const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
-  const path = `tenants/${tenant.id}/hero-${Date.now()}.${ext}`
+  const path = `tenants/${tenant.id}/hero-${variant}-${Date.now()}.${ext}`
 
   const supabase = createSecretClient()
   const buffer = Buffer.from(await file.arrayBuffer())
@@ -169,9 +179,10 @@ export async function uploadHeroImage(formData: FormData): Promise<DataResult<{ 
   const { data: pub } = supabase.storage.from(BLOCK_BUCKET).getPublicUrl(path)
   const url = pub.publicUrl
 
+  const column = HERO_COLUMN[variant]
   const { error: dbErr } = await supabase
     .from('tenants')
-    .update({ hero_image_url: url })
+    .update({ [column]: url })
     .eq('id', tenant.id)
   if (dbErr) return { ok: false, error: dbErr.message }
 
@@ -180,14 +191,16 @@ export async function uploadHeroImage(formData: FormData): Promise<DataResult<{ 
   return { ok: true, data: { url } }
 }
 
-export async function clearHeroImage(): Promise<SimpleResult> {
+export async function clearHeroImage(variantRaw: string = 'mobile'): Promise<SimpleResult> {
   const guard = await ensureOwner()
   if (!guard.ok) return { ok: false, error: guard.error }
   const tenant = await getCurrentTenantOrNotFound()
+  const variant: HeroVariant = variantRaw === 'desktop' ? 'desktop' : 'mobile'
+  const column = HERO_COLUMN[variant]
   const supabase = createSecretClient()
   const { error } = await supabase
     .from('tenants')
-    .update({ hero_image_url: null })
+    .update({ [column]: null })
     .eq('id', tenant.id)
   if (error) return { ok: false, error: error.message }
   revalidatePath('/admin/dashboard/pagina-publica')

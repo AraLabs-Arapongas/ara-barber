@@ -14,7 +14,7 @@ export default async function PaginaPublicaPage() {
   const { data: tenantRow } = await supabase
     .from('tenants')
     .select(
-      'hero_eyebrow, home_headline_top, home_headline_accent, hero_image_url, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
+      'hero_eyebrow, home_headline_top, home_headline_accent, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
     )
     .eq('id', tenant.id)
     .maybeSingle()
@@ -59,6 +59,7 @@ export default async function PaginaPublicaPage() {
           headlineAccent: tenantRow?.home_headline_accent ?? '',
           subheadline: tenantRow?.hero_subheadline ?? '',
           imageUrl: tenantRow?.hero_image_url ?? null,
+          imageUrlDesktop: tenantRow?.hero_image_url_desktop ?? null,
         }}
         initialDifferentials={parseInitialDifferentials(tenantRow?.differentials)}
         initialTestimonials={testimonials.map((t) => ({

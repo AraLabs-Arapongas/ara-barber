@@ -88,6 +88,7 @@ type Props = {
     headlineAccent: string
     subheadline: string
     imageUrl: string | null
+    imageUrlDesktop: string | null
   }
   initialDifferentials: DifferentialState[]
   initialTestimonials: TestimonialState[]
@@ -293,6 +294,102 @@ function SortableBlockRow({ block, onToggle }: { block: BlockState; onToggle: ()
 
 // ─── Hero ────────────────────────────────────────────────────────────
 
+function HeroImageSlot({
+  variant,
+  label,
+  ratioHint,
+  previewClass,
+  initialUrl,
+  onMessage,
+}: {
+  variant: 'mobile' | 'desktop'
+  label: string
+  ratioHint: string
+  previewClass: string
+  initialUrl: string | null
+  onMessage: (m: { kind: 'success' | 'error'; text: string } | null) => void
+}) {
+  const [url, setUrl] = useState<string | null>(initialUrl)
+  const [pending, startTransition] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function pick() {
+    inputRef.current?.click()
+  }
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    onMessage(null)
+    const fd = new FormData()
+    fd.set('file', file)
+    fd.set('variant', variant)
+    startTransition(async () => {
+      const res = await uploadHeroImage(fd)
+      if (res.ok) {
+        setUrl(res.data.url)
+        onMessage({ kind: 'success', text: `${label}: imagem atualizada!` })
+      } else {
+        onMessage({ kind: 'error', text: res.error })
+      }
+    })
+  }
+
+  function clear() {
+    onMessage(null)
+    startTransition(async () => {
+      const res = await clearHeroImage(variant)
+      if (res.ok) {
+        setUrl(null)
+        onMessage({ kind: 'success', text: `${label}: imagem removida.` })
+      } else {
+        onMessage({ kind: 'error', text: res.error })
+      }
+    })
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-[0.8125rem] font-medium text-fg">{label}</p>
+        <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-fg-subtle">{ratioHint}</p>
+      </div>
+      <div
+        className={`relative overflow-hidden rounded-lg border border-border bg-bg-subtle ${previewClass}`}
+      >
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt={label} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-fg-subtle">
+            <ImageIcon className="h-6 w-6" aria-hidden="true" />
+          </div>
+        )}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={onFile}
+        className="sr-only"
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="secondary" size="sm" onClick={pick} disabled={pending}>
+          <Upload className="h-4 w-4" aria-hidden="true" />
+          {url ? 'Trocar' : 'Subir'}
+        </Button>
+        {url ? (
+          <Button type="button" variant="ghost" size="sm" onClick={clear} disabled={pending}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            Remover
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function HeroEditor({
   initial,
 }: {
@@ -302,16 +399,15 @@ function HeroEditor({
     headlineAccent: string
     subheadline: string
     imageUrl: string | null
+    imageUrlDesktop: string | null
   }
 }) {
   const [eyebrow, setEyebrow] = useState(initial.eyebrow)
   const [headlineTop, setHeadlineTop] = useState(initial.headlineTop)
   const [headlineAccent, setHeadlineAccent] = useState(initial.headlineAccent)
   const [subheadline, setSubheadline] = useState(initial.subheadline)
-  const [imageUrl, setImageUrl] = useState<string | null>(initial.imageUrl)
   const [pending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -328,89 +424,29 @@ function HeroEditor({
     })
   }
 
-  function pickFile() {
-    inputRef.current?.click()
-  }
-
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setMsg(null)
-    const fd = new FormData()
-    fd.set('file', file)
-    startTransition(async () => {
-      const res = await uploadHeroImage(fd)
-      if (res.ok) {
-        setImageUrl(res.data.url)
-        setMsg({ kind: 'success', text: 'Imagem atualizada!' })
-      } else {
-        setMsg({ kind: 'error', text: res.error })
-      }
-    })
-  }
-
-  function clearImage() {
-    setMsg(null)
-    startTransition(async () => {
-      const res = await clearHeroImage()
-      if (res.ok) {
-        setImageUrl(null)
-        setMsg({ kind: 'success', text: 'Imagem removida.' })
-      } else {
-        setMsg({ kind: 'error', text: res.error })
-      }
-    })
-  }
-
   return (
     <EditorSection
       title="Hero"
-      hint="Imagem de fundo e subtítulo do bloco principal. O título vem das configurações de marca."
+      hint="Imagens, tarja, título e subtítulo do bloco principal. Tudo opcional — campos vazios não aparecem."
     >
       <div className="space-y-4">
-        <div className="flex items-start gap-4">
-          <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-subtle">
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt="Hero" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-fg-subtle">
-                <ImageIcon className="h-6 w-6" aria-hidden="true" />
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={onFileChange}
-              className="sr-only"
-            />
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={pickFile}
-              disabled={pending}
-            >
-              <Upload className="h-4 w-4" aria-hidden="true" />
-              {imageUrl ? 'Trocar imagem' : 'Subir imagem'}
-            </Button>
-            {imageUrl ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={clearImage}
-                disabled={pending}
-              >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-                Remover
-              </Button>
-            ) : null}
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <HeroImageSlot
+            variant="mobile"
+            label="Imagem mobile"
+            ratioHint="9:16 retrato"
+            previewClass="aspect-[9/16] max-w-[120px]"
+            initialUrl={initial.imageUrl}
+            onMessage={setMsg}
+          />
+          <HeroImageSlot
+            variant="desktop"
+            label="Imagem desktop"
+            ratioHint="16:9 paisagem"
+            previewClass="aspect-[16/9]"
+            initialUrl={initial.imageUrlDesktop}
+            onMessage={setMsg}
+          />
         </div>
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block text-sm font-medium text-fg">

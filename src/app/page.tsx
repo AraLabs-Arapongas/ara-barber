@@ -190,6 +190,7 @@ async function TenantPublicHome() {
                     headlineAccent={tenant.homeHeadlineAccent}
                     subheadline={tenant.heroSubheadline}
                     imageUrl={tenant.heroImageUrl}
+                    imageUrlDesktop={tenant.heroImageUrlDesktop}
                   />
                 )
               case 'SERVICES':
