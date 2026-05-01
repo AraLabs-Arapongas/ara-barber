@@ -52,45 +52,54 @@ export function ServicesForm({ initial }: { initial: Row[] }) {
         {rows.map((r, idx) => (
           <div
             key={idx}
-            className="flex items-center gap-2 rounded-md border border-border bg-bg-subtle/30 px-3 py-2.5"
+            className="rounded-md border border-border bg-bg-subtle/30 px-3 py-2.5"
           >
-            <Input
-              value={r.name}
-              onChange={(e) => update(idx, { name: e.target.value })}
-              placeholder="Nome do serviço"
-              className="h-9 flex-1"
-            />
-            <select
-              value={r.duration_minutes}
-              onChange={(e) => update(idx, { duration_minutes: Number(e.target.value) })}
-              className="h-9 rounded-md border border-border bg-bg px-2 text-[0.8125rem]"
-            >
-              {DURATIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d}min
-                </option>
-              ))}
-            </select>
-            <span className="text-[0.8125rem] text-fg-muted">R$</span>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={(r.price_cents / 100).toFixed(2)}
-              onChange={(e) =>
-                update(idx, { price_cents: Math.round(Number(e.target.value) * 100) })
-              }
-              className="h-9 w-24 text-right"
-            />
-            <button
-              type="button"
-              onClick={() => remove(idx)}
-              disabled={rows.length === 1}
-              className="rounded p-1 text-fg-muted hover:bg-bg-subtle disabled:opacity-30"
-              aria-label="Remover"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <Input
+                value={r.name}
+                onChange={(e) => update(idx, { name: e.target.value })}
+                placeholder="Nome do serviço"
+                className="h-9 min-w-0 flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => remove(idx)}
+                disabled={rows.length === 1}
+                className="shrink-0 rounded p-1 text-fg-muted hover:bg-bg-subtle disabled:opacity-30"
+                aria-label="Remover"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <select
+                value={r.duration_minutes}
+                onChange={(e) => update(idx, { duration_minutes: Number(e.target.value) })}
+                className="h-9 rounded-md border border-border bg-bg px-2 text-[0.8125rem]"
+              >
+                {DURATIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}min
+                  </option>
+                ))}
+              </select>
+              <div className="ml-auto flex items-center gap-1.5">
+                <span className="text-[0.8125rem] text-fg-muted">R$</span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={(r.price_cents / 100).toFixed(2).replace('.', ',')}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/[^\d,.]/g, '').replace(',', '.')
+                    const num = Number(cleaned)
+                    update(idx, {
+                      price_cents: Number.isFinite(num) ? Math.round(num * 100) : 0,
+                    })
+                  }}
+                  className="h-9 w-24 text-right"
+                />
+              </div>
+            </div>
           </div>
         ))}
         <button
