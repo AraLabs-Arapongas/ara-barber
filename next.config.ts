@@ -36,12 +36,11 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Cache Components (Next 16): habilita o directive 'use cache' + cacheLife()
-  // + cacheTag() em queries server-side. Cache é por tag (granular), invalidado
-  // explicitamente via revalidateTag() em mutations. Reduz drasticamente DB
-  // round-trips em RSC re-renders entre navegações.
-  // Docs: https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents
-  cacheComponents: true,
+  // NOTA: Cache Components (cacheComponents: true) exigiria Suspense em
+  // toda página com data fetch dinâmico — refactor maior. Usamos
+  // unstable_cache + revalidateTag em queries específicas (lib/cache + queries
+  // wrappadas) que dá controle granular sem exigir suspensions em árvores
+  // legadas. Quando o app virar suspense-first, reabilitar cacheComponents.
 }
 
 /**

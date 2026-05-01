@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { cacheLife, cacheTag } from 'next/cache'
+import { unstable_cache } from 'next/cache'
 import { createSecretClient } from '@/lib/supabase/secret'
 import { cacheTags } from '@/lib/cache/tags'
 import type { Database } from '@/lib/supabase/types'
@@ -11,23 +11,25 @@ export type Service = Pick<
 >
 
 /**
- * Lista serviços do tenant. **Cacheada** — invalida via
+ * Lista serviços do tenant. **Cacheada** (unstable_cache) — invalida via
  * `cacheTags.services(tenantId)` em CRUD de services.
  */
 export async function getServices(tenantId: string): Promise<Service[]> {
-  'use cache'
-  cacheLife('days')
-  cacheTag(cacheTags.services(tenantId))
+  return unstable_cache(
+    async () => {
+      const supabase = createSecretClient()
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name, description, duration_minutes, price_cents, is_active')
+        .eq('tenant_id', tenantId)
+        .order('name')
 
-  const supabase = createSecretClient()
-  const { data, error } = await supabase
-    .from('services')
-    .select('id, name, description, duration_minutes, price_cents, is_active')
-    .eq('tenant_id', tenantId)
-    .order('name')
-
-  if (error) throw error
-  return data ?? []
+      if (error) throw error
+      return data ?? []
+    },
+    ['getServices', tenantId],
+    { tags: [cacheTags.services(tenantId)], revalidate: 86400 },
+  )()
 }
 
 /**
@@ -37,18 +39,20 @@ export async function getService(
   tenantId: string,
   serviceId: string,
 ): Promise<Database['public']['Tables']['services']['Row'] | null> {
-  'use cache'
-  cacheLife('days')
-  cacheTag(cacheTags.service(tenantId, serviceId))
+  return unstable_cache(
+    async () => {
+      const supabase = createSecretClient()
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('id', serviceId)
+        .maybeSingle()
 
-  const supabase = createSecretClient()
-  const { data, error } = await supabase
-    .from('services')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('id', serviceId)
-    .maybeSingle()
-
-  if (error) throw error
-  return data
+      if (error) throw error
+      return data
+    },
+    ['getService', tenantId, serviceId],
+    { tags: [cacheTags.service(tenantId, serviceId)], revalidate: 86400 },
+  )()
 }

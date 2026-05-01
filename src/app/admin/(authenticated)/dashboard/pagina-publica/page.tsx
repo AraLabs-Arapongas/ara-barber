@@ -5,8 +5,6 @@ import { createSecretClient } from '@/lib/supabase/secret'
 import { getLandingBlocks, getLandingTestimonials, type LandingBlock } from '@/lib/landing/queries'
 import { LandingPageEditor } from '@/components/dashboard/landing-page-editor'
 
-export const dynamic = 'force-dynamic'
-
 export default async function PaginaPublicaPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const supabase = createSecretClient()

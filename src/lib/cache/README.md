@@ -1,55 +1,72 @@
-# Cache Components — convenções
+# Cache de queries — convenções
 
-Habilitamos `cacheComponents: true` no `next.config.ts` (Next 16). Toda query
-RSC que valha cachear segue este padrão.
+Usamos `unstable_cache` (legacy mas estável) pra memoizar queries RSC com
+invalidação por tag. Cache Components do Next 16 (`'use cache'` + `cacheLife`
++ `cacheTag`) exige Suspense everywhere — refactor invasivo demais pro app
+atual. Reabilitar `cacheComponents: true` quando a árvore inteira for
+suspense-first.
 
 ## Quando cachear
 
 Cacheia se a query:
 
-- Roda em RSC (server component) — não mistura cache em route handlers.
+- Roda em RSC (server component).
 - Lê dados que **não mudam a cada request** (ex: lista de profs, agenda do dia).
-- A invalidação tem um trigger claro (mutation explícita OU evento realtime).
+- A invalidação tem trigger claro (mutation explícita OU evento realtime).
 
 **Não cacheie** se:
 
-- Os dados mudam por timing/conjunto que muda fora do nosso controle (ex:
-  `now()` calculado server-side).
-- A query depende de cookies/sessão de modo crítico (use `cookies()` antes do
-  `'use cache'` ou separe as camadas).
+- Os dados mudam por timing fora do nosso controle (ex: `now()` calculado
+  server-side a cada request).
+- A query depende de cookies/sessão — `unstable_cache` não vê cookies. Use
+  `createSecretClient()` (bypass RLS) e garanta auth no caller.
 
 ## Pattern de leitura
 
 ```ts
-'use cache'
-import { cacheLife, cacheTag } from 'next/cache'
+import 'server-only'
+import { unstable_cache } from 'next/cache'
+import { createSecretClient } from '@/lib/supabase/secret'
 import { cacheTags } from '@/lib/cache/tags'
 
 export async function getAgendaForDay(tenantId: string, dateISO: string, tz: string) {
-  'use cache'
-  cacheLife('days')
-  cacheTag(cacheTags.agendaDay(tenantId, dateISO))
-
-  // ... query supabase aqui
+  return unstable_cache(
+    async () => {
+      const supabase = createSecretClient()
+      // ... query
+      return data
+    },
+    ['getAgendaForDay', tenantId, dateISO, tz],
+    { tags: [cacheTags.agendaDay(tenantId, dateISO)], revalidate: 86400 },
+  )()
 }
 ```
 
-`cacheLife('days')` = duração long; relying on tag invalidation pra freshness.
-Use `'minutes'` ou `'seconds'` só pra dados que precisam fallback de TTL além
-da invalidação por tag.
+Notas:
+
+- A cache key array (`['getAgendaForDay', tenantId, dateISO, tz]`) precisa
+  conter todos os args que diferenciam o resultado — senão dá cache hit
+  cruzado entre tenants/datas.
+- `revalidate: 86400` (1 dia) é o fallback de TTL. Invalidação real vem por
+  tag. Use `60` (1min) ou `3600` (1h) pra dados mais voláteis.
+- O `()` final invoca o wrapper retornado por `unstable_cache`.
 
 ## Pattern de invalidação
 
 ### 1. Em server actions (mutation explícita)
 
+Use `updateTag` (single-arg, read-your-own-writes — em Next 16 é o
+primitivo recomendado pra server actions; `revalidateTag` agora exige
+profile e é melhor pra route handlers):
+
 ```ts
-import { revalidateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache/tags'
 
 export async function createAppointment(...) {
   // ... insert no DB
-  revalidateTag(cacheTags.agendaDay(tenantId, dateISO))
-  revalidateTag(cacheTags.agendaPending(tenantId))
+  updateTag(cacheTags.agendaDay(tenantId, dateISO))
+  updateTag(cacheTags.agendaPending(tenantId))
 }
 ```
 
@@ -72,5 +89,12 @@ de agenda em vez de 1 pra agenda inteira).
 
 Refactor inicial cobriu **agenda + professionals + services**. Outros
 módulos (clientes, financeiro, reports) ficam pra demanda — quando notar
-re-fetch desnecessário entre navegações, adiciona o trio (`use cache` +
-`cacheLife` + `cacheTag`) na query e `revalidateTag` na mutation.
+re-fetch desnecessário entre navegações, envolve a query em
+`unstable_cache` e adiciona `updateTag` na mutation correspondente.
+
+## Roadmap: voltar pra Cache Components
+
+Quando o app virar suspense-first (todas as boundaries com `<Suspense>` em
+volta de leituras async), reabilitar `cacheComponents: true` em
+`next.config.ts` e migrar de volta pro trio `'use cache'` + `cacheLife` +
+`cacheTag`. Isso desbloqueia PPR e granularidade fina por componente.

@@ -1,5 +1,5 @@
 /**
- * Convenções de tags pra Cache Components do Next 16.
+ * Convenções de tags pra `unstable_cache` do Next.
  *
  * Toda tag é scoped por tenant pra evitar invalidação cruzada (mudar
  * profissional do tenant A NÃO deve invalidar cache do tenant B).
@@ -11,19 +11,24 @@
  *
  * Pattern de uso em queries:
  *   ```
+ *   import { unstable_cache } from 'next/cache'
  *   async function getFoo(tenantId: string) {
- *     'use cache'
- *     cacheLife('days')
- *     cacheTag(cacheTags.foo(tenantId))
- *     // ...
+ *     return unstable_cache(
+ *       async () => { ... },
+ *       ['getFoo', tenantId],
+ *       { tags: [cacheTags.foo(tenantId)], revalidate: 86400 },
+ *     )()
  *   }
  *   ```
  *
- * Pattern de invalidação em mutations:
+ * Pattern de invalidação em server actions (read-your-own-writes):
  *   ```
- *   import { revalidateTag } from 'next/cache'
- *   revalidateTag(cacheTags.foo(tenantId))
+ *   import { updateTag } from 'next/cache'
+ *   updateTag(cacheTags.foo(tenantId))
  *   ```
+ *
+ * Em route handlers ou contextos non-action use
+ * `revalidateTag(tag, 'max')` (Next 16 exige profile).
  */
 
 const t = (tenantId: string) => `tenant:${tenantId}`

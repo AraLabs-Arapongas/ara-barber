@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { cacheLife, cacheTag } from 'next/cache'
+import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createSecretClient } from '@/lib/supabase/secret'
 import { cacheTags } from '@/lib/cache/tags'
@@ -67,8 +67,8 @@ function rowToAppointment(row: Row): AgendaAppointment {
 /**
  * Busca appointments de um dia específico no timezone do tenant.
  *
- * **Cacheada** (Next 16 Cache Components). Usa secret client (bypass RLS)
- * porque `'use cache'` proíbe cookies. Caller DEVE garantir auth via
+ * **Cacheada** (`unstable_cache`). Usa secret client (bypass RLS)
+ * porque o cache não pode usar cookies. Caller DEVE garantir auth via
  * `assertStaff({ expectedTenantId: tenantId })` na rota/layout antes de
  * chamar — sem isso, cache scoped por tenant ainda evita leakage entre
  * tenants mas não impede usuário não-staff de ler.
@@ -84,37 +84,39 @@ export async function getAgendaForDay(
   dateISO: string,
   tenantTimezone: string,
 ): Promise<AgendaAppointment[]> {
-  'use cache'
-  cacheLife('days')
-  cacheTag(cacheTags.agendaDay(tenantId, dateISO))
+  return unstable_cache(
+    async () => {
+      // Converte "YYYY-MM-DD" no timezone do tenant pra janela UTC correta
+      const dayStart = new Date(`${dateISO}T00:00:00`)
+      const dayEnd = new Date(`${dateISO}T23:59:59`)
 
-  // Converte "YYYY-MM-DD" no timezone do tenant pra janela UTC correta
-  const dayStart = new Date(`${dateISO}T00:00:00`)
-  const dayEnd = new Date(`${dateISO}T23:59:59`)
+      const tzOffsetMs = getTimezoneOffsetMs(tenantTimezone, dayStart)
+      const startUTC = new Date(dayStart.getTime() - tzOffsetMs)
+      const endUTC = new Date(dayEnd.getTime() - tzOffsetMs)
 
-  const tzOffsetMs = getTimezoneOffsetMs(tenantTimezone, dayStart)
-  const startUTC = new Date(dayStart.getTime() - tzOffsetMs)
-  const endUTC = new Date(dayEnd.getTime() - tzOffsetMs)
+      const supabase = createSecretClient()
+      const { data } = await supabase
+        .from('appointments')
+        .select(
+          `
+          id, start_at, end_at, status, customer_id, professional_id, service_id,
+          customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
+          customer:customers(name),
+          service:services(name),
+          professional:professionals(name)
+        `,
+        )
+        .eq('tenant_id', tenantId)
+        .gte('start_at', startUTC.toISOString())
+        .lte('start_at', endUTC.toISOString())
+        .order('start_at', { ascending: true })
 
-  const supabase = createSecretClient()
-  const { data } = await supabase
-    .from('appointments')
-    .select(
-      `
-      id, start_at, end_at, status, customer_id, professional_id, service_id,
-      customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
-      customer:customers(name),
-      service:services(name),
-      professional:professionals(name)
-    `,
-    )
-    .eq('tenant_id', tenantId)
-    .gte('start_at', startUTC.toISOString())
-    .lte('start_at', endUTC.toISOString())
-    .order('start_at', { ascending: true })
-
-  const rows = (data ?? []) as unknown as Row[]
-  return rows.map(rowToAppointment)
+      const rows = (data ?? []) as unknown as Row[]
+      return rows.map(rowToAppointment)
+    },
+    ['getAgendaForDay', tenantId, dateISO, tenantTimezone],
+    { tags: [cacheTags.agendaDay(tenantId, dateISO)], revalidate: 86400 },
+  )()
 }
 
 /**
@@ -130,30 +132,32 @@ export async function getPendingConfirmations(
   fromISO: string,
   limit = 10,
 ): Promise<AgendaAppointment[]> {
-  'use cache'
-  cacheLife('days')
-  cacheTag(cacheTags.agendaPending(tenantId))
+  return unstable_cache(
+    async () => {
+      const supabase = createSecretClient()
+      const { data } = await supabase
+        .from('appointments')
+        .select(
+          `
+          id, start_at, end_at, status, customer_id, professional_id, service_id,
+          customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
+          customer:customers(name),
+          service:services(name),
+          professional:professionals(name)
+        `,
+        )
+        .eq('tenant_id', tenantId)
+        .eq('status', 'SCHEDULED')
+        .gte('start_at', fromISO)
+        .order('start_at', { ascending: true })
+        .limit(limit)
 
-  const supabase = createSecretClient()
-  const { data } = await supabase
-    .from('appointments')
-    .select(
-      `
-      id, start_at, end_at, status, customer_id, professional_id, service_id,
-      customer_name_snapshot, price_cents_snapshot, notes, group_id, position,
-      customer:customers(name),
-      service:services(name),
-      professional:professionals(name)
-    `,
-    )
-    .eq('tenant_id', tenantId)
-    .eq('status', 'SCHEDULED')
-    .gte('start_at', fromISO)
-    .order('start_at', { ascending: true })
-    .limit(limit)
-
-  const rows = (data ?? []) as unknown as Row[]
-  return rows.map(rowToAppointment)
+      const rows = (data ?? []) as unknown as Row[]
+      return rows.map(rowToAppointment)
+    },
+    ['getPendingConfirmations', tenantId, fromISO, String(limit)],
+    { tags: [cacheTags.agendaPending(tenantId)], revalidate: 86400 },
+  )()
 }
 
 /**
