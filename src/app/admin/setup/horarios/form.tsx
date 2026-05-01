@@ -1,7 +1,8 @@
 'use client'
 
 import { useActionState, useState, useMemo } from 'react'
-import { saveBusinessHoursStep, type StepActionState } from '@/lib/onboarding/actions'
+import { saveBusinessHoursStep} from '@/lib/onboarding/actions'
+import type { StepActionState } from '@/lib/onboarding/schemas'
 import { WizardFooter } from '../_components/wizard-footer'
 
 const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']

@@ -3,7 +3,8 @@
 import { useActionState, useState, useMemo } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { saveProfessionalsStep, type StepActionState } from '@/lib/onboarding/actions'
+import { saveProfessionalsStep} from '@/lib/onboarding/actions'
+import type { StepActionState } from '@/lib/onboarding/schemas'
 import { WizardFooter } from '../_components/wizard-footer'
 
 type Row = { name: string }

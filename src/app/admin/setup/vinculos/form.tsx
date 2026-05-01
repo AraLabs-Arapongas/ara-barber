@@ -1,7 +1,8 @@
 'use client'
 
 import { useActionState, useMemo, useState } from 'react'
-import { saveLinksStep, type StepActionState } from '@/lib/onboarding/actions'
+import { saveLinksStep} from '@/lib/onboarding/actions'
+import type { StepActionState } from '@/lib/onboarding/schemas'
 import { WizardFooter } from '../_components/wizard-footer'
 
 type Service = { id: string; name: string }

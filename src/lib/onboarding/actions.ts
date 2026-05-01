@@ -15,8 +15,6 @@ import {
   type StepActionState,
 } from '@/lib/onboarding/schemas'
 
-export type { StepActionState }
-
 function parseJsonField<T>(formData: FormData): T {
   const raw = formData.get('payload')
   if (typeof raw !== 'string') throw new Error('Campo payload ausente')
