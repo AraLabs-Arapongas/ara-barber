@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { cacheTags } from '@/lib/cache/tags'
@@ -76,8 +76,8 @@ export async function saveWeeklyAvailability(
     if (insErr) return { ok: false, error: 'Falha ao salvar jornada.' }
   }
 
-  updateTag(cacheTags.availability(tenantId))
-  updateTag(cacheTags.availabilityFor(tenantId, parsed.data.professionalId))
+  revalidateTag(cacheTags.availability(tenantId), 'max')
+  revalidateTag(cacheTags.availabilityFor(tenantId, parsed.data.professionalId), 'max')
   revalidatePath('/admin/dashboard/disponibilidade')
   return { ok: true }
 }
@@ -118,8 +118,8 @@ export async function createAvailabilityBlock(
 
   if (error) return { ok: false, error: 'Falha ao criar bloqueio.' }
 
-  updateTag(cacheTags.availability(user.profile.tenantId!))
-  updateTag(cacheTags.availabilityFor(user.profile.tenantId!, parsed.data.professionalId))
+  revalidateTag(cacheTags.availability(user.profile.tenantId!), 'max')
+  revalidateTag(cacheTags.availabilityFor(user.profile.tenantId!, parsed.data.professionalId), 'max')
   revalidatePath('/admin/dashboard/disponibilidade')
   return { ok: true }
 }
@@ -152,9 +152,9 @@ export async function deleteAvailabilityBlock(
 
   if (error) return { ok: false, error: 'Falha ao remover.' }
 
-  updateTag(cacheTags.availability(user.profile.tenantId!))
+  revalidateTag(cacheTags.availability(user.profile.tenantId!), 'max')
   if (block?.professional_id) {
-    updateTag(cacheTags.availabilityFor(user.profile.tenantId!, block.professional_id))
+    revalidateTag(cacheTags.availabilityFor(user.profile.tenantId!, block.professional_id), 'max')
   }
   revalidatePath('/admin/dashboard/disponibilidade')
   return { ok: true }

@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { canTransition } from '@/lib/appointments/status-rules'
@@ -77,8 +77,8 @@ export async function transitionAppointmentStatus(raw: TransitionInput): Promise
 
   if (updateErr) return { ok: false, error: 'Falha ao atualizar. Tente novamente.' }
 
-  updateTag(cacheTags.agendaDay(appt.tenant_id, appt.start_at.slice(0, 10)))
-  updateTag(cacheTags.agendaPending(appt.tenant_id))
+  revalidateTag(cacheTags.agendaDay(appt.tenant_id, appt.start_at.slice(0, 10)), 'max')
+  revalidateTag(cacheTags.agendaPending(appt.tenant_id), 'max')
   revalidatePath('/admin/dashboard/agenda')
   return { ok: true }
 }

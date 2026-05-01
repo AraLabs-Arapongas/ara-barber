@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { recordAudit } from '@/lib/audit/log'
 import { cacheTags } from '@/lib/cache/tags'
@@ -95,8 +95,8 @@ export async function createAppointment(
     },
   })
 
-  updateTag(cacheTags.agendaDay(input.tenantId, isoDateOf(input.startAt)))
-  updateTag(cacheTags.agendaPending(input.tenantId))
+  revalidateTag(cacheTags.agendaDay(input.tenantId, isoDateOf(input.startAt)), 'max')
+  revalidateTag(cacheTags.agendaPending(input.tenantId), 'max')
   revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/meus-agendamentos')
   return { ok: true, appointmentId: data.id }
@@ -187,8 +187,8 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
     },
   })
 
-  updateTag(cacheTags.agendaDay(appt.tenant_id, isoDateOf(appt.start_at)))
-  updateTag(cacheTags.agendaPending(appt.tenant_id))
+  revalidateTag(cacheTags.agendaDay(appt.tenant_id, isoDateOf(appt.start_at)), 'max')
+  revalidateTag(cacheTags.agendaPending(appt.tenant_id), 'max')
   revalidatePath('/meus-agendamentos')
   return { ok: true }
 }
@@ -275,8 +275,8 @@ export async function cancelCustomerGroupBooking(
     .select('start_at')
     .eq('group_id', group.id)
   const uniqueDates = new Set((allSegments ?? []).map((s) => isoDateOf(s.start_at)))
-  for (const d of uniqueDates) updateTag(cacheTags.agendaDay(group.tenant_id, d))
-  updateTag(cacheTags.agendaPending(group.tenant_id))
+  for (const d of uniqueDates) revalidateTag(cacheTags.agendaDay(group.tenant_id, d), 'max')
+  revalidateTag(cacheTags.agendaPending(group.tenant_id), 'max')
   revalidatePath('/meus-agendamentos')
   return { ok: true }
 }

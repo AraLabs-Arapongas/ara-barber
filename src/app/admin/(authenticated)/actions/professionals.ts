@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { cacheTags } from '@/lib/cache/tags'
@@ -44,7 +44,7 @@ export async function createProfessional(
 
   if (error) return { ok: false, error: 'Falha ao criar profissional.' }
 
-  updateTag(cacheTags.professionals(user.profile.tenantId!))
+  revalidateTag(cacheTags.professionals(user.profile.tenantId!), 'max')
   revalidatePath('/admin/dashboard/profissionais')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -85,8 +85,8 @@ export async function updateProfessional(
 
   if (error) return { ok: false, error: 'Falha ao atualizar profissional.' }
 
-  updateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.id))
-  updateTag(cacheTags.professionals(user.profile.tenantId!))
+  revalidateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.id), 'max')
+  revalidateTag(cacheTags.professionals(user.profile.tenantId!), 'max')
   revalidatePath('/admin/dashboard/profissionais')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -114,8 +114,8 @@ export async function toggleProfessionalActive(
 
   if (error) return { ok: false, error: 'Falha ao atualizar.' }
 
-  updateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.id))
-  updateTag(cacheTags.professionals(user.profile.tenantId!))
+  revalidateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.id), 'max')
+  revalidateTag(cacheTags.professionals(user.profile.tenantId!), 'max')
   revalidatePath('/admin/dashboard/profissionais')
   return { ok: true }
 }

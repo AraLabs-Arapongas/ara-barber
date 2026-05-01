@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 
 import { assertStaff, AuthError } from '@/lib/auth/guards'
@@ -174,8 +174,8 @@ export async function createManualAppointment(
     },
   })
 
-  updateTag(cacheTags.agendaDay(tenant.id, parsed.data.startAtISO.slice(0, 10)))
-  updateTag(cacheTags.agendaPending(tenant.id))
+  revalidateTag(cacheTags.agendaDay(tenant.id, parsed.data.startAtISO.slice(0, 10)), 'max')
+  revalidateTag(cacheTags.agendaPending(tenant.id), 'max')
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/admin/dashboard/clientes')

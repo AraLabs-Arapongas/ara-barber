@@ -75,7 +75,7 @@ function rowToAppointment(row: Row): AgendaAppointment {
  *
  * Invalidação:
  *   - Mutations em appointments do dia (create/cancel/update) chamam
- *     `updateTag(cacheTags.agendaDay(tenantId, dateISO))`.
+ *     `revalidateTag(cacheTags.agendaDay(tenantId, dateISO))`.
  *   - Realtime hook detecta postgres_changes e chama
  *     `invalidateAgendaForDay()` antes de `router.refresh()`.
  */

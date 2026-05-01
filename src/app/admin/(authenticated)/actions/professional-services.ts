@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { cacheTags } from '@/lib/cache/tags'
@@ -48,9 +48,9 @@ export async function toggleProfessionalService(
     if (error) return { ok: false, error: 'Falha ao desvincular.' }
   }
 
-  updateTag(cacheTags.professionalServices(user.profile.tenantId!))
-  updateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.professionalId))
-  updateTag(cacheTags.service(user.profile.tenantId!, parsed.data.serviceId))
+  revalidateTag(cacheTags.professionalServices(user.profile.tenantId!), 'max')
+  revalidateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.professionalId), 'max')
+  revalidateTag(cacheTags.service(user.profile.tenantId!, parsed.data.serviceId), 'max')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
 }

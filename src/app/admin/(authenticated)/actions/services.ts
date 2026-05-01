@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath, updateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { cacheTags } from '@/lib/cache/tags'
@@ -59,7 +59,7 @@ export async function createService(raw: z.infer<typeof CreateInput>): Promise<S
     if (linkErr) return { ok: false, error: 'Serviço criado, mas falha ao vincular profissionais.' }
   }
 
-  updateTag(cacheTags.services(user.profile.tenantId!))
+  revalidateTag(cacheTags.services(user.profile.tenantId!), 'max')
   revalidatePath('/admin/dashboard/servicos')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -121,8 +121,8 @@ export async function updateService(raw: z.infer<typeof UpdateInput>): Promise<S
     if (insErr) return { ok: false, error: 'Falha ao vincular profissionais.' }
   }
 
-  updateTag(cacheTags.service(user.profile.tenantId!, parsed.data.id))
-  updateTag(cacheTags.services(user.profile.tenantId!))
+  revalidateTag(cacheTags.service(user.profile.tenantId!, parsed.data.id), 'max')
+  revalidateTag(cacheTags.services(user.profile.tenantId!), 'max')
   revalidatePath('/admin/dashboard/servicos')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -150,8 +150,8 @@ export async function toggleServiceActive(
 
   if (error) return { ok: false, error: 'Falha ao atualizar.' }
 
-  updateTag(cacheTags.service(user.profile.tenantId!, parsed.data.id))
-  updateTag(cacheTags.services(user.profile.tenantId!))
+  revalidateTag(cacheTags.service(user.profile.tenantId!, parsed.data.id), 'max')
+  revalidateTag(cacheTags.services(user.profile.tenantId!), 'max')
   revalidatePath('/admin/dashboard/servicos')
   return { ok: true }
 }
