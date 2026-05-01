@@ -4,7 +4,7 @@ import {
   ServicesStepSchema,
   ProfessionalsStepSchema,
   LinksStepSchema,
-} from '@/lib/onboarding/actions'
+} from '@/lib/onboarding/schemas'
 
 describe('BusinessHoursStepSchema', () => {
   it('aceita 7 dias válidos', () => {
