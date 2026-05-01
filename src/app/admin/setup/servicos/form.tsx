@@ -1,8 +1,9 @@
 'use client'
 
 import { useActionState, useState, useMemo } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { StyledInput } from '@/components/ui/styled-input'
 import { SelectSheet } from '@/components/ui/select-sheet'
 import { saveServicesStep} from '@/lib/onboarding/actions'
 import type { StepActionState } from '@/lib/onboarding/schemas'
@@ -53,25 +54,16 @@ export function ServicesForm({ initial }: { initial: Row[] }) {
         {rows.map((r, idx) => (
           <div
             key={idx}
-            className="overflow-hidden rounded-md border border-border bg-bg-subtle/30 px-2.5 py-2.5"
+            className="rounded-md border border-border bg-bg-subtle/30 px-2.5 py-2.5"
           >
-            <div className="flex items-center gap-1.5">
-              <Input
-                value={r.name}
-                onChange={(e) => update(idx, { name: e.target.value })}
-                placeholder="Nome do serviço"
-                className="h-9 min-w-0 flex-1"
-              />
-              <button
-                type="button"
-                onClick={() => remove(idx)}
-                disabled={rows.length === 1}
-                className="shrink-0 rounded p-1 text-fg-muted hover:bg-bg disabled:opacity-30"
-                aria-label="Remover"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            <StyledInput
+              value={r.name}
+              onChange={(e) => update(idx, { name: e.target.value })}
+              placeholder="Nome do serviço"
+              onClear={rows.length > 1 ? () => remove(idx) : undefined}
+              clearLabel="Remover serviço"
+              clearDisabled={rows.length === 1}
+            />
             <div className="mt-2 flex items-center gap-2">
               <SelectSheet
                 value={r.duration_minutes}
