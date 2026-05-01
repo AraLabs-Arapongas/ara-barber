@@ -2,8 +2,8 @@
 
 import { useActionState, useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { StyledInput } from '@/components/ui/styled-input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { SelectSheet } from '@/components/ui/select-sheet'
 import { saveServicesStep} from '@/lib/onboarding/actions'
 import type { StepActionState } from '@/lib/onboarding/schemas'
@@ -74,18 +74,10 @@ export function ServicesForm({ initial }: { initial: Row[] }) {
               />
               <div className="ml-auto flex items-center gap-1.5">
                 <span className="text-[0.8125rem] text-fg-muted">R$</span>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={(r.price_cents / 100).toFixed(2).replace('.', ',')}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.replace(/[^\d,.]/g, '').replace(',', '.')
-                    const num = Number(cleaned)
-                    update(idx, {
-                      price_cents: Number.isFinite(num) ? Math.round(num * 100) : 0,
-                    })
-                  }}
-                  className="h-9 w-24 text-right"
+                <CurrencyInput
+                  valueCents={r.price_cents}
+                  onChangeCents={(c) => update(idx, { price_cents: c })}
+                  containerClassName="w-28"
                 />
               </div>
             </div>
