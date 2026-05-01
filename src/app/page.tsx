@@ -185,7 +185,7 @@ async function TenantPublicHome() {
                 return (
                   <HeroBlock
                     key="HERO"
-                    tenantName={tenant.name}
+                    eyebrow={tenant.heroEyebrow}
                     headlineTop={tenant.homeHeadlineTop}
                     headlineAccent={tenant.homeHeadlineAccent}
                     subheadline={tenant.heroSubheadline}

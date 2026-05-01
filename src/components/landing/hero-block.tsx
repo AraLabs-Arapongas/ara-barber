@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
 type Props = {
-  tenantName: string
+  eyebrow: string | null
   headlineTop: string | null
   headlineAccent: string | null
   subheadline: string | null
@@ -10,15 +10,17 @@ type Props = {
 }
 
 export function HeroBlock({
-  tenantName,
+  eyebrow,
   headlineTop,
   headlineAccent,
   subheadline,
   imageUrl,
 }: Props) {
-  const top = headlineTop?.trim() || tenantName
+  const eb = eyebrow?.trim() || null
+  const top = headlineTop?.trim() || null
   const accent = headlineAccent?.trim() || null
   const sub = subheadline?.trim() || null
+  const hasHeadline = !!(top || accent)
 
   return (
     <section className="relative -mx-4 overflow-hidden sm:-mx-6">
@@ -37,24 +39,30 @@ export function HeroBlock({
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/40 to-black/85" />
 
         <div className="relative z-10 flex min-h-[80vh] flex-col justify-end px-6 pb-16 pt-28 sm:px-10 sm:pb-24 sm:pt-36">
-          <p className="mb-5 text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
-            {tenantName}
-          </p>
-          <h1 className="font-display text-[2.625rem] font-medium leading-[0.95] tracking-tight text-white sm:text-[4.5rem]">
-            {top}
-            {accent ? (
-              <>
-                {' '}
+          {eb ? (
+            <p className="mb-5 text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
+              {eb}
+            </p>
+          ) : null}
+          {hasHeadline ? (
+            <h1 className="font-display text-[2.625rem] font-medium leading-[0.95] tracking-tight text-white sm:text-[4.5rem]">
+              {top}
+              {top && accent ? ' ' : null}
+              {accent ? (
                 <span className="font-light italic text-brand-accent">{accent}</span>
-              </>
-            ) : null}
-          </h1>
+              ) : null}
+            </h1>
+          ) : null}
           {sub ? (
-            <p className="mt-6 max-w-md text-[1rem] leading-relaxed text-white/85 sm:text-[1.125rem]">
+            <p
+              className={`max-w-md text-[1rem] leading-relaxed text-white/85 sm:text-[1.125rem] ${
+                hasHeadline ? 'mt-6' : ''
+              }`}
+            >
               {sub}
             </p>
           ) : null}
-          <div className="mt-10">
+          <div className={hasHeadline || sub || eb ? 'mt-10' : ''}>
             <Link
               href="/book"
               className="group inline-flex items-center gap-3 rounded-full bg-brand-accent px-8 py-4 text-[0.9375rem] font-medium text-brand-accent-fg shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.99]"

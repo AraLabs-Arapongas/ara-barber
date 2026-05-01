@@ -82,7 +82,13 @@ type TestimonialState = {
 
 type Props = {
   initialBlocks: BlockState[]
-  initialHero: { subheadline: string; imageUrl: string | null }
+  initialHero: {
+    eyebrow: string
+    headlineTop: string
+    headlineAccent: string
+    subheadline: string
+    imageUrl: string | null
+  }
   initialDifferentials: DifferentialState[]
   initialTestimonials: TestimonialState[]
   initialSocial: { instagram_url: string; facebook_url: string; tiktok_url: string }
@@ -287,7 +293,20 @@ function SortableBlockRow({ block, onToggle }: { block: BlockState; onToggle: ()
 
 // ─── Hero ────────────────────────────────────────────────────────────
 
-function HeroEditor({ initial }: { initial: { subheadline: string; imageUrl: string | null } }) {
+function HeroEditor({
+  initial,
+}: {
+  initial: {
+    eyebrow: string
+    headlineTop: string
+    headlineAccent: string
+    subheadline: string
+    imageUrl: string | null
+  }
+}) {
+  const [eyebrow, setEyebrow] = useState(initial.eyebrow)
+  const [headlineTop, setHeadlineTop] = useState(initial.headlineTop)
+  const [headlineAccent, setHeadlineAccent] = useState(initial.headlineAccent)
   const [subheadline, setSubheadline] = useState(initial.subheadline)
   const [imageUrl, setImageUrl] = useState<string | null>(initial.imageUrl)
   const [pending, startTransition] = useTransition()
@@ -298,7 +317,12 @@ function HeroEditor({ initial }: { initial: { subheadline: string; imageUrl: str
     e.preventDefault()
     setMsg(null)
     startTransition(async () => {
-      const res = await updateHeroText({ hero_subheadline: subheadline })
+      const res = await updateHeroText({
+        hero_eyebrow: eyebrow,
+        home_headline_top: headlineTop,
+        home_headline_accent: headlineAccent,
+        hero_subheadline: subheadline,
+      })
       if (res.ok) setMsg({ kind: 'success', text: 'Salvo!' })
       else setMsg({ kind: 'error', text: res.error })
     })
@@ -389,6 +413,38 @@ function HeroEditor({ initial }: { initial: { subheadline: string; imageUrl: str
           </div>
         </div>
         <form onSubmit={onSubmit} className="space-y-3">
+          <label className="block text-sm font-medium text-fg">
+            Tarja (eyebrow)
+            <Input
+              value={eyebrow}
+              onChange={(e) => setEyebrow(e.target.value)}
+              maxLength={80}
+              placeholder='Ex: "Salão Bela Imagem" — texto pequeno acima do título. Deixe vazio pra ocultar.'
+              className="mt-1"
+            />
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm font-medium text-fg">
+              Título principal
+              <Input
+                value={headlineTop}
+                onChange={(e) => setHeadlineTop(e.target.value)}
+                maxLength={120}
+                placeholder='Ex: "Bela Imagem"'
+                className="mt-1"
+              />
+            </label>
+            <label className="block text-sm font-medium text-fg">
+              Destaque (itálico)
+              <Input
+                value={headlineAccent}
+                onChange={(e) => setHeadlineAccent(e.target.value)}
+                maxLength={120}
+                placeholder='Ex: "Centro de beleza"'
+                className="mt-1"
+              />
+            </label>
+          </div>
           <label className="block text-sm font-medium text-fg">
             Subtítulo
             <textarea

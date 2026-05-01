@@ -14,7 +14,7 @@ export default async function PaginaPublicaPage() {
   const { data: tenantRow } = await supabase
     .from('tenants')
     .select(
-      'hero_image_url, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
+      'hero_eyebrow, home_headline_top, home_headline_accent, hero_image_url, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
     )
     .eq('id', tenant.id)
     .maybeSingle()
@@ -54,6 +54,9 @@ export default async function PaginaPublicaPage() {
           position: b.position,
         }))}
         initialHero={{
+          eyebrow: tenantRow?.hero_eyebrow ?? '',
+          headlineTop: tenantRow?.home_headline_top ?? '',
+          headlineAccent: tenantRow?.home_headline_accent ?? '',
           subheadline: tenantRow?.hero_subheadline ?? '',
           imageUrl: tenantRow?.hero_image_url ?? null,
         }}

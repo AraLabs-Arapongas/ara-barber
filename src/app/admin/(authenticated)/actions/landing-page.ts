@@ -100,9 +100,12 @@ export async function updateLandingBlocks(raw: UpdateLandingBlocksInput): Promis
   return { ok: true }
 }
 
-// ─── Hero: subhead + upload de imagem ────────────────────────────────
+// ─── Hero: textos + upload de imagem ─────────────────────────────────
 
 const HeroInput = z.object({
+  hero_eyebrow: z.string().max(80).optional().or(z.literal('')),
+  home_headline_top: z.string().max(120).optional().or(z.literal('')),
+  home_headline_accent: z.string().max(120).optional().or(z.literal('')),
   hero_subheadline: z.string().max(280).optional().or(z.literal('')),
 })
 
@@ -119,11 +122,12 @@ export async function updateHeroText(raw: UpdateHeroInput): Promise<SimpleResult
   }
 
   const supabase = await createClient()
+  const update = Object.fromEntries(
+    Object.entries(parsed.data).map(([k, v]) => [k, v === '' ? null : v]),
+  )
   const { error, data } = await supabase
     .from('tenants')
-    .update({
-      hero_subheadline: parsed.data.hero_subheadline === '' ? null : parsed.data.hero_subheadline,
-    })
+    .update(update)
     .eq('id', tenant.id)
     .select('id')
   if (error) return { ok: false, error: error.message }

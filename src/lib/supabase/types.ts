@@ -814,6 +814,7 @@ export type Database = {
           facebook_url: string | null
           favicon_url: string | null
           grace_period_ends_at: string | null
+          hero_eyebrow: string | null
           hero_image_url: string | null
           hero_subheadline: string | null
           home_headline_accent: string | null
@@ -868,6 +869,7 @@ export type Database = {
           facebook_url?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
+          hero_eyebrow?: string | null
           hero_image_url?: string | null
           hero_subheadline?: string | null
           home_headline_accent?: string | null
@@ -922,6 +924,7 @@ export type Database = {
           facebook_url?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
+          hero_eyebrow?: string | null
           hero_image_url?: string | null
           hero_subheadline?: string | null
           home_headline_accent?: string | null
