@@ -18,6 +18,23 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-04-30 — Setup wizard pós-criação de tenant.**
+  Wizard guiado de 4 steps mínimos pra agenda funcionar:
+  horários, serviços, profissionais, vínculos serviço×profissional.
+  Bloqueante na primeira sessão (cookie `ara_setup_dismissed` 30d
+  pra escape), banner persistente no dashboard até completar.
+  Schema add: `tenants.onboarding_completed_at` +
+  `onboarding_step` (migration 0032). Backfill na própria
+  migration cuida dos tenants já operacionais (`qa-aralabs`,
+  `demo-aralabs`). Pós-conclusão: redirect
+  `/admin/dashboard?welcome=1` com toast "Compartilhe link" +
+  copy-to-clipboard. Server actions usam delete-then-insert no
+  escopo do tenant (idempotente, simples). Spec:
+  `docs/superpowers/specs/2026-04-30-setup-wizard-design.md`.
+  Plano executado:
+  `docs/superpowers/plans/2026-04-30-setup-wizard.md`.
+  Resolve item #1 da checklist pré-launch do piloto.
+
 - **2026-04-30 — Platform admin em produção.**
   `https://admin.aralabs.com.br` operacional com user
   `admin@aralabs.com.br` (role `PLATFORM_ADMIN`). Telas: Dashboard

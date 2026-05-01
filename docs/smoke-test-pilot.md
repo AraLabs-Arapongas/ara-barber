@@ -469,6 +469,24 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] User menu → "Sair" → cair em `/login`.
 - [ ] **Falha esperada:** logar com user que NÃO é PLATFORM_ADMIN → cair em `/login?error=forbidden`.
 
+## 12c. Setup wizard (tenant novo)
+
+**Pré-condição:** criar tenant novo via admin platform (ou `pnpm provision-tenant`) com `onboarding_completed_at = null`. Logar com o owner pela primeira vez.
+
+- [ ] Owner loga → cai automaticamente em `/admin/setup` (não no `/admin/dashboard`)
+- [ ] Step 1 (horários): pré-fill Seg-Sáb 9-18, Dom fechado. Mudar Sábado pra fechado, salvar → cai no step 2
+- [ ] Step 2 (serviços): adicionar 2 serviços (ex: "Corte" 30min R$50 + "Barba" 30min R$25), salvar → cai no step 3
+- [ ] Step 3 (profissionais): adicionar 2 profissionais (ex: João, Maria), salvar → cai no step 4
+- [ ] Step 4 (vínculos): matriz com tudo marcado por default; desmarcar João×Barba (Maria fica fazendo só barba); salvar → redirect pra `/admin/dashboard?welcome=1`
+- [ ] Toast "Pronto! Sua agenda tá no ar." com botão Copiar → copia URL pública
+- [ ] Navegar pra outra rota e voltar → toast some
+- [ ] Acessar `<slug>.aralabs.com.br/book` (cliente) → consegue agendar com slots reais
+- [ ] **Sair do wizard:** criar OUTRO tenant novo, logar, no step 2 clicar "Sair do wizard" → cai em `/admin/dashboard` com banner amarelo "Configure seu negócio · 1 de 4 etapas concluídas"
+- [ ] Navegar pra `/admin/dashboard/agenda` → banner persiste
+- [ ] Click "Continuar setup →" no banner → cai em `/admin/setup/servicos` (step 2, onde parou)
+- [ ] Completar steps 2-4 → banner some após conclusão
+- [ ] **Tenants antigos NÃO veem wizard:** logar com user de tenant existente (`qa-aralabs`, `demo-aralabs`) → dashboard normal sem banner
+
 ## 13. Smoke técnico
 
 - [ ] `pnpm typecheck` limpo.
