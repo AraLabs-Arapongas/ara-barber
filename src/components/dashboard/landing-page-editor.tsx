@@ -270,22 +270,36 @@ function SortableBlockRow({ block, onToggle }: { block: BlockState; onToggle: ()
         <p className="font-medium text-fg">{meta.label}</p>
         <p className="text-[0.75rem] text-fg-muted">{meta.hint}</p>
       </div>
-      {/* Switch controlado: o thumb é descendente de sibling do <input>,
-          então `peer-checked` não atinge — controla via state direto. */}
+      {/* Switch controlado direto pelo state — track + thumb com tamanhos
+          explícitos pra evitar inconsistências de Tailwind utilities. */}
       <button
         type="button"
         role="switch"
         aria-checked={block.enabled}
         aria-label={`${block.enabled ? 'Desativar' : 'Ativar'} ${meta.label}`}
         onClick={onToggle}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          block.enabled ? 'bg-brand-primary' : 'bg-bg-subtle'
-        }`}
+        style={{
+          width: 44,
+          height: 24,
+          backgroundColor: block.enabled
+            ? 'var(--color-brand-primary)'
+            : 'var(--color-bg-subtle)',
+        }}
+        className="relative shrink-0 rounded-full border border-border transition-colors"
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-            block.enabled ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
-          }`}
+          style={{
+            position: 'absolute',
+            top: 1,
+            left: 1,
+            width: 20,
+            height: 20,
+            borderRadius: '9999px',
+            backgroundColor: '#fff',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+            transform: block.enabled ? 'translateX(20px)' : 'translateX(0)',
+            transition: 'transform 150ms ease-out',
+          }}
         />
       </button>
     </li>
