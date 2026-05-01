@@ -1,9 +1,10 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { cacheTags } from '@/lib/cache/tags'
 
 const TIME = /^\d{2}:\d{2}(:\d{2})?$/
 
@@ -45,7 +46,7 @@ export async function saveWeeklyAvailability(
   }
 
   const supabase = await createClient()
-  const tenantId = user.profile.tenantId
+  const tenantId = user.profile.tenantId!
 
   // Valida ownership do profissional
   const { data: prof } = await supabase
@@ -75,6 +76,8 @@ export async function saveWeeklyAvailability(
     if (insErr) return { ok: false, error: 'Falha ao salvar jornada.' }
   }
 
+  updateTag(cacheTags.availability(tenantId))
+  updateTag(cacheTags.availabilityFor(tenantId, parsed.data.professionalId))
   revalidatePath('/admin/dashboard/disponibilidade')
   return { ok: true }
 }
@@ -115,6 +118,8 @@ export async function createAvailabilityBlock(
 
   if (error) return { ok: false, error: 'Falha ao criar bloqueio.' }
 
+  updateTag(cacheTags.availability(user.profile.tenantId!))
+  updateTag(cacheTags.availabilityFor(user.profile.tenantId!, parsed.data.professionalId))
   revalidatePath('/admin/dashboard/disponibilidade')
   return { ok: true }
 }
@@ -127,18 +132,30 @@ export async function deleteAvailabilityBlock(
   const parsed = DeleteBlockInput.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 
+  let user
   try {
-    await assertStaff()
+    user = await assertStaff()
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
   }
 
   const supabase = await createClient()
+  // Captura professional_id antes de deletar pra invalidar a tag scoped por prof.
+  const { data: block } = await supabase
+    .from('availability_blocks')
+    .select('professional_id')
+    .eq('id', parsed.data.id)
+    .maybeSingle()
+
   const { error } = await supabase.from('availability_blocks').delete().eq('id', parsed.data.id)
 
   if (error) return { ok: false, error: 'Falha ao remover.' }
 
+  updateTag(cacheTags.availability(user.profile.tenantId!))
+  if (block?.professional_id) {
+    updateTag(cacheTags.availabilityFor(user.profile.tenantId!, block.professional_id))
+  }
   revalidatePath('/admin/dashboard/disponibilidade')
   return { ok: true }
 }

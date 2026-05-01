@@ -1,9 +1,10 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { cacheTags } from '@/lib/cache/tags'
 
 const CreateInput = z.object({
   name: z.string().min(1).max(200),
@@ -58,6 +59,7 @@ export async function createService(raw: z.infer<typeof CreateInput>): Promise<S
     if (linkErr) return { ok: false, error: 'Serviço criado, mas falha ao vincular profissionais.' }
   }
 
+  updateTag(cacheTags.services(user.profile.tenantId!))
   revalidatePath('/admin/dashboard/servicos')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -119,6 +121,8 @@ export async function updateService(raw: z.infer<typeof UpdateInput>): Promise<S
     if (insErr) return { ok: false, error: 'Falha ao vincular profissionais.' }
   }
 
+  updateTag(cacheTags.service(user.profile.tenantId!, parsed.data.id))
+  updateTag(cacheTags.services(user.profile.tenantId!))
   revalidatePath('/admin/dashboard/servicos')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -130,8 +134,9 @@ export async function toggleServiceActive(
   const parsed = ToggleInput.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 
+  let user
   try {
-    await assertStaff()
+    user = await assertStaff()
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
@@ -145,6 +150,8 @@ export async function toggleServiceActive(
 
   if (error) return { ok: false, error: 'Falha ao atualizar.' }
 
+  updateTag(cacheTags.service(user.profile.tenantId!, parsed.data.id))
+  updateTag(cacheTags.services(user.profile.tenantId!))
   revalidatePath('/admin/dashboard/servicos')
   return { ok: true }
 }

@@ -1,9 +1,10 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { cacheTags } from '@/lib/cache/tags'
 
 const Input = z.object({
   professionalId: z.string().uuid(),
@@ -47,6 +48,9 @@ export async function toggleProfessionalService(
     if (error) return { ok: false, error: 'Falha ao desvincular.' }
   }
 
+  updateTag(cacheTags.professionalServices(user.profile.tenantId!))
+  updateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.professionalId))
+  updateTag(cacheTags.service(user.profile.tenantId!, parsed.data.serviceId))
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
 }

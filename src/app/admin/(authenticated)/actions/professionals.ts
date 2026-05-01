@@ -1,9 +1,10 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
+import { cacheTags } from '@/lib/cache/tags'
 
 const CreateInput = z.object({
   name: z.string().min(1).max(200),
@@ -43,6 +44,7 @@ export async function createProfessional(
 
   if (error) return { ok: false, error: 'Falha ao criar profissional.' }
 
+  updateTag(cacheTags.professionals(user.profile.tenantId!))
   revalidatePath('/admin/dashboard/profissionais')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -79,10 +81,12 @@ export async function updateProfessional(
       updated_at: new Date().toISOString(),
     })
     .eq('id', parsed.data.id)
-    .eq('tenant_id', user.profile.tenantId)
+    .eq('tenant_id', user.profile.tenantId!)
 
   if (error) return { ok: false, error: 'Falha ao atualizar profissional.' }
 
+  updateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.id))
+  updateTag(cacheTags.professionals(user.profile.tenantId!))
   revalidatePath('/admin/dashboard/profissionais')
   revalidatePath('/admin/dashboard/equipe-servicos')
   return { ok: true }
@@ -94,8 +98,9 @@ export async function toggleProfessionalActive(
   const parsed = ToggleInput.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
 
+  let user
   try {
-    await assertStaff()
+    user = await assertStaff()
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: 'Sem permissão.' }
     throw e
@@ -109,6 +114,8 @@ export async function toggleProfessionalActive(
 
   if (error) return { ok: false, error: 'Falha ao atualizar.' }
 
+  updateTag(cacheTags.professional(user.profile.tenantId!, parsed.data.id))
+  updateTag(cacheTags.professionals(user.profile.tenantId!))
   revalidatePath('/admin/dashboard/profissionais')
   return { ok: true }
 }
