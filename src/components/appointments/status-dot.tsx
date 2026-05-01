@@ -14,7 +14,13 @@ import type { AppointmentStatus } from '@/lib/appointments/status-rules'
  * Usado em cards onde texto cheio do badge quebraria layout (ex:
  * próxima reserva na home, lista de reservas).
  */
-export function StatusDot({ status, size = 'md' }: { status: AppointmentStatus; size?: 'sm' | 'md' }) {
+export function StatusDot({
+  status,
+  size = 'md',
+}: {
+  status: AppointmentStatus
+  size?: 'sm' | 'md'
+}) {
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef<HTMLSpanElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -47,10 +53,7 @@ export function StatusDot({ status, size = 'md' }: { status: AppointmentStatus; 
         title={label}
         className={`flex shrink-0 items-center justify-center rounded-full p-1 hover:bg-bg-subtle focus-visible:bg-bg-subtle focus-visible:outline-none`}
       >
-        <span
-          className={`${dotSize} rounded-full ${STATUS_DOT[status]}`}
-          aria-hidden="true"
-        />
+        <span className={`${dotSize} rounded-full ${STATUS_DOT[status]}`} aria-hidden="true" />
       </button>
       {open ? (
         <span

@@ -25,9 +25,7 @@ export async function createTenantAction(
   })
   if (!parsed.success) {
     return {
-      error: parsed.error.issues
-        .map((i) => `${i.path.join('.')}: ${i.message}`)
-        .join('; '),
+      error: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
     }
   }
 
@@ -66,9 +64,18 @@ export async function createTenantAction(
 
 const UpdateBrandingSchema = z.object({
   tenantId: z.string().uuid(),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
-  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .nullable(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .nullable(),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .nullable(),
 })
 
 export type UpdateBrandingState = { error?: string; ok?: boolean }

@@ -119,9 +119,7 @@ export function CustomerQuickActions({ contactPhone, whatsapp, address }: Props)
                 </span>
                 <span className="text-[0.8125rem] font-medium text-fg">{item.label}</span>
               </Link>
-              {idx === 0 ? (
-                <span aria-hidden="true" className="my-3 w-px bg-border" />
-              ) : null}
+              {idx === 0 ? <span aria-hidden="true" className="my-3 w-px bg-border" /> : null}
             </Fragment>
           )
         })}

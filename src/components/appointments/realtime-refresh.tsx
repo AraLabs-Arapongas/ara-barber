@@ -109,11 +109,7 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
           if (status === 'SUBSCRIBED') {
             reconnectAttempts = 0
             clearReconnectTimer()
-          } else if (
-            status === 'CHANNEL_ERROR' ||
-            status === 'TIMED_OUT' ||
-            status === 'CLOSED'
-          ) {
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             scheduleReconnect()
           }
         })

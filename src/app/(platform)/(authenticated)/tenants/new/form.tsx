@@ -30,9 +30,7 @@ export function NewTenantForm() {
         placeholder="maria@estetica.com"
         required
       />
-      {state.error ? (
-        <p className="text-[0.8125rem] text-danger">{state.error}</p>
-      ) : null}
+      {state.error ? <p className="text-[0.8125rem] text-danger">{state.error}</p> : null}
       <Button type="submit" disabled={pending}>
         {pending ? 'Criando...' : 'Criar tenant'}
       </Button>

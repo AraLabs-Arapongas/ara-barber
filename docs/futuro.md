@@ -4,6 +4,7 @@
 > vira código. Atualize ao longo das conversas — não deixe acumular.
 >
 > **Não confundir com:**
+>
 > - `docs/superpowers/plans/` — planos executáveis (checklist por fase).
 > - `docs/superpowers/specs/` — design técnico de feature.
 >
@@ -103,8 +104,7 @@ _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão
   service-role escreve) + helper `lib/audit/log.recordAudit()` integrado
   em createAppointment, cancelCustomerAppointment, createManualAppointment,
   updateBookingRules, deleteMyAccountForTenant. Migration 0028.
-  (3) **pgTAP RLS isolation tests**: extensão habilitada (migration
-  0029) + suite `supabase/tests/database/rls_isolation.sql` com 11
+  (3) **pgTAP RLS isolation tests**: extensão habilitada (migration 0029) + suite `supabase/tests/database/rls_isolation.sql` com 11
   asserções cross-tenant (customer A não vê/altera dados de B). Roda
   via `pnpm test:rls`.
   (4) **Playwright em CI reabilitado**: smoke mínimo (proxy header +
@@ -187,16 +187,16 @@ _(Vazio — itens anteriores resolvidos no sweep de 2026-04-28; ver Decisões.)_
   Status atual: edge function `on-appointment-event` aplica template
   mas WhatsApp só monta `wa.me/...?text=...` (cliente abre manual).
   Tradeoff custo/risco analisado:
-    - **Z-API/Evolution** (~R$ 50-150/mês fixo): usa número que dono
-      já anuncia, sem aprovar templates, risco de ban Meta baixo se
-      respeitar volume + opt-in. **Recomendado pro beachhead.**
-    - **WhatsApp Business API oficial** (Meta direto ou BSP como
-      Twilio): R$ 0,05-0,30 por mensagem, profissional, mas templates
-      precisam aprovação Meta. Vale só pra tenants grandes ou white-label.
-  **Inclui também:** quando agendamento for criado/confirmado, mandar
-  WhatsApp de confirmação (mesmo conteúdo que o email hoje) com link
-  `.ics` ou web calendar (`https://calendar.google.com/calendar/render?action=TEMPLATE&...`)
-  pro cliente adicionar na agenda dele.
+  - **Z-API/Evolution** (~R$ 50-150/mês fixo): usa número que dono
+    já anuncia, sem aprovar templates, risco de ban Meta baixo se
+    respeitar volume + opt-in. **Recomendado pro beachhead.**
+  - **WhatsApp Business API oficial** (Meta direto ou BSP como
+    Twilio): R$ 0,05-0,30 por mensagem, profissional, mas templates
+    precisam aprovação Meta. Vale só pra tenants grandes ou white-label.
+    **Inclui também:** quando agendamento for criado/confirmado, mandar
+    WhatsApp de confirmação (mesmo conteúdo que o email hoje) com link
+    `.ics` ou web calendar (`https://calendar.google.com/calendar/render?action=TEMPLATE&...`)
+    pro cliente adicionar na agenda dele.
 
 - **Lembrete 24h + 2h via WhatsApp.**
   Estrutura existe (`appointments.reminder_24h_sent_at`,

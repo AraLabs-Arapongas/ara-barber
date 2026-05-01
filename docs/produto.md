@@ -100,6 +100,7 @@ Em ordem aproximada de prioridade:
 ## 8. Stack técnico
 
 **Frontend:**
+
 - Next.js 16 (App Router, Server Components, Server Actions, proxy.ts)
 - React 19
 - Tailwind CSS 4
@@ -107,18 +108,21 @@ Em ordem aproximada de prioridade:
 - PWA via Next.js manifest dinâmico
 
 **Backend:**
+
 - Supabase (Postgres + Auth + Storage + Realtime + pg_cron)
 - RLS como isolamento primário
 - Edge functions pra dispatch de notificações
 - Server Actions como default (Route Handlers só pra webhooks/manifest)
 
 **Infra:**
+
 - Vercel (hosting + Fluid Compute)
 - Supabase Cloud (`*.aralabs.com.br` resolve via proxy de subdomínio)
 - Sentry (error monitoring, free tier)
 - Vercel Analytics (Core Web Vitals)
 
 **Segurança:**
+
 - 3 clientes Supabase com escopos distintos (browser, server SSR, secret server-only).
 - Toda mutation passa por validação Zod antes de tocar o banco.
 - RLS policies cobrem: platform admin, staff, customer read, customer write.

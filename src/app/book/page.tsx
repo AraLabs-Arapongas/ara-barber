@@ -5,13 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CustomerBookingWizard } from '@/components/book/wizard'
 
 type Step = 'service' | 'order' | 'professional' | 'datetime' | 'confirm'
-const VALID_STEPS = new Set<Step>([
-  'service',
-  'order',
-  'professional',
-  'datetime',
-  'confirm',
-])
+const VALID_STEPS = new Set<Step>(['service', 'order', 'professional', 'datetime', 'confirm'])
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

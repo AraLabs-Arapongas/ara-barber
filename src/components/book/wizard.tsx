@@ -158,33 +158,30 @@ export function CustomerBookingWizard({
     })
   }
 
-  const toggleService = useCallback(
-    (sid: string) => {
-      setServiceIds((prev) => {
-        const exists = prev.includes(sid)
-        const updated = exists ? prev.filter((id) => id !== sid) : [...prev, sid]
-        // Sincroniza order: mantém ordem prévia, adiciona novos no fim,
-        // remove os desselecionados.
-        setOrder((prevOrder) => {
-          const filtered = prevOrder.filter((id) => updated.includes(id))
-          const newOnes = updated.filter((id) => !filtered.includes(id))
-          return [...filtered, ...newOnes]
-        })
-        // Limpa profissional do serviço removido.
-        if (exists) {
-          setProfessionalByService((prevProf) => {
-            const next = { ...prevProf }
-            delete next[sid]
-            return next
-          })
-        }
-        // Slot anterior fica inválido se mudou conjunto de serviços.
-        setSelectedSlot(null)
-        return updated
+  const toggleService = useCallback((sid: string) => {
+    setServiceIds((prev) => {
+      const exists = prev.includes(sid)
+      const updated = exists ? prev.filter((id) => id !== sid) : [...prev, sid]
+      // Sincroniza order: mantém ordem prévia, adiciona novos no fim,
+      // remove os desselecionados.
+      setOrder((prevOrder) => {
+        const filtered = prevOrder.filter((id) => updated.includes(id))
+        const newOnes = updated.filter((id) => !filtered.includes(id))
+        return [...filtered, ...newOnes]
       })
-    },
-    [],
-  )
+      // Limpa profissional do serviço removido.
+      if (exists) {
+        setProfessionalByService((prevProf) => {
+          const next = { ...prevProf }
+          delete next[sid]
+          return next
+        })
+      }
+      // Slot anterior fica inválido se mudou conjunto de serviços.
+      setSelectedSlot(null)
+      return updated
+    })
+  }, [])
 
   // Submit final.
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -341,13 +338,7 @@ export function CustomerBookingWizard({
                 >
                   Entrar pra confirmar
                 </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  fullWidth
-                  className="mt-2"
-                  onClick={back}
-                >
+                <Button type="button" variant="secondary" fullWidth className="mt-2" onClick={back}>
                   Voltar
                 </Button>
               </CardContent>
@@ -536,8 +527,7 @@ function ConfirmSummary({
                   <p className="text-[0.875rem] tabular-nums text-fg">{startTime}</p>
                 </div>
                 <p className="text-[0.8125rem] text-fg-muted">
-                  com {prof?.displayName ?? prof?.name ?? '—'} ·{' '}
-                  {svc?.durationMinutes ?? 0} min ·{' '}
+                  com {prof?.displayName ?? prof?.name ?? '—'} · {svc?.durationMinutes ?? 0} min ·{' '}
                   {formatCentsToBrl(svc?.priceCents ?? 0)}
                 </p>
               </li>

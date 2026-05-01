@@ -236,7 +236,10 @@ export default async function PrivacyPolicyPage() {
                     contato@aralabs.com.br
                   </a>{' '}
                   para questões sobre a plataforma. Veja também os{' '}
-                  <Link href="/termos-uso" className="font-medium text-brand-primary hover:underline">
+                  <Link
+                    href="/termos-uso"
+                    className="font-medium text-brand-primary hover:underline"
+                  >
                     Termos de uso
                   </Link>
                   .

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_groups: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          tenant_id: string
+          total_duration_minutes: number
+          total_price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          tenant_id: string
+          total_duration_minutes: number
+          total_price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          tenant_id?: string
+          total_duration_minutes?: number
+          total_price_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_groups_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           cancel_reason: string | null
@@ -112,54 +160,6 @@ export type Database = {
           },
           {
             foreignKeyName: "appointments_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      appointment_groups: {
-        Row: {
-          created_at: string
-          customer_id: string
-          id: string
-          status: Database["public"]["Enums"]["appointment_status"]
-          tenant_id: string
-          total_duration_minutes: number
-          total_price_cents: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          customer_id: string
-          id?: string
-          status?: Database["public"]["Enums"]["appointment_status"]
-          tenant_id: string
-          total_duration_minutes: number
-          total_price_cents: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          customer_id?: string
-          id?: string
-          status?: Database["public"]["Enums"]["appointment_status"]
-          tenant_id?: string
-          total_duration_minutes?: number
-          total_price_cents?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appointment_groups_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointment_groups_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -355,6 +355,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_blocks: {
+        Row: {
+          block_type: Database["public"]["Enums"]["landing_block_type"]
+          config: Json | null
+          created_at: string
+          enabled: boolean
+          id: string
+          position: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          block_type: Database["public"]["Enums"]["landing_block_type"]
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          position: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          block_type?: Database["public"]["Enums"]["landing_block_type"]
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          position?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_blocks_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -768,12 +809,17 @@ export type Database = {
           current_plan_id: string | null
           custom_domain: string | null
           customer_can_cancel: boolean
+          differentials: Json | null
           email: string | null
+          facebook_url: string | null
           favicon_url: string | null
           grace_period_ends_at: string | null
+          hero_image_url: string | null
+          hero_subheadline: string | null
           home_headline_accent: string | null
           home_headline_top: string | null
           id: string
+          instagram_url: string | null
           is_custom_trial: boolean
           logo_url: string | null
           min_advance_hours: number
@@ -793,6 +839,7 @@ export type Database = {
           subdomain: string
           subscription_ends_at: string | null
           subscription_starts_at: string | null
+          tiktok_url: string | null
           timezone: string
           transaction_fee_fixed_cents: number | null
           transaction_fee_type: Database["public"]["Enums"]["transaction_fee_type"]
@@ -818,12 +865,17 @@ export type Database = {
           current_plan_id?: string | null
           custom_domain?: string | null
           customer_can_cancel?: boolean
+          differentials?: Json | null
           email?: string | null
+          facebook_url?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
+          hero_image_url?: string | null
+          hero_subheadline?: string | null
           home_headline_accent?: string | null
           home_headline_top?: string | null
           id?: string
+          instagram_url?: string | null
           is_custom_trial?: boolean
           logo_url?: string | null
           min_advance_hours?: number
@@ -843,6 +895,7 @@ export type Database = {
           subdomain: string
           subscription_ends_at?: string | null
           subscription_starts_at?: string | null
+          tiktok_url?: string | null
           timezone?: string
           transaction_fee_fixed_cents?: number | null
           transaction_fee_type?: Database["public"]["Enums"]["transaction_fee_type"]
@@ -868,12 +921,17 @@ export type Database = {
           current_plan_id?: string | null
           custom_domain?: string | null
           customer_can_cancel?: boolean
+          differentials?: Json | null
           email?: string | null
+          facebook_url?: string | null
           favicon_url?: string | null
           grace_period_ends_at?: string | null
+          hero_image_url?: string | null
+          hero_subheadline?: string | null
           home_headline_accent?: string | null
           home_headline_top?: string | null
           id?: string
+          instagram_url?: string | null
           is_custom_trial?: boolean
           logo_url?: string | null
           min_advance_hours?: number
@@ -893,6 +951,7 @@ export type Database = {
           subdomain?: string
           subscription_ends_at?: string | null
           subscription_starts_at?: string | null
+          tiktok_url?: string | null
           timezone?: string
           transaction_fee_fixed_cents?: number | null
           transaction_fee_type?: Database["public"]["Enums"]["transaction_fee_type"]
@@ -909,6 +968,50 @@ export type Database = {
             columns: ["current_plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          author_name: string
+          author_photo_url: string | null
+          body: string
+          created_at: string
+          id: string
+          position: number
+          rating: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_name: string
+          author_photo_url?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          position?: number
+          rating?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string
+          author_photo_url?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          position?: number
+          rating?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1021,6 +1124,14 @@ export type Database = {
         | "SUSPENDED"
         | "CANCELED"
       deposit_type: "FIXED" | "PERCENTAGE"
+      landing_block_type:
+        | "HERO"
+        | "SERVICES"
+        | "DIFFERENTIALS"
+        | "PROFESSIONALS"
+        | "TESTIMONIALS"
+        | "CONTACT"
+        | "FINAL_CTA"
       tenant_status: "ACTIVE" | "SUSPENDED" | "ARCHIVED"
       transaction_fee_type: "PERCENTAGE" | "FIXED" | "NONE"
       user_role:
@@ -1172,6 +1283,15 @@ export const Constants = {
         "CANCELED",
       ],
       deposit_type: ["FIXED", "PERCENTAGE"],
+      landing_block_type: [
+        "HERO",
+        "SERVICES",
+        "DIFFERENTIALS",
+        "PROFESSIONALS",
+        "TESTIMONIALS",
+        "CONTACT",
+        "FINAL_CTA",
+      ],
       tenant_status: ["ACTIVE", "SUSPENDED", "ARCHIVED"],
       transaction_fee_type: ["PERCENTAGE", "FIXED", "NONE"],
       user_role: [

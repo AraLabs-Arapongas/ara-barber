@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Calendar, ExternalLink } from 'lucide-react'
+import { ArrowRight, ExternalLink, Calendar } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
 import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
@@ -10,17 +10,24 @@ import { TenantLogo } from '@/components/branding/tenant-logo'
 import { AraLabsMark } from '@/components/brand/logo'
 import { AraLabsAttribution } from '@/components/brand/aralabs-attribution'
 import { Button } from '@/components/ui/button'
-import { CustomerAccess } from '@/components/home/customer-access'
-import { CustomerQuickActions } from '@/components/home/customer-quick-actions'
-import { BusinessHoursAccordion } from '@/components/home/business-hours-accordion'
-import { LoyaltyStamps } from '@/components/home/loyalty-stamps'
-import { UpcomingAppointmentsCarousel } from '@/components/home/upcoming-appointments-carousel'
 import { CustomerShell } from '@/components/customer/customer-shell'
-import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { createClient } from '@/lib/supabase/server'
 import { getCustomerForTenant } from '@/lib/customers/ensure'
-import { getBusinessHours } from '@/lib/booking/queries'
+import { getActiveServicesForTenant, getBusinessHours } from '@/lib/booking/queries'
 import { getMyCustomerAppointments } from '@/lib/appointments/queries'
+import {
+  getLandingBlocks,
+  getLandingProfessionals,
+  getLandingTestimonials,
+  type LandingBlockType,
+} from '@/lib/landing/queries'
+import { HeroBlock } from '@/components/landing/hero-block'
+import { ServicesBlock } from '@/components/landing/services-block'
+import { DifferentialsBlock } from '@/components/landing/differentials-block'
+import { ProfessionalsBlock } from '@/components/landing/professionals-block'
+import { TestimonialsBlock } from '@/components/landing/testimonials-block'
+import { ContactBlock } from '@/components/landing/contact-block'
+import { FinalCtaBlock } from '@/components/landing/final-cta-block'
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers()
@@ -29,7 +36,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (area !== 'tenant' || tenantMissing) return {}
 
-  // Tenant válido: lê e devolve metadata personalizada.
   const tenant = await getCurrentTenantOrNotFound()
   const slug = await getCurrentTenantSlug()
 
@@ -44,29 +50,14 @@ export default async function RootPage() {
   const area = h.get('x-ara-area')
   const tenantMissing = h.get('x-ara-tenant-missing') === '1'
 
-  // Subdomínio válido em formato mas sem tenant no DB → renderiza o 404 tematizado
-  // inline (ao invés de chamar notFound(), que em Next 16 dev dispara o error shell
-  // em vez do not-found.tsx). Status HTTP segue 200; quando necessário, ajustar
-  // via rewrite do proxy. TODO Épico 10.
   if (tenantMissing) return <TenantNotFound />
-
   if (area === 'tenant') return <TenantPublicHome />
-
-  // area === 'root'. Apex pertence à storefront AraLabs (outro repo).
-  // Em prod, qualquer request que chegue aqui é redirecionada pra lá.
-  // Em dev (localhost), mostra um índice de atalhos pro desenvolvedor navegar entre tenants.
   if (process.env.NEXT_PUBLIC_ENV !== 'development') {
     redirect('https://aralabs.com.br')
   }
-
   return <DevRootIndex />
 }
 
-/**
- * Tela exibida quando o subdomínio não corresponde a um tenant cadastrado.
- * Renderizada pelo próprio page.tsx (não via notFound()) para evitar o error
- * shell do Next 16 dev mode.
- */
 function TenantNotFound() {
   return (
     <main className="noise-overlay relative flex min-h-screen flex-col bg-bg px-6 py-10">
@@ -98,9 +89,6 @@ function TenantNotFound() {
   )
 }
 
-/**
- * Home do tenant quando acessado via `<slug>.aralabs.com.br`.
- */
 async function TenantPublicHome() {
   const tenant = await getCurrentTenantOrNotFound()
   const unavailable = tenant.status !== 'ACTIVE' || tenant.billingStatus === 'SUSPENDED'
@@ -111,14 +99,20 @@ async function TenantPublicHome() {
   } = await supabase.auth.getUser()
 
   let loggedIn = false
-  let displayName: string | null = null
-  let emailForHome: string | null = null
+  let upcomingCount = 0
   if (user && !unavailable) {
     const customer = await getCustomerForTenant(tenant.id)
     if (customer) {
       loggedIn = true
-      displayName = customer.name
-      emailForHome = customer.email ?? user.email ?? null
+      const myAppts = await getMyCustomerAppointments(tenant.id)
+      // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
+      const nowMs = Date.now()
+      upcomingCount = myAppts.filter(
+        (a) =>
+          new Date(a.startAt).getTime() >= nowMs &&
+          a.status !== 'CANCELED' &&
+          a.status !== 'NO_SHOW',
+      ).length
     }
   }
 
@@ -146,26 +140,21 @@ async function TenantPublicHome() {
     )
   }
 
-  const [businessHours, myAppointments] = await Promise.all([
+  // Carrega tudo que a landing pode precisar em paralelo. Cada bloco
+  // só vai renderizar se enabled e tiver dado, então sobre-buscar é ok.
+  const [blocks, services, professionals, testimonials, businessHours] = await Promise.all([
+    getLandingBlocks(tenant.id),
+    getActiveServicesForTenant(tenant.id),
+    getLandingProfessionals(tenant.id),
+    getLandingTestimonials(tenant.id),
     getBusinessHours(tenant.id),
-    loggedIn ? getMyCustomerAppointments(tenant.id) : Promise.resolve([]),
   ])
 
-  // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
-  const nowMs = Date.now()
-  // `getMyCustomerAppointments` retorna DESC (mais recente primeiro). Pra
-  // home queremos PRÓXIMAS reservas em ordem CRONOLÓGICA (a mais próxima
-  // primeiro). Filtra futuras + ativas, depois ordena ASC, pega top 5
-  // pro carousel.
-  const upcomingAppointments = myAppointments
-    .filter(
-      (a) =>
-        new Date(a.startAt).getTime() >= nowMs &&
-        a.status !== 'CANCELED' &&
-        a.status !== 'NO_SHOW',
-    )
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
-    .slice(0, 5)
+  const enabled = new Map<LandingBlockType, { position: number }>()
+  for (const b of blocks) {
+    if (b.enabled) enabled.set(b.blockType, { position: b.position })
+  }
+  const ordered = [...enabled.entries()].sort((a, b) => a[1].position - b[1].position)
 
   return (
     <>
@@ -177,107 +166,87 @@ async function TenantPublicHome() {
         }}
       />
 
-      {/* Realtime: re-fetcha a home quando appointments do cliente
-          mudam (staff confirma/cancela, cliente cancela em outra aba).
-          Só pra logado — anon não tem JWT pra autorizar broadcast. */}
-      {loggedIn ? (
-        <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="customer-home" />
-      ) : null}
-
       <CustomerShell showTabBar={loggedIn}>
-        <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5 pt-6 pb-12 sm:px-6">
-          {/* Header horizontal: logo + nome + tagline/subtítulo.
-              Substituiu o logo gigante centralizado (350→64px ao lado
-              do nome) — visual mais "app" e menos "landing". */}
-          <header className="flex items-center gap-3">
-            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={56} />
-            <div className="min-w-0">
-              <h1 className="truncate font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
-                {tenant.name}
-              </h1>
-              {tenant.tagline ? (
-                <p className="mt-0.5 truncate text-[0.8125rem] text-fg-muted">{tenant.tagline}</p>
-              ) : null}
+        <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 pt-4 pb-12 sm:px-6 sm:pt-6">
+          <header className="flex items-center justify-between gap-3 px-1">
+            <div className="flex min-w-0 items-center gap-3">
+              <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={48} />
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-[1.125rem] font-semibold leading-tight tracking-tight text-fg">
+                  {tenant.name}
+                </h1>
+                {tenant.tagline ? (
+                  <p className="mt-0.5 truncate text-[0.75rem] text-fg-muted">{tenant.tagline}</p>
+                ) : null}
+              </div>
             </div>
           </header>
 
-          {/* Greeting personalizado pra logado: "Olá, [primeiro nome]"
-              + status contextual da próxima reserva. Cliente que abre
-              o app sente reconhecimento imediato. */}
-          {loggedIn ? (
-            <section className="mt-2">
-              <h2 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
-                Olá, {firstName(displayName ?? '')}
-              </h2>
-            </section>
-          ) : null}
-
-          {/* Bloco 1 — Próximas reservas: carousel quando há 2+; card
-              único quando há só 1. Cada card tem ações inline (Ver
-              detalhes / Reagendar / Cancelar). */}
-          {upcomingAppointments.length > 0 ? (
-            <section>
-              <p className="mb-2 px-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-                {upcomingAppointments.length === 1
-                  ? 'Sua próxima reserva'
-                  : `Suas próximas reservas (${upcomingAppointments.length})`}
-              </p>
-              <UpcomingAppointmentsCarousel
-                appointments={upcomingAppointments.map((a) => ({
-                  id: a.id,
-                  serviceId: a.serviceId,
-                  serviceName: a.serviceName,
-                  professionalId: a.professionalId,
-                  professionalName: a.professionalName,
-                  startAt: a.startAt,
-                  status: a.status,
-                }))}
-                tenantTimezone={tenant.timezone}
-                cancellationWindowHours={tenant.cancellationWindowHours}
-                customerCanCancel={tenant.customerCanCancel}
-              />
-            </section>
-          ) : null}
-
-          {/* Bloco 2 — CTA principal: Nova reserva. */}
-          <section>
-            <Link href="/book" className="inline-block w-full">
-              <Button size="lg" fullWidth>
-                <Calendar className="h-4 w-4" aria-hidden="true" />
-                Nova reserva
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
+          {loggedIn && upcomingCount > 0 ? (
+            <Link
+              href="/minha-conta"
+              className="flex items-center gap-3 rounded-2xl border border-brand-primary/30 bg-brand-primary/5 px-4 py-3 text-[0.875rem] text-fg transition-colors hover:border-brand-primary/50"
+            >
+              <Calendar className="h-4 w-4 text-brand-primary" aria-hidden="true" />
+              <span className="flex-1">
+                Você tem {upcomingCount === 1 ? '1 reserva' : `${upcomingCount} reservas`} marcada
+                {upcomingCount === 1 ? '' : 's'}.
+              </span>
+              <span className="text-[0.8125rem] font-medium text-brand-primary">
+                Minha conta
+                <ArrowRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
+              </span>
             </Link>
-          </section>
-
-          {/* Bloco 3 — Ações rápidas: WhatsApp + Como chegar.
-              "Reagendar" agora vive dentro do card da próxima reserva. */}
-          {loggedIn ? (
-            <CustomerQuickActions
-              contactPhone={tenant.contactPhone}
-              whatsapp={tenant.whatsapp}
-              address={{
-                line1: tenant.addressLine1,
-                line2: tenant.addressLine2,
-                city: tenant.city,
-                state: tenant.state,
-                postalCode: tenant.postalCode,
-              }}
-            />
           ) : null}
 
-          {/* Bloco 4 — Programa de pontos (mockado, feature flag). */}
-          {loggedIn ? <LoyaltyStamps /> : null}
-
-          {/* Bloco 5 — Funcionamento: accordion com status "agora". */}
-          {businessHours.length > 0 ? <BusinessHoursAccordion hours={businessHours} /> : null}
-
-          {/* Login / signup pra anônimos. */}
-          {!loggedIn ? (
-            <div className="mt-2 flex flex-col items-center">
-              <CustomerAccess loggedIn={loggedIn} displayName={displayName} email={emailForHome} />
-            </div>
-          ) : null}
+          {ordered.map(([blockType]) => {
+            switch (blockType) {
+              case 'HERO':
+                return (
+                  <HeroBlock
+                    key="HERO"
+                    tenantName={tenant.name}
+                    headlineTop={tenant.homeHeadlineTop}
+                    headlineAccent={tenant.homeHeadlineAccent}
+                    subheadline={tenant.heroSubheadline}
+                    imageUrl={tenant.heroImageUrl}
+                  />
+                )
+              case 'SERVICES':
+                return <ServicesBlock key="SERVICES" services={services} />
+              case 'DIFFERENTIALS':
+                return <DifferentialsBlock key="DIFFERENTIALS" items={tenant.differentials} />
+              case 'PROFESSIONALS':
+                return <ProfessionalsBlock key="PROFESSIONALS" professionals={professionals} />
+              case 'TESTIMONIALS':
+                return <TestimonialsBlock key="TESTIMONIALS" testimonials={testimonials} />
+              case 'CONTACT':
+                return (
+                  <ContactBlock
+                    key="CONTACT"
+                    whatsapp={tenant.whatsapp}
+                    contactPhone={tenant.contactPhone}
+                    addressLine1={tenant.addressLine1}
+                    addressLine2={tenant.addressLine2}
+                    city={tenant.city}
+                    state={tenant.state}
+                    postalCode={tenant.postalCode}
+                    businessHours={businessHours}
+                  />
+                )
+              case 'FINAL_CTA':
+                return (
+                  <FinalCtaBlock
+                    key="FINAL_CTA"
+                    instagramUrl={tenant.instagramUrl}
+                    facebookUrl={tenant.facebookUrl}
+                    tiktokUrl={tenant.tiktokUrl}
+                  />
+                )
+              default:
+                return null
+            }
+          })}
 
           <footer className="mt-auto flex justify-center pt-6">
             <AraLabsAttribution />
@@ -288,17 +257,6 @@ async function TenantPublicHome() {
   )
 }
 
-function firstName(full: string): string {
-  const trimmed = full.trim()
-  if (!trimmed) return ''
-  return trimmed.split(/\s+/)[0]
-}
-
-/**
- * Índice de desenvolvimento — mostrado apenas em `localhost` (area=root).
- * Em produção esta tela não existe: o apex redireciona para o site institucional.
- * Usa a porta atual e o dev base host do env; facilita pular entre áreas.
- */
 function DevRootIndex() {
   const devBase = process.env.NEXT_PUBLIC_DEV_BASE_HOST ?? 'lvh.me'
   const port = '3008'

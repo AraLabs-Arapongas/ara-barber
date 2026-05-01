@@ -6,11 +6,41 @@ import {
 } from '@/lib/platform/derivations'
 
 const sampleTenants = [
-  { id: 't1', billing_status: 'ACTIVE', monthly_price_cents: 9900, status: 'ACTIVE', trial_ends_at: null },
-  { id: 't2', billing_status: 'ACTIVE', monthly_price_cents: 19900, status: 'ACTIVE', trial_ends_at: null },
-  { id: 't3', billing_status: 'TRIALING', monthly_price_cents: 9900, status: 'ACTIVE', trial_ends_at: '2026-05-03T00:00:00Z' },
-  { id: 't4', billing_status: 'TRIALING', monthly_price_cents: 9900, status: 'ACTIVE', trial_ends_at: '2026-05-15T00:00:00Z' },
-  { id: 't5', billing_status: 'SUSPENDED', monthly_price_cents: 9900, status: 'SUSPENDED', trial_ends_at: null },
+  {
+    id: 't1',
+    billing_status: 'ACTIVE',
+    monthly_price_cents: 9900,
+    status: 'ACTIVE',
+    trial_ends_at: null,
+  },
+  {
+    id: 't2',
+    billing_status: 'ACTIVE',
+    monthly_price_cents: 19900,
+    status: 'ACTIVE',
+    trial_ends_at: null,
+  },
+  {
+    id: 't3',
+    billing_status: 'TRIALING',
+    monthly_price_cents: 9900,
+    status: 'ACTIVE',
+    trial_ends_at: '2026-05-03T00:00:00Z',
+  },
+  {
+    id: 't4',
+    billing_status: 'TRIALING',
+    monthly_price_cents: 9900,
+    status: 'ACTIVE',
+    trial_ends_at: '2026-05-15T00:00:00Z',
+  },
+  {
+    id: 't5',
+    billing_status: 'SUSPENDED',
+    monthly_price_cents: 9900,
+    status: 'SUSPENDED',
+    trial_ends_at: null,
+  },
 ] as const
 
 describe('calculateMRR', () => {
@@ -23,7 +53,17 @@ describe('calculateMRR', () => {
   })
 
   it('ignora monthly_price_cents null', () => {
-    expect(calculateMRR([{ id: 'x', billing_status: 'ACTIVE', monthly_price_cents: null, status: 'ACTIVE', trial_ends_at: null }])).toBe(0)
+    expect(
+      calculateMRR([
+        {
+          id: 'x',
+          billing_status: 'ACTIVE',
+          monthly_price_cents: null,
+          status: 'ACTIVE',
+          trial_ends_at: null,
+        },
+      ]),
+    ).toBe(0)
   })
 })
 

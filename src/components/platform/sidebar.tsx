@@ -24,9 +24,7 @@ export function PlatformSidebar() {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-[0.875rem] transition-colors ${
-              active
-                ? 'bg-bg text-fg font-medium'
-                : 'text-fg-muted hover:bg-bg hover:text-fg'
+              active ? 'bg-bg text-fg font-medium' : 'text-fg-muted hover:bg-bg hover:text-fg'
             }`}
           >
             <Icon className="h-4 w-4" />

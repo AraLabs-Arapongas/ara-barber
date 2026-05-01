@@ -3,11 +3,7 @@
 import { useMemo, useState, useActionState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  deactivateUserAction,
-  sendPasswordResetAction,
-  type UserActionState,
-} from '../actions'
+import { deactivateUserAction, sendPasswordResetAction, type UserActionState } from '../actions'
 import type { AdminUserRow } from '@/lib/platform/users'
 
 export function UsersTable({ users }: { users: AdminUserRow[] }) {
