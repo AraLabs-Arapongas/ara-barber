@@ -198,6 +198,41 @@ export async function saveLinksStep(
     })),
   )
   if (insErr) return { error: `insert: ${insErr.message}` }
+
+  // Seed professional_availability copiando business_hours pra cada profissional.
+  // Sem isso, computeSlots retorna vazio porque o profissional não tem jornada
+  // cadastrada e a home staff mostra "sem horário configurado". Cada prof pode
+  // customizar individualmente depois em Mais → Disponibilidade.
+  const [{ data: hours }, { data: pros }] = await Promise.all([
+    supabase
+      .from('business_hours')
+      .select('weekday, is_open, start_time, end_time')
+      .eq('tenant_id', tenant.id),
+    supabase
+      .from('professionals')
+      .select('id')
+      .eq('tenant_id', tenant.id)
+      .eq('is_active', true),
+  ])
+  const openDays = (hours ?? []).filter((h) => h.is_open)
+  const availabilityRows = (pros ?? []).flatMap((p) =>
+    openDays.map((d) => ({
+      tenant_id: tenant.id,
+      professional_id: p.id,
+      weekday: d.weekday,
+      start_time: d.start_time,
+      end_time: d.end_time,
+      is_available: true,
+    })),
+  )
+  await supabase.from('professional_availability').delete().eq('tenant_id', tenant.id)
+  if (availabilityRows.length > 0) {
+    const { error: availErr } = await supabase
+      .from('professional_availability')
+      .insert(availabilityRows)
+    if (availErr) return { error: `availability: ${availErr.message}` }
+  }
+
   await supabase
     .from('tenants')
     .update({ onboarding_completed_at: new Date().toISOString(), onboarding_step: null })
@@ -209,7 +244,10 @@ export async function saveLinksStep(
     action: 'onboarding.completed',
     entityType: 'tenant',
     entityId: tenant.id,
-    changes: { links: parsed.data.links.length },
+    changes: {
+      links: parsed.data.links.length,
+      availability_seeded: availabilityRows.length,
+    },
   })
   revalidatePath('/admin/setup')
   revalidatePath('/admin/dashboard')
