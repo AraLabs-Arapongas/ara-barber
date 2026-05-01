@@ -170,7 +170,10 @@ export function WeekAgendaStrip({
             <p className="mb-2 text-sm text-fg-muted">{totalLabel}</p>
           )}
 
-          <div className="relative h-32 w-full min-w-0">
+          <div
+            className="relative h-32 w-full min-w-0 [&_*]:outline-none [&_*]:focus:outline-none"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={120}>
               <BarChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 4 }}>
                 <XAxis
@@ -218,28 +221,30 @@ export function WeekAgendaStrip({
                   height={36}
                   interval={0}
                 />
-                <Tooltip
-                  cursor={{ fill: 'var(--color-bg-subtle)', opacity: 0.5 }}
-                  content={(props) => {
-                    const cast = props as unknown as {
-                      active?: boolean
-                      payload?: ReadonlyArray<{ payload: ChartPoint }>
-                    }
-                    return (
-                      <ChartTooltip
-                        active={cast.active}
-                        payload={cast.payload}
-                        mode={mode}
-                        moneyHidden={moneyHidden}
-                      />
-                    )
-                  }}
-                />
+                {hasClickableDays ? (
+                  <Tooltip
+                    cursor={{ fill: 'var(--color-bg-subtle)', opacity: 0.5 }}
+                    content={(props) => {
+                      const cast = props as unknown as {
+                        active?: boolean
+                        payload?: ReadonlyArray<{ payload: ChartPoint }>
+                      }
+                      return (
+                        <ChartTooltip
+                          active={cast.active}
+                          payload={cast.payload}
+                          mode={mode}
+                          moneyHidden={moneyHidden}
+                        />
+                      )
+                    }}
+                  />
+                ) : null}
                 <Bar
                   dataKey="value"
                   radius={[4, 4, 0, 0]}
                   cursor={hasClickableDays ? 'pointer' : 'default'}
-                  onClick={handleBarClick}
+                  onClick={hasClickableDays ? handleBarClick : undefined}
                 >
                   {chartData.map((point) => (
                     <Cell
