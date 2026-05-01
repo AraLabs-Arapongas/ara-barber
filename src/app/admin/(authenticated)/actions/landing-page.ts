@@ -71,19 +71,29 @@ export async function updateLandingBlocks(raw: UpdateLandingBlocksInput): Promis
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Input inválido.' }
   }
 
-  const supabase = await createClient()
-  // Upsert por (tenant_id, block_type). Use unique constraint pra
-  // garantir que cada block_type só apareça uma vez por tenant.
-  const rows = parsed.data.blocks.map((b) => ({
-    tenant_id: tenant.id,
-    block_type: b.blockType,
-    enabled: b.enabled,
-    position: b.position,
-  }))
-  const { error } = await supabase
-    .from('landing_blocks')
-    .upsert(rows, { onConflict: 'tenant_id,block_type' })
-  if (error) return { ok: false, error: error.message }
+  // Os 7 blocos default já são seedados via migration pra cada tenant
+  // (e novos tenants ganham via trigger ou seed). Aqui só atualizamos
+  // enabled+position de cada um. Se algum bloco não existir ainda
+  // (tenant criado antes da migration), insere.
+  const supabaseSecret = createSecretClient()
+  for (const b of parsed.data.blocks) {
+    const { error: upErr, data: upData } = await supabaseSecret
+      .from('landing_blocks')
+      .update({ enabled: b.enabled, position: b.position })
+      .eq('tenant_id', tenant.id)
+      .eq('block_type', b.blockType)
+      .select('id')
+    if (upErr) return { ok: false, error: upErr.message }
+    if (!upData || upData.length === 0) {
+      const { error: insErr } = await supabaseSecret.from('landing_blocks').insert({
+        tenant_id: tenant.id,
+        block_type: b.blockType,
+        enabled: b.enabled,
+        position: b.position,
+      })
+      if (insErr) return { ok: false, error: insErr.message }
+    }
+  }
 
   revalidatePath('/admin/dashboard/pagina-publica')
   revalidatePath('/')

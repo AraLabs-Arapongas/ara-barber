@@ -1,7 +1,12 @@
 import type * as React from 'react'
 import Link from 'next/link'
-import { ArrowRight, Calendar } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowRight } from 'lucide-react'
+
+type Props = {
+  instagramUrl: string | null
+  facebookUrl: string | null
+  tiktokUrl: string | null
+}
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -10,7 +15,7 @@ function InstagramIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.8}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -28,12 +33,6 @@ function FacebookIcon({ className }: { className?: string }) {
       <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88V14.9h-2.54V12h2.54V9.8c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.24.19 2.24.19v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.9h-2.33v6.98C18.34 21.13 22 16.99 22 12z" />
     </svg>
   )
-}
-
-type Props = {
-  instagramUrl: string | null
-  facebookUrl: string | null
-  tiktokUrl: string | null
 }
 
 function TikTokIcon({ className }: { className?: string }) {
@@ -60,24 +59,30 @@ export function FinalCtaBlock({ instagramUrl, facebookUrl, tiktokUrl }: Props) {
   )
 
   return (
-    <section className="rounded-3xl bg-brand-primary px-6 py-10 text-center text-brand-primary-fg sm:px-10 sm:py-14">
-      <h2 className="font-display text-[1.625rem] font-semibold leading-tight tracking-tight sm:text-[2rem]">
-        Pronto pra agendar?
+    <section className="-mx-4 bg-fg px-6 py-20 text-center sm:-mx-6 sm:px-10 sm:py-28">
+      <p className="text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
+        Vamos lá
+      </p>
+      <h2 className="mx-auto mt-4 max-w-2xl font-display text-[2.25rem] font-medium leading-[1] tracking-tight text-bg sm:text-[3.5rem]">
+        Pronto pra <span className="font-light italic text-brand-accent">agendar?</span>
       </h2>
-      <p className="mx-auto mt-2 max-w-md text-[0.9375rem] opacity-90">
+      <p className="mx-auto mt-5 max-w-md text-[0.9375rem] leading-relaxed text-bg/70">
         Reserve seu horário em poucos toques. Sem cadastro complicado.
       </p>
-      <div className="mt-6">
-        <Link href="/book" className="inline-block">
-          <Button size="lg" variant="secondary">
-            <Calendar className="h-4 w-4" aria-hidden="true" />
-            Agendar agora
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Button>
+      <div className="mt-10">
+        <Link
+          href="/book"
+          className="group inline-flex items-center gap-3 rounded-full bg-brand-accent px-9 py-4 text-[0.9375rem] font-medium text-brand-accent-fg shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.99]"
+        >
+          Agendar agora
+          <ArrowRight
+            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
         </Link>
       </div>
       {socials.length > 0 ? (
-        <div className="mt-8 flex items-center justify-center gap-4">
+        <div className="mt-12 flex items-center justify-center gap-5">
           {socials.map(({ url, label, Icon }) => (
             <a
               key={label}
@@ -85,9 +90,9 @@ export function FinalCtaBlock({ instagramUrl, facebookUrl, tiktokUrl }: Props) {
               target="_blank"
               rel="noreferrer noopener"
               aria-label={label}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-bg/30 text-bg transition-colors hover:border-brand-accent hover:text-brand-accent"
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4 w-4" />
             </a>
           ))}
         </div>

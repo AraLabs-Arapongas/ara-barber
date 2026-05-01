@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, ExternalLink, Calendar } from 'lucide-react'
+import { ArrowRight, ExternalLink } from 'lucide-react'
 import { getCurrentTenantOrNotFound, getCurrentTenantSlug } from '@/lib/tenant/context'
 import { buildTenantMetadata } from '@/lib/tenant/metadata'
 import { ThemeInjector } from '@/components/branding/theme-injector'
@@ -167,37 +167,27 @@ async function TenantPublicHome() {
       />
 
       <CustomerShell showTabBar={loggedIn}>
-        <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 pt-4 pb-12 sm:px-6 sm:pt-6">
-          <header className="flex items-center justify-between gap-3 px-1">
-            <div className="flex min-w-0 items-center gap-3">
-              <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={48} />
-              <div className="min-w-0">
-                <h1 className="truncate font-display text-[1.125rem] font-semibold leading-tight tracking-tight text-fg">
-                  {tenant.name}
-                </h1>
-                {tenant.tagline ? (
-                  <p className="mt-0.5 truncate text-[0.75rem] text-fg-muted">{tenant.tagline}</p>
-                ) : null}
-              </div>
-            </div>
-          </header>
-
+        {/* Header flutuante sobre o hero — fica transparente até dar
+            scroll, dando vibe de capa editorial. Em mobile encolhe pra
+            só logo + nome. */}
+        <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between gap-3 px-5 pt-5 sm:px-8 sm:pt-7">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={36} />
+            <p className="truncate font-display text-[0.9375rem] font-medium tracking-wide text-white drop-shadow-sm">
+              {tenant.name}
+            </p>
+          </div>
           {loggedIn && upcomingCount > 0 ? (
             <Link
               href="/minha-conta"
-              className="flex items-center gap-3 rounded-2xl border border-brand-primary/30 bg-brand-primary/5 px-4 py-3 text-[0.875rem] text-fg transition-colors hover:border-brand-primary/50"
+              className="rounded-full border border-white/40 bg-white/10 px-3.5 py-1.5 text-[0.75rem] font-medium uppercase tracking-[0.12em] text-white backdrop-blur-sm transition-colors hover:bg-white/20"
             >
-              <Calendar className="h-4 w-4 text-brand-primary" aria-hidden="true" />
-              <span className="flex-1">
-                Você tem {upcomingCount === 1 ? '1 reserva' : `${upcomingCount} reservas`} marcada
-                {upcomingCount === 1 ? '' : 's'}.
-              </span>
-              <span className="text-[0.8125rem] font-medium text-brand-primary">
-                Minha conta
-                <ArrowRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
-              </span>
+              Minha conta
             </Link>
           ) : null}
+        </header>
+
+        <main className="mx-auto flex w-full max-w-3xl flex-col gap-20 px-4 pb-16 sm:gap-28 sm:px-6 sm:pb-20">
 
           {ordered.map(([blockType]) => {
             switch (blockType) {
@@ -248,7 +238,7 @@ async function TenantPublicHome() {
             }
           })}
 
-          <footer className="mt-auto flex justify-center pt-6">
+          <footer className="flex justify-center pt-4">
             <AraLabsAttribution />
           </footer>
         </main>

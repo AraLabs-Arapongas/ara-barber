@@ -1,4 +1,4 @@
-import { MapPin, MessageCircle, Clock } from 'lucide-react'
+import { MapPin, MessageCircle } from 'lucide-react'
 import type { BusinessHour } from '@/lib/booking/queries'
 
 type Props = {
@@ -32,76 +32,75 @@ export function ContactBlock(props: Props) {
   const wa = props.whatsapp ? digits(props.whatsapp) : null
   const address = fullAddress(props)
   const hasAny = wa || props.contactPhone || address || props.businessHours.length > 0
-
   if (!hasAny) return null
 
   const hours = [...props.businessHours].sort((a, b) => a.weekday - b.weekday)
 
   return (
-    <section className="px-1">
-      <header className="mb-4">
-        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-brand-accent">
-          Onde nos encontrar
-        </p>
-        <h2 className="mt-1 font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
-          Contato e horário
-        </h2>
-      </header>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {wa ? (
-          <a
-            href={`https://wa.me/${wa}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-border-strong"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
-              <MessageCircle className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="font-medium text-fg">WhatsApp</p>
-              <p className="text-[0.8125rem] text-fg-muted">{props.whatsapp}</p>
-            </div>
-          </a>
-        ) : null}
+    <section className="px-1 sm:px-2">
+      <p className="text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
+        Onde nos encontrar
+      </p>
+      <h2 className="mt-3 font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
+        Estamos <span className="font-light italic text-brand-accent">pertinho</span>
+      </h2>
 
-        {address ? (
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-border-strong"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
-              <MapPin className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <p className="font-medium text-fg">Endereço</p>
-              <p className="truncate text-[0.8125rem] text-fg-muted">{address}</p>
-            </div>
-          </a>
-        ) : null}
+      <div className="mt-10 grid gap-10 sm:grid-cols-2">
+        <div className="space-y-6">
+          {wa ? (
+            <a
+              href={`https://wa.me/${wa}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="group flex items-start gap-4"
+            >
+              <MessageCircle className="mt-1 h-5 w-5 text-brand-accent" strokeWidth={1.5} aria-hidden="true" />
+              <div>
+                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
+                  WhatsApp
+                </p>
+                <p className="mt-1 font-display text-[1.125rem] text-fg group-hover:text-brand-primary">
+                  {props.whatsapp}
+                </p>
+              </div>
+            </a>
+          ) : null}
+
+          {address ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="group flex items-start gap-4"
+            >
+              <MapPin className="mt-1 h-5 w-5 text-brand-accent" strokeWidth={1.5} aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
+                  Endereço
+                </p>
+                <p className="mt-1 font-display text-[1rem] leading-relaxed text-fg group-hover:text-brand-primary">
+                  {address}
+                </p>
+              </div>
+            </a>
+          ) : null}
+        </div>
 
         {hours.length > 0 ? (
-          <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-4 sm:col-span-2">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
-              <Clock className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="mb-2 font-medium text-fg">Horário de funcionamento</p>
-              <ul className="space-y-1 text-[0.8125rem] text-fg-muted">
-                {hours.map((h) => (
-                  <li key={h.weekday} className="flex justify-between gap-3">
-                    <span>{WEEKDAYS[h.weekday]}</span>
-                    <span>
-                      {h.isOpen
-                        ? `${h.startTime.slice(0, 5)} – ${h.endTime.slice(0, 5)}`
-                        : 'Fechado'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div>
+            <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
+              Horário
+            </p>
+            <dl className="mt-3 divide-y divide-border/60 border-y border-border/60">
+              {hours.map((h) => (
+                <div key={h.weekday} className="flex justify-between gap-3 py-2.5 text-[0.875rem]">
+                  <dt className="text-fg">{WEEKDAYS[h.weekday]}</dt>
+                  <dd className="tabular-nums text-fg-muted">
+                    {h.isOpen ? `${h.startTime.slice(0, 5)} – ${h.endTime.slice(0, 5)}` : 'Fechado'}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         ) : null}
       </div>

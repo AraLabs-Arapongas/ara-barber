@@ -8,22 +8,17 @@ type Props = {
 export function ProfessionalsBlock({ professionals }: Props) {
   if (professionals.length === 0) return null
   return (
-    <section className="px-1">
-      <header className="mb-4">
-        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-brand-accent">
-          Quem atende
-        </p>
-        <h2 className="mt-1 font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
-          Nossa equipe
-        </h2>
-      </header>
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <section className="px-1 sm:px-2">
+      <p className="text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
+        Quem atende
+      </p>
+      <h2 className="mt-3 font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
+        Nossa <span className="font-light italic text-brand-accent">equipe</span>
+      </h2>
+      <ul className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6">
         {professionals.map((p) => (
-          <li
-            key={p.id}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface p-4 text-center"
-          >
-            <div className="relative h-20 w-20 overflow-hidden rounded-full bg-bg-subtle">
+          <li key={p.id} className="flex flex-col gap-3">
+            <div className="relative aspect-[3/4] overflow-hidden bg-bg-subtle">
               {p.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -33,11 +28,11 @@ export function ProfessionalsBlock({ professionals }: Props) {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-fg-subtle">
-                  <User className="h-8 w-8" aria-hidden="true" />
+                  <User className="h-12 w-12" aria-hidden="true" strokeWidth={1} />
                 </div>
               )}
             </div>
-            <p className="text-[0.875rem] font-medium leading-tight text-fg">
+            <p className="font-display text-[1rem] font-medium leading-tight text-fg sm:text-[1.125rem]">
               {p.displayName ?? p.name}
             </p>
           </li>

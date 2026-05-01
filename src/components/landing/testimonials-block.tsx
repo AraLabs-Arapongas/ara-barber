@@ -8,35 +8,35 @@ type Props = {
 export function TestimonialsBlock({ testimonials }: Props) {
   if (testimonials.length === 0) return null
   return (
-    <section className="px-1">
-      <header className="mb-4">
-        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-brand-accent">
-          Quem indica
-        </p>
-        <h2 className="mt-1 font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
-          O que dizem de nós
-        </h2>
-      </header>
-      <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible">
+    <section className="-mx-4 bg-bg-subtle px-6 py-16 sm:-mx-6 sm:px-10 sm:py-20">
+      <p className="text-[0.6875rem] font-medium uppercase tracking-[0.32em] text-brand-accent">
+        Quem indica
+      </p>
+      <h2 className="mt-3 max-w-xl font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
+        O que <span className="font-light italic text-brand-accent">dizem</span> de nós
+      </h2>
+      <ul className="mt-10 -mx-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-6 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-8 sm:overflow-visible sm:px-0">
         {testimonials.map((t) => (
           <li
             key={t.id}
-            className="flex w-[85%] shrink-0 snap-start flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:w-auto"
+            className="flex w-[80%] shrink-0 snap-start flex-col gap-4 sm:w-auto"
           >
             <div className="flex items-center gap-1 text-brand-accent">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className="h-4 w-4"
+                  className="h-3.5 w-3.5"
                   aria-hidden="true"
                   fill={i < t.rating ? 'currentColor' : 'none'}
                   strokeWidth={i < t.rating ? 0 : 1.5}
                 />
               ))}
             </div>
-            <p className="text-[0.875rem] leading-relaxed text-fg">&ldquo;{t.body}&rdquo;</p>
-            <div className="mt-auto flex items-center gap-2 pt-1">
-              <div className="h-9 w-9 overflow-hidden rounded-full bg-bg-subtle">
+            <p className="font-display text-[1.125rem] font-light italic leading-relaxed text-fg sm:text-[1.375rem]">
+              &ldquo;{t.body}&rdquo;
+            </p>
+            <div className="mt-auto flex items-center gap-3 pt-2">
+              <div className="h-10 w-10 overflow-hidden rounded-full bg-surface">
                 {t.authorPhotoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -50,7 +50,9 @@ export function TestimonialsBlock({ testimonials }: Props) {
                   </div>
                 )}
               </div>
-              <p className="text-[0.8125rem] font-medium text-fg">{t.authorName}</p>
+              <p className="text-[0.8125rem] font-medium uppercase tracking-[0.12em] text-fg">
+                {t.authorName}
+              </p>
             </div>
           </li>
         ))}
