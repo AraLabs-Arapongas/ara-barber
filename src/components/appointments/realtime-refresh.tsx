@@ -51,6 +51,31 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
     let reconnectAttempts = 0
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
+    // Throttle pra router.refresh(): coalesce calls dentro de 1.5s numa só.
+    // Sem isso, focus + visibilitychange + pageshow + N postgres_changes
+    // disparam refreshes seguidos que martelam RSC fetch.
+    const REFRESH_MIN_INTERVAL_MS = 1500
+    let lastRefreshAt = 0
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null
+    const requestRefresh = (origin: string) => {
+      const now = Date.now()
+      const elapsed = now - lastRefreshAt
+      if (elapsed >= REFRESH_MIN_INTERVAL_MS) {
+        lastRefreshAt = now
+        console.warn('[realtime] refresh', origin)
+        router.refresh()
+        return
+      }
+      if (refreshTimer) return // já tem um agendado
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null
+        if (cancelled) return
+        lastRefreshAt = Date.now()
+        console.warn('[realtime] refresh (debounced)', origin)
+        router.refresh()
+      }, REFRESH_MIN_INTERVAL_MS - elapsed)
+    }
+
     const clearReconnectTimer = () => {
       if (reconnectTimer) {
         clearTimeout(reconnectTimer)
@@ -101,7 +126,7 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
           },
           (payload) => {
             console.warn('[realtime] appointments event', payload.eventType, payload)
-            router.refresh()
+            requestRefresh(`postgres:${payload.eventType}`)
           },
         )
         .subscribe((status, err) => {
@@ -137,13 +162,12 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
     // garantir dados frescos mesmo se um event de realtime foi perdido.
     const handleResume = (origin: string) => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
-      console.warn('[realtime] resume', origin)
       void (async () => {
         const { data } = await supabase.auth.getSession()
         if (data.session?.access_token) {
           supabase.realtime.setAuth(data.session.access_token)
         }
-        router.refresh()
+        requestRefresh(`resume:${origin}`)
       })()
     }
     const onVisibility = () => handleResume('visibilitychange')
@@ -156,6 +180,7 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
     return () => {
       cancelled = true
       clearReconnectTimer()
+      if (refreshTimer) clearTimeout(refreshTimer)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('focus', onFocus)
       window.removeEventListener('pageshow', onPageShow)
