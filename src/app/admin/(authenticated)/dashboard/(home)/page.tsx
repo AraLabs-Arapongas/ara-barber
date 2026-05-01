@@ -12,6 +12,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
 import { formatCentsToBrl } from '@/lib/money'
 import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
+import { WelcomeToast } from '@/components/dashboard/welcome-toast'
+import { getOnboardingState } from '@/lib/onboarding/queries'
 import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { QuickActions } from '@/components/home/quick-actions'
 import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
@@ -39,8 +41,15 @@ function timeLabel(iso: string, tenantTimezone: string): string {
   }).format(new Date(iso))
 }
 
-export default async function DashboardHome() {
+export default async function DashboardHome({
+  searchParams,
+}: {
+  searchParams: Promise<{ welcome?: string }>
+}) {
+  const params = await searchParams
   const tenant = await getCurrentTenantOrNotFound()
+  const onboarding = await getOnboardingState(tenant.id)
+  const showWelcome = params.welcome === '1' && onboarding.completed
   const supabase = await createClient()
 
   const dateISO = todayISO(tenant.timezone)
@@ -145,6 +154,9 @@ export default async function DashboardHome() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
+      {showWelcome ? (
+        <WelcomeToast url={`https://${tenant.subdomain}.aralabs.com.br`} />
+      ) : null}
       <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="staff-home" />
       <header className="mb-6 flex items-start justify-between gap-3">
         <div>
