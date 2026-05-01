@@ -3,6 +3,7 @@
 import { useActionState, useState, useMemo } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import { saveServicesStep} from '@/lib/onboarding/actions'
 import type { StepActionState } from '@/lib/onboarding/schemas'
 import { WizardFooter } from '../_components/wizard-footer'
@@ -72,17 +73,13 @@ export function ServicesForm({ initial }: { initial: Row[] }) {
               </button>
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <select
+              <SelectSheet
                 value={r.duration_minutes}
-                onChange={(e) => update(idx, { duration_minutes: Number(e.target.value) })}
-                className="h-9 rounded-md border border-border bg-bg px-2 text-[0.8125rem]"
-              >
-                {DURATIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}min
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => update(idx, { duration_minutes: v })}
+                options={DURATIONS.map((d) => ({ value: d, label: `${d}min` }))}
+                sheetTitle="Duração do serviço"
+                className="w-[88px]"
+              />
               <div className="ml-auto flex items-center gap-1.5">
                 <span className="text-[0.8125rem] text-fg-muted">R$</span>
                 <Input

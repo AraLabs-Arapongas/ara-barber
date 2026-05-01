@@ -3,6 +3,7 @@
 import { useActionState, useState, useMemo } from 'react'
 import { saveBusinessHoursStep} from '@/lib/onboarding/actions'
 import type { StepActionState } from '@/lib/onboarding/schemas'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import { WizardFooter } from '../_components/wizard-footer'
 
 const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -59,31 +60,25 @@ export function HoursForm({ initialDays }: { initialDays: Day[] }) {
               />
               Aberto
             </label>
-            <select
+            <SelectSheet
               value={d.start_time}
-              onChange={(e) => update(d.weekday, { start_time: e.target.value })}
+              onChange={(v) => update(d.weekday, { start_time: v })}
+              options={TIME_OPTIONS.map((t) => ({ value: t, label: t }))}
+              sheetTitle={`${WEEKDAYS[d.weekday]} — abre às`}
+              placeholder="--:--"
               disabled={!d.is_open}
-              className="ml-auto rounded-md border border-border bg-bg px-2 py-1 text-[0.8125rem] disabled:opacity-40"
-            >
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              className="ml-auto w-[78px]"
+            />
             <span className="text-fg-subtle">→</span>
-            <select
+            <SelectSheet
               value={d.end_time}
-              onChange={(e) => update(d.weekday, { end_time: e.target.value })}
+              onChange={(v) => update(d.weekday, { end_time: v })}
+              options={TIME_OPTIONS.map((t) => ({ value: t, label: t }))}
+              sheetTitle={`${WEEKDAYS[d.weekday]} — fecha às`}
+              placeholder="--:--"
               disabled={!d.is_open}
-              className="rounded-md border border-border bg-bg px-2 py-1 text-[0.8125rem] disabled:opacity-40"
-            >
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              className="w-[78px]"
+            />
           </div>
         ))}
         {state.error ? (
