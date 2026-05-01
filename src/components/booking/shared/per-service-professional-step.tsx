@@ -126,7 +126,12 @@ function ProfCard({
   onClick: () => void
 }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={selected} className="block w-full text-left">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className="block w-full text-left"
+    >
       <Card
         className={`shadow-xs transition-colors ${
           selected

@@ -56,8 +56,7 @@ export function NextAppointmentCardHero({
 
   const startMs = new Date(appointment.startAt).getTime()
   const cutoff = startMs - cancellationWindowHours * 60 * 60 * 1000
-  const eligibleStatus =
-    appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED'
+  const eligibleStatus = appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED'
   const canCancel = customerCanCancel && eligibleStatus && nowMs <= cutoff
 
   const dateLabel = smartDateLabel(appointment.startAt, tenantTimezone)

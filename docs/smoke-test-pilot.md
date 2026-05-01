@@ -38,34 +38,54 @@ URLs locais:
 
 ---
 
-## 1. Home pública do tenant (revamp 2026-04-28)
+## 1. Home pública (landing) do tenant (revamp 2026-04-30)
 
-Ordem de blocos: Logo → **Próxima reserva** (se houver) → CTA "Nova
-reserva" → Ações rápidas (chips) → Funcionamento (accordion fechado).
-Anônimo vê só logo + CTA + funcionamento + "Entrar".
+A home pública agora é uma **landing page configurável** com blocos toggláveis e ordenáveis. Conteúdo "app pra cliente logado" (próximas reservas, fidelidade, ações rápidas) migrou pra `/minha-conta`.
+
+Blocos default na ordem: Hero → Serviços → Diferenciais → Profissionais (off por padrão) → Depoimentos → Contato e horário → Chamada final + redes sociais.
 
 **Visitante deslogado:**
 
 - [ ] Abrir `/` em anônimo carrega sem erro.
-- [ ] Logo do tenant aparece em tamanho compacto (~120px, não ocupa tela inteira).
-- [ ] CTA "Nova reserva" (com ícone de calendário) leva pra `/book`.
-- [ ] Bloco "Funcionamento" aparece como accordion fechado mostrando status do dia ("Hoje 09:00–18:00" ou "Fechado hoje"); clicar expande os 7 dias.
-- [ ] "Já sou cliente? Entrar" abre bottom sheet com login OTP.
+- [ ] Header compacto mostra logo + nome do tenant (+ tagline se configurada).
+- [ ] Bloco **Hero** aparece com headline (`home_headline_top` + `home_headline_accent`) + subtítulo (se configurado) + CTA "Agendar agora" → leva pra `/book`. Se há `hero_image_url`, imagem ocupa o fundo com overlay escuro.
+- [ ] Bloco **Serviços** lista cards com nome, preço (R$ formatado), duração e descrição. Link "Ver todos e agendar" → `/book`.
+- [ ] Bloco **Diferenciais** mostra até 6 cards com ícone+título+texto (só se admin configurou).
+- [ ] Bloco **Profissionais** aparece somente se enabled no admin; mostra fotos+nomes dos `professionals.is_active=true`.
+- [ ] Bloco **Depoimentos** mostra cards com estrelas (1–5) + texto + nome (carrossel scroll-snap em mobile, grid em sm+).
+- [ ] Bloco **Contato** lista WhatsApp clicável (`https://wa.me/...`), Endereço (link Google Maps) e Horário de funcionamento por dia da semana.
+- [ ] Bloco **Chamada final** (faixa colorida brand-primary) com CTA "Agendar agora" + ícones Instagram/Facebook/TikTok (se URLs configuradas) — links abrem em nova aba.
 - [ ] **Tab bar do cliente NÃO aparece** (só após login).
-
-**Visitante logado (sem reserva futura):**
-
-- [ ] Bloco "Sua próxima reserva" NÃO aparece.
-- [ ] CTA "Nova reserva" aparece.
-- [ ] Ações rápidas mostram pelo menos "Reservas" (sempre); + "Falar"/"Ligar" se tenant tem `contact_phone`/`whatsapp`.
-- [ ] **Tab bar do cliente aparece**: Início / Agendar / Reservas / Perfil.
 
 **Visitante logado (com reserva futura):**
 
-- [ ] Bloco "Sua próxima reserva" aparece em destaque (card com fundo brand-primary/5, borda brand) com: serviço, dia por extenso, horário, profissional e badge de status.
-- [ ] Clicar na próxima reserva abre `/meus-agendamentos/[id]`.
-- [ ] Ações rápidas mostram "Reagendar" (vai pro wizard pré-preenchido com serviço+profissional+step=datetime), "Falar"/"Ligar" (se há contato), "Reservas".
-- [ ] Reagendar NÃO cancela o appointment original — cliente confirma o novo e cancela o velho manualmente depois.
+- [ ] No topo, abaixo do header, banner discreto "Você tem N reserva(s) marcada(s) → Minha conta" com link `/minha-conta`.
+- [ ] Resto da landing renderiza igual a anônimo (cliente logado também vê a vitrine).
+- [ ] **Tab bar do cliente aparece**: Início / Agendar / Reservas / Perfil.
+
+**Cliente logado em `/minha-conta`:**
+
+- [ ] Greeting "Olá, [primeiro nome]".
+- [ ] Próximas reservas (top 5 ASC) no carrossel; cada card com ações inline (Ver detalhes / Reagendar / Cancelar respeitando `cancellation_window_hours` e `customer_can_cancel`).
+- [ ] Estado vazio quando não há reservas: "Você não tem reservas marcadas. Que tal agendar a próxima?"
+- [ ] CTA "Nova reserva" → `/book`.
+- [ ] Ações rápidas (WhatsApp + Como chegar) e bloco fidelidade.
+- [ ] Link "← Página inicial" no header retorna pra `/`.
+
+## 1b. Admin: editor da página pública (revamp 2026-04-30)
+
+Logado como BUSINESS_OWNER, acessar **Mais → Página pública** ou diretamente `/admin/dashboard/pagina-publica`.
+
+- [ ] Topo mostra link "Abrir página pública em nova aba" → abre `/` num novo tab.
+- [ ] Seção **Blocos da página** lista os 7 blocos com switch on/off + handle de drag (`GripVertical`). Arrastar reordena na lista; clicar "Salvar ordem" persiste e revalida `/`.
+- [ ] Toggle qualquer bloco off + Salvar → bloco somem da landing pública (revisar em `/`).
+- [ ] Ativar Profissionais + Salvar → bloco aparece na landing.
+- [ ] Seção **Hero**: subir imagem PNG/JPG/WebP (≤5MB), preview troca; "Remover" volta ao placeholder. Subtítulo (até 280 chars) salva via "Salvar texto".
+- [ ] Seção **Diferenciais**: "Adicionar" cria card vazio (até 6); ícone via dropdown (sparkles/award/clock/heart/shield/star), título (≤60), texto (≤220). Lixeira remove. "Salvar" persiste tudo em `tenants.differentials` (jsonb).
+- [ ] Seção **Depoimentos**: "Adicionar depoimento" abre formulário inline (nome, texto ≤500, estrelas 1–5). "Editar" reabre o form preenchido; "Excluir" pede confirmação.
+- [ ] Seção **Redes sociais**: 3 inputs URL (Instagram, Facebook, TikTok) — exige `https://...`. Salvar persiste e os ícones aparecem no bloco "Chamada final" da landing.
+- [ ] Não-BUSINESS_OWNER (RECEPTIONIST) tentando salvar qualquer ação retorna erro "Apenas o dono do negócio pode editar a página pública." (defense in depth — RLS também bloqueia).
+- [ ] Multi-tenant: alterações em `barbearia-teste` não vazam pra `casa-do-corte` (testar editando em um e abrindo o outro).
 
 ## 2. Wizard de booking (cliente novo)
 

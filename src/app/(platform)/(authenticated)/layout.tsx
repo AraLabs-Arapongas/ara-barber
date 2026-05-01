@@ -19,9 +19,7 @@ export default async function PlatformAuthLayout({ children }: { children: React
     <div className="flex min-h-screen">
       <aside className="w-56 shrink-0 border-r border-border bg-bg-subtle">
         <div className="flex h-14 items-center border-b border-border px-4">
-          <span className="font-display text-[0.9375rem] font-semibold text-fg">
-            AraLabs Admin
-          </span>
+          <span className="font-display text-[0.9375rem] font-semibold text-fg">AraLabs Admin</span>
         </div>
         <PlatformSidebar />
       </aside>

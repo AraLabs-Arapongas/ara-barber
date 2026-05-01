@@ -54,12 +54,11 @@ export function groupBookings(appointments: AgendaAppointment[]): DisplayBooking
     // Status do combo: se todos cancelados → CANCELED; se algum confirmed → CONFIRMED;
     // senão → status do primeiro. (Cancel via RPC sincroniza todos, então normalmente
     // todos têm o mesmo status.)
-    const status: AppointmentStatus =
-      sorted.every((s) => s.status === 'CANCELED')
-        ? 'CANCELED'
-        : sorted.some((s) => s.status === 'CONFIRMED')
-          ? 'CONFIRMED'
-          : (sorted[0]?.status ?? 'SCHEDULED')
+    const status: AppointmentStatus = sorted.every((s) => s.status === 'CANCELED')
+      ? 'CANCELED'
+      : sorted.some((s) => s.status === 'CONFIRMED')
+        ? 'CONFIRMED'
+        : (sorted[0]?.status ?? 'SCHEDULED')
 
     result.push({
       kind: 'combo',

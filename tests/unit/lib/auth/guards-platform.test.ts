@@ -24,7 +24,8 @@ describe('assertPlatformAdmin', () => {
 
   it('throws FORBIDDEN quando role não é PLATFORM_ADMIN', async () => {
     mocked.mockResolvedValue({
-      id: 'u1', email: 'x@y.com',
+      id: 'u1',
+      email: 'x@y.com',
       profile: { id: 'p1', name: 'X', role: 'BUSINESS_OWNER', tenantId: 't1' },
     })
     await expect(assertPlatformAdmin()).rejects.toMatchObject({ code: 'FORBIDDEN' })
@@ -32,7 +33,8 @@ describe('assertPlatformAdmin', () => {
 
   it('returns user quando role é PLATFORM_ADMIN', async () => {
     const user = {
-      id: 'u1', email: 'x@y.com',
+      id: 'u1',
+      email: 'x@y.com',
       profile: { id: 'p1', name: 'X', role: 'PLATFORM_ADMIN' as const, tenantId: null },
     }
     mocked.mockResolvedValue(user)

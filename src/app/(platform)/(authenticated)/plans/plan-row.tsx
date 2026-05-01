@@ -9,10 +9,7 @@ import type { AdminPlanRow } from '@/lib/platform/plans'
 import { upsertPlanAction, type UpsertPlanState } from '../actions'
 
 export function PlanRow({ plan }: { plan: AdminPlanRow | null }) {
-  const [state, action, pending] = useActionState<UpsertPlanState, FormData>(
-    upsertPlanAction,
-    {},
-  )
+  const [state, action, pending] = useActionState<UpsertPlanState, FormData>(upsertPlanAction, {})
   const isNew = plan === null
   const formId = isNew ? 'new-plan' : `plan-${plan.id}`
   return (
@@ -30,13 +27,7 @@ export function PlanRow({ plan }: { plan: AdminPlanRow | null }) {
         </form>
       </td>
       <td className="px-3 py-1.5">
-        <Input
-          form={formId}
-          name="name"
-          defaultValue={plan?.name ?? ''}
-          required
-          className="h-8"
-        />
+        <Input form={formId} name="name" defaultValue={plan?.name ?? ''} required className="h-8" />
       </td>
       <td className="px-3 py-1.5 text-right">
         <Input

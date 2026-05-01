@@ -16,9 +16,7 @@ function baseInput(overrides: Partial<ComboSlotInput> = {}): ComboSlotInput {
     bufferMinutes: 10,
     dateISO: DATE,
     tenantTimezone: TZ,
-    businessHours: [
-      { weekday: 1, isOpen: true, startTime: '09:00', endTime: '18:00' },
-    ],
+    businessHours: [{ weekday: 1, isOpen: true, startTime: '09:00', endTime: '18:00' }],
     availability: [],
     blocks: [],
     existingAppointments: [],
@@ -50,9 +48,7 @@ describe('computeComboSlots', () => {
             candidateProfessionalIds: [PRO_A],
           },
         ],
-        availability: [
-          { professionalId: PRO_A, weekday: 1, startTime: '09:00', endTime: '18:00' },
-        ],
+        availability: [{ professionalId: PRO_A, weekday: 1, startTime: '09:00', endTime: '18:00' }],
       }),
     )
 
@@ -208,9 +204,7 @@ describe('computeComboSlots', () => {
             candidateProfessionalIds: [PRO_A],
           },
         ],
-        availability: [
-          { professionalId: PRO_A, weekday: 1, startTime: '09:00', endTime: '18:00' },
-        ],
+        availability: [{ professionalId: PRO_A, weekday: 1, startTime: '09:00', endTime: '18:00' }],
       }),
     )
 
