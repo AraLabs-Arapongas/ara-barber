@@ -48,9 +48,20 @@ const TRANSITIONS: Record<AppointmentStatus, Partial<Record<AppointmentStatus, R
     NO_SHOW: [REQUIRE_STAFF, REQUIRE_PAST_START],
     COMPLETED: [REQUIRE_STAFF, REQUIRE_PAST_END],
   },
-  COMPLETED: {},
+  // Auto-complete (cron) marca como COMPLETED depois do end_at + grace.
+  // Staff pode corrigir pra NO_SHOW ou CANCELED se o cliente não compareceu.
+  COMPLETED: {
+    NO_SHOW: [REQUIRE_STAFF],
+    CANCELED: [REQUIRE_STAFF],
+  },
+  // Staff pode corrigir um NO_SHOW (caso tenha marcado por engano).
+  NO_SHOW: {
+    COMPLETED: [REQUIRE_STAFF],
+    CANCELED: [REQUIRE_STAFF],
+  },
+  // CANCELED é terminal: o slot pode ter sido reaberto/rebookado, reverter
+  // criaria conflito de horário sem validação.
   CANCELED: {},
-  NO_SHOW: {},
 }
 
 export function canTransition(
