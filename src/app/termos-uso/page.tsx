@@ -49,9 +49,9 @@ export default async function TermsOfUsePage() {
                 Termos de uso
               </h1>
               <p className="text-fg-muted">
-                Estes termos regem o uso do agendamento online de{' '}
-                <strong>{tenant.name}</strong>, fornecido pela plataforma AraLabs. Ao usar o
-                serviço, você concorda com o que está abaixo.
+                Estes termos regem o uso do agendamento online de <strong>{tenant.name}</strong>,
+                fornecido pela plataforma AraLabs. Ao usar o serviço, você concorda com o que está
+                abaixo.
               </p>
 
               <section>
@@ -59,10 +59,10 @@ export default async function TermsOfUsePage() {
                   Quem somos
                 </h2>
                 <p className="mt-2 text-fg-muted">
-                  <strong className="text-fg">{tenant.name}</strong> é o estabelecimento que
-                  oferece os serviços agendados. <strong className="text-fg">AraLabs</strong> é a
-                  empresa que opera a plataforma técnica de agendamento. Os termos comerciais do
-                  serviço (preço, qualidade, política de atendimento) são de responsabilidade do
+                  <strong className="text-fg">{tenant.name}</strong> é o estabelecimento que oferece
+                  os serviços agendados. <strong className="text-fg">AraLabs</strong> é a empresa
+                  que opera a plataforma técnica de agendamento. Os termos comerciais do serviço
+                  (preço, qualidade, política de atendimento) são de responsabilidade do
                   estabelecimento. A AraLabs responde pela disponibilidade e segurança da
                   plataforma.
                 </p>
@@ -78,12 +78,10 @@ export default async function TermsOfUsePage() {
                     tiver acesso pode fazer reservas em seu nome.
                   </li>
                   <li>
-                    Os dados de cadastro (nome, telefone) devem ser verdadeiros. Reservas com
-                    dados falsos podem ser canceladas pelo estabelecimento.
+                    Os dados de cadastro (nome, telefone) devem ser verdadeiros. Reservas com dados
+                    falsos podem ser canceladas pelo estabelecimento.
                   </li>
-                  <li>
-                    Sua conta é pessoal e intransferível.
-                  </li>
+                  <li>Sua conta é pessoal e intransferível.</li>
                 </ul>
               </section>
 
@@ -93,9 +91,12 @@ export default async function TermsOfUsePage() {
                 </h2>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
                   <li>
-                    A reserva é confirmada quando aparece com status &ldquo;Confirmada&rdquo; na
-                    sua tela{' '}
-                    <Link href="/meus-agendamentos" className="font-medium text-brand-primary hover:underline">
+                    A reserva é confirmada quando aparece com status &ldquo;Confirmada&rdquo; na sua
+                    tela{' '}
+                    <Link
+                      href="/meus-agendamentos"
+                      className="font-medium text-brand-primary hover:underline"
+                    >
                       Meus agendamentos
                     </Link>
                     .
@@ -109,8 +110,8 @@ export default async function TermsOfUsePage() {
                     estabelecimento). Fora dessa janela, entre em contato direto.
                   </li>
                   <li>
-                    Não comparecer (no-show) repetidamente pode resultar em bloqueio do seu
-                    cadastro neste estabelecimento.
+                    Não comparecer (no-show) repetidamente pode resultar em bloqueio do seu cadastro
+                    neste estabelecimento.
                   </li>
                 </ul>
               </section>
@@ -124,7 +125,10 @@ export default async function TermsOfUsePage() {
                   <li>Criar reservas em nome de terceiros sem autorização.</li>
                   <li>Fazer reservas em massa para revenda ou bloqueio de horários.</li>
                   <li>Usar o serviço para qualquer finalidade ilícita.</li>
-                  <li>Tentar acessar ou modificar dados que não sejam seus (engenharia reversa, exploits, etc).</li>
+                  <li>
+                    Tentar acessar ou modificar dados que não sejam seus (engenharia reversa,
+                    exploits, etc).
+                  </li>
                 </ul>
                 <p className="mt-2 text-fg-muted">
                   Violações podem resultar em bloqueio imediato e responsabilização legal.
@@ -136,11 +140,11 @@ export default async function TermsOfUsePage() {
                   Disponibilidade do serviço
                 </h2>
                 <p className="mt-2 text-fg-muted">
-                  Trabalhamos para manter a plataforma disponível 24/7, mas pode haver
-                  interrupções por manutenção, falhas de terceiros (provedor de internet,
-                  hospedagem) ou eventos imprevistos. Não garantimos disponibilidade
-                  ininterrupta. Em caso de indisponibilidade, contate o estabelecimento por
-                  outros canais (telefone, WhatsApp).
+                  Trabalhamos para manter a plataforma disponível 24/7, mas pode haver interrupções
+                  por manutenção, falhas de terceiros (provedor de internet, hospedagem) ou eventos
+                  imprevistos. Não garantimos disponibilidade ininterrupta. Em caso de
+                  indisponibilidade, contate o estabelecimento por outros canais (telefone,
+                  WhatsApp).
                 </p>
               </section>
 
@@ -151,10 +155,10 @@ export default async function TermsOfUsePage() {
                 <p className="mt-2 text-fg-muted">
                   A AraLabs responde pela operação técnica da plataforma. Para questões sobre o
                   atendimento, qualidade do serviço, valores cobrados ou problemas durante a
-                  execução, entre em contato direto com o estabelecimento. Em nenhum caso a
-                  AraLabs será responsável por danos indiretos, lucros cessantes ou prejuízos
-                  decorrentes do uso ou impossibilidade de uso da plataforma, exceto nos limites
-                  da legislação aplicável.
+                  execução, entre em contato direto com o estabelecimento. Em nenhum caso a AraLabs
+                  será responsável por danos indiretos, lucros cessantes ou prejuízos decorrentes do
+                  uso ou impossibilidade de uso da plataforma, exceto nos limites da legislação
+                  aplicável.
                 </p>
               </section>
 
@@ -164,7 +168,10 @@ export default async function TermsOfUsePage() {
                 </h2>
                 <p className="mt-2 text-fg-muted">
                   O tratamento dos seus dados pessoais é descrito em detalhe na nossa{' '}
-                  <Link href="/politica-privacidade" className="font-medium text-brand-primary hover:underline">
+                  <Link
+                    href="/politica-privacidade"
+                    className="font-medium text-brand-primary hover:underline"
+                  >
                     Política de privacidade
                   </Link>
                   .
@@ -187,10 +194,10 @@ export default async function TermsOfUsePage() {
                   Lei aplicável e foro
                 </h2>
                 <p className="mt-2 text-fg-muted">
-                  Estes termos são regidos pelas leis da República Federativa do Brasil. Fica
-                  eleito o foro da comarca de Arapongas/PR para dirimir quaisquer controvérsias,
-                  ressalvado o direito do consumidor de optar pelo foro do seu domicílio quando
-                  aplicável o Código de Defesa do Consumidor.
+                  Estes termos são regidos pelas leis da República Federativa do Brasil. Fica eleito
+                  o foro da comarca de Arapongas/PR para dirimir quaisquer controvérsias, ressalvado
+                  o direito do consumidor de optar pelo foro do seu domicílio quando aplicável o
+                  Código de Defesa do Consumidor.
                 </p>
               </section>
 

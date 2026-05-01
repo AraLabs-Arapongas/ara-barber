@@ -25,9 +25,7 @@ const COLUMN_BY_KIND: Record<Kind, 'logo_url' | 'favicon_url'> = {
   favicon: 'favicon_url',
 }
 
-export type UploadResult =
-  | { ok: true; url: string }
-  | { ok: false; error: string }
+export type UploadResult = { ok: true; url: string } | { ok: false; error: string }
 
 /**
  * Faz upload de logo ou favicon do tenant pra Supabase Storage e

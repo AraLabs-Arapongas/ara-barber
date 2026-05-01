@@ -34,13 +34,7 @@ type Props = {
  * mostra a imagem ANTES do server responder, criando sensação de
  * fluidez. Quando o server confirma, troca pra URL pública oficial.
  */
-export function TenantAssetUploader({
-  kind,
-  label,
-  hint,
-  currentUrl,
-  previewSize = 80,
-}: Props) {
+export function TenantAssetUploader({ kind, label, hint, currentUrl, previewSize = 80 }: Props) {
   const [url, setUrl] = useState<string | null>(currentUrl)
   const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -142,13 +136,7 @@ export function TenantAssetUploader({
             {url ? 'Trocar' : 'Subir imagem'}
           </Button>
           {url ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onClear}
-              disabled={pending}
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={pending}>
               <Trash2 className="h-4 w-4" aria-hidden="true" />
               Remover
             </Button>

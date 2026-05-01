@@ -29,7 +29,11 @@ export function BrandingForm({
     <form action={action} className="space-y-3">
       <input type="hidden" name="tenantId" value={tenantId} />
       <ColorField label="Cor primária" name="primaryColor" defaultValue={primaryColor ?? ''} />
-      <ColorField label="Cor secundária" name="secondaryColor" defaultValue={secondaryColor ?? ''} />
+      <ColorField
+        label="Cor secundária"
+        name="secondaryColor"
+        defaultValue={secondaryColor ?? ''}
+      />
       <ColorField label="Cor accent" name="accentColor" defaultValue={accentColor ?? ''} />
       {state.error ? <p className="text-[0.8125rem] text-danger">{state.error}</p> : null}
       {state.ok ? <p className="text-[0.8125rem] text-success">Salvo.</p> : null}
@@ -52,7 +56,12 @@ function ColorField({
   return (
     <label className="flex items-center gap-3">
       <span className="w-32 text-[0.8125rem] text-fg-muted">{label}</span>
-      <Input name={name} defaultValue={defaultValue} placeholder="#000000" className="max-w-[140px]" />
+      <Input
+        name={name}
+        defaultValue={defaultValue}
+        placeholder="#000000"
+        className="max-w-[140px]"
+      />
     </label>
   )
 }
@@ -69,7 +78,14 @@ export function StatusActions({ tenantId, current }: { tenantId: string; current
       {(['ACTIVE', 'SUSPENDED', 'ARCHIVED'] as const)
         .filter((s) => s !== current)
         .map((s) => (
-          <Button key={s} type="submit" name="status" value={s} variant="secondary" disabled={pending}>
+          <Button
+            key={s}
+            type="submit"
+            name="status"
+            value={s}
+            variant="secondary"
+            disabled={pending}
+          >
             → {s}
           </Button>
         ))}

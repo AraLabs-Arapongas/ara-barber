@@ -5,11 +5,7 @@ import { getTenantById } from '@/lib/platform/tenants'
 import { formatCentsToBrl } from '@/lib/money'
 import { BrandingForm, StatusActions } from './edit-forms'
 
-export default async function TenantDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const tenant = await getTenantById(id)
   if (!tenant) notFound()

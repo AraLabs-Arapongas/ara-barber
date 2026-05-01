@@ -53,6 +53,12 @@ export type TenantContext = {
   city: string | null
   state: string | null
   postalCode: string | null
+  heroImageUrl: string | null
+  heroSubheadline: string | null
+  instagramUrl: string | null
+  facebookUrl: string | null
+  tiktokUrl: string | null
+  differentials: Array<{ icon?: string; title: string; text: string }> | null
 }
 
 export async function getCurrentTenantId(): Promise<string | null> {
@@ -89,7 +95,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes, hero_image_url, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -128,5 +134,29 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     city: data.city,
     state: data.state,
     postalCode: data.postal_code,
+    heroImageUrl: data.hero_image_url,
+    heroSubheadline: data.hero_subheadline,
+    instagramUrl: data.instagram_url,
+    facebookUrl: data.facebook_url,
+    tiktokUrl: data.tiktok_url,
+    differentials: parseDifferentials(data.differentials),
   }
 })
+
+function parseDifferentials(
+  raw: unknown,
+): Array<{ icon?: string; title: string; text: string }> | null {
+  if (!Array.isArray(raw)) return null
+  const out: Array<{ icon?: string; title: string; text: string }> = []
+  for (const item of raw) {
+    if (item && typeof item === 'object') {
+      const obj = item as Record<string, unknown>
+      const title = typeof obj.title === 'string' ? obj.title : ''
+      const text = typeof obj.text === 'string' ? obj.text : ''
+      if (!title && !text) continue
+      const icon = typeof obj.icon === 'string' ? obj.icon : undefined
+      out.push({ icon, title, text })
+    }
+  }
+  return out.length > 0 ? out : null
+}

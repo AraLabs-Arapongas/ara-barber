@@ -70,16 +70,11 @@ export function LoyaltyStamps() {
             <p className="mt-0.5 text-[0.875rem] font-medium leading-tight text-fg">
               {completed ? (
                 <>
-                  Você ganhou:{' '}
-                  <span className="text-brand-primary">{reward}</span>
+                  Você ganhou: <span className="text-brand-primary">{reward}</span>
                 </>
               ) : (
                 <>
-                  <span>
-                    {remaining === 1
-                      ? 'Falta 1 visita'
-                      : `Faltam ${remaining} visitas`}
-                  </span>{' '}
+                  <span>{remaining === 1 ? 'Falta 1 visita' : `Faltam ${remaining} visitas`}</span>{' '}
                   <span className="font-normal text-fg-muted">
                     para ganhar 1 {reward.toLowerCase()}
                   </span>
@@ -113,9 +108,7 @@ export function LoyaltyStamps() {
                     : 'border-dashed border-border bg-bg-subtle text-fg-subtle'
                 }`}
               >
-                {filled ? (
-                  <Check className="h-[55%] w-[55%]" aria-hidden="true" />
-                ) : null}
+                {filled ? <Check className="h-[55%] w-[55%]" aria-hidden="true" /> : null}
               </span>
             )
           })}

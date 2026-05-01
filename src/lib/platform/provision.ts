@@ -18,9 +18,7 @@ import type { Database } from '@/lib/supabase/types'
  */
 
 export const ProvisionTenantInputSchema = z.object({
-  slug: z
-    .string()
-    .regex(/^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/, 'Use só [a-z0-9-]'),
+  slug: z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/, 'Use só [a-z0-9-]'),
   name: z.string().min(1).max(120),
   ownerEmail: z.string().email(),
   ownerName: z.string().min(1).max(120),

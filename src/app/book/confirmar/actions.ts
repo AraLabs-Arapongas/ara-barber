@@ -75,9 +75,7 @@ export async function confirmBookingAction(
   // Combo: RPC atômica.
   const supabase = await createClient()
   const totalDuration = input.segments.reduce((sum, s) => {
-    return (
-      sum + Math.round((new Date(s.endAt).getTime() - new Date(s.startAt).getTime()) / 60000)
-    )
+    return sum + Math.round((new Date(s.endAt).getTime() - new Date(s.startAt).getTime()) / 60000)
   }, 0)
   const totalPrice = input.segments.reduce((sum, s) => sum + s.priceCentsSnapshot, 0)
 

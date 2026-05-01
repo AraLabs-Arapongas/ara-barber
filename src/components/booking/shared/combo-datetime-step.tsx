@@ -63,8 +63,7 @@ export function ComboDateTimeStep({
         return {
           serviceId: sid,
           durationMinutes: svc.durationMinutes,
-          professionalId:
-            profSel === ANY_PROFESSIONAL ? ANY_PROFESSIONAL_SENTINEL : profSel,
+          professionalId: profSel === ANY_PROFESSIONAL ? ANY_PROFESSIONAL_SENTINEL : profSel,
           candidateProfessionalIds: candidates,
         } as ComboService
       })

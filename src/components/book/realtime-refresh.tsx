@@ -135,11 +135,7 @@ export function RealtimeBookingRefresh({ tenantId }: Props) {
           if (status === 'SUBSCRIBED') {
             reconnectAttempts = 0
             clearReconnectTimer()
-          } else if (
-            status === 'CHANNEL_ERROR' ||
-            status === 'TIMED_OUT' ||
-            status === 'CLOSED'
-          ) {
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             scheduleReconnect()
           }
         })

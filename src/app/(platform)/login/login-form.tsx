@@ -33,8 +33,8 @@ export function LoginForm() {
   if (status === 'sent') {
     return (
       <div className="text-[0.875rem] text-fg-muted">
-        Enviamos um link de acesso pra <span className="font-medium text-fg">{email}</span>.
-        Clique no link pra entrar.
+        Enviamos um link de acesso pra <span className="font-medium text-fg">{email}</span>. Clique
+        no link pra entrar.
       </div>
     )
   }
