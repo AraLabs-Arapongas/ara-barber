@@ -35,6 +35,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Cache Components (Next 16): habilita o directive 'use cache' + cacheLife()
+  // + cacheTag() em queries server-side. Cache é por tag (granular), invalidado
+  // explicitamente via revalidateTag() em mutations. Reduz drasticamente DB
+  // round-trips em RSC re-renders entre navegações.
+  // Docs: https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents
+  cacheComponents: true,
 }
 
 /**
