@@ -7,6 +7,7 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import { useConfirm } from '@/components/ui/confirm/provider'
 import { createBlock, deleteBlock } from '@/app/admin/(authenticated)/actions/blocks'
 
@@ -203,19 +204,17 @@ export function BlocksManager({
                   >
                     Profissional
                   </label>
-                  <select
-                    id="block-professional"
+                  <SelectSheet
                     value={professionalId}
-                    onChange={(e) => setProfessionalId(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-                  >
-                    <option value="">Selecione…</option>
-                    {professionals.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setProfessionalId(v)}
+                    options={[
+                      { value: '', label: 'Selecione…' },
+                      ...professionals.map((p) => ({ value: p.id, label: p.name })),
+                    ]}
+                    sheetTitle="Profissional"
+                    placeholder="Selecione…"
+                    className="h-11 w-full bg-bg-subtle"
+                  />
                 </div>
               ) : null}
 

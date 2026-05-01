@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import {
   inviteStaff,
   updateStaffRole,
@@ -106,17 +107,18 @@ export function UsersManager({ users, canManage }: { users: StaffRow[]; canManag
                 <label htmlFor="invite-role" className="text-[0.8125rem] font-medium text-fg">
                   Permissão
                 </label>
-                <select
-                  id="invite-role"
+                <SelectSheet
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as StaffRole)}
+                  onChange={(v) => setInviteRole(v as StaffRole)}
+                  options={[
+                    { value: 'BUSINESS_OWNER', label: 'Dono' },
+                    { value: 'RECEPTIONIST', label: 'Recepção' },
+                    { value: 'PROFESSIONAL', label: 'Profissional' },
+                  ]}
+                  sheetTitle="Permissão"
                   className={SELECT_CLASSES}
                   disabled={pending}
-                >
-                  <option value="BUSINESS_OWNER">Dono</option>
-                  <option value="RECEPTIONIST">Recepção</option>
-                  <option value="PROFESSIONAL">Profissional</option>
-                </select>
+                />
               </div>
               <div className="flex justify-end gap-2">
                 <Button
@@ -165,17 +167,18 @@ export function UsersManager({ users, canManage }: { users: StaffRow[]; canManag
                       ) : null}
                     </p>
                     {canManage ? (
-                      <select
+                      <SelectSheet
                         value={u.role}
-                        onChange={(e) => changeRole(u.id, e.target.value)}
-                        className="mt-1 rounded border border-border bg-bg-subtle px-2 py-0.5 text-sm text-fg disabled:opacity-50"
+                        onChange={(v) => changeRole(u.id, v)}
+                        options={[
+                          { value: 'BUSINESS_OWNER', label: ROLE_LABELS.BUSINESS_OWNER },
+                          { value: 'RECEPTIONIST', label: ROLE_LABELS.RECEPTIONIST },
+                          { value: 'PROFESSIONAL', label: ROLE_LABELS.PROFESSIONAL },
+                        ]}
+                        sheetTitle={`Permissão de ${u.email || u.name}`}
+                        className="mt-1 bg-bg-subtle"
                         disabled={pending || u.isMe}
-                        aria-label={`Permissão de ${u.email || u.name}`}
-                      >
-                        <option value="BUSINESS_OWNER">{ROLE_LABELS.BUSINESS_OWNER}</option>
-                        <option value="RECEPTIONIST">{ROLE_LABELS.RECEPTIONIST}</option>
-                        <option value="PROFESSIONAL">{ROLE_LABELS.PROFESSIONAL}</option>
-                      </select>
+                      />
                     ) : (
                       <p className="mt-1 text-sm text-fg-muted">{ROLE_LABELS[u.role]}</p>
                     )}

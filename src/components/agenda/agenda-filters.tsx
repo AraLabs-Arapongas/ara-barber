@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { SelectSheet } from '@/components/ui/select-sheet'
 
 type Professional = { id: string; name: string }
 
@@ -24,32 +25,30 @@ export function AgendaFilters({ professionals }: { professionals: Professional[]
 
   return (
     <div className="my-3 flex gap-2 overflow-x-auto">
-      <select
+      <SelectSheet
         value={profFilter}
-        onChange={(e) => update('professional', e.target.value)}
+        onChange={(v) => update('professional', v)}
+        options={[
+          { value: '', label: 'Todos os profissionais' },
+          ...professionals.map((p) => ({ value: p.id, label: p.name })),
+        ]}
+        sheetTitle="Filtrar por profissional"
         className={selectClass}
-        aria-label="Filtrar por profissional"
-      >
-        <option value="">Todos os profissionais</option>
-        {professionals.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
-      <select
+      />
+      <SelectSheet
         value={statusFilter}
-        onChange={(e) => update('status', e.target.value)}
+        onChange={(v) => update('status', v)}
+        options={[
+          { value: '', label: 'Todos os status' },
+          { value: 'SCHEDULED', label: 'Agendados' },
+          { value: 'CONFIRMED', label: 'Confirmados' },
+          { value: 'COMPLETED', label: 'Concluídos' },
+          { value: 'CANCELED', label: 'Cancelados' },
+          { value: 'NO_SHOW', label: 'Faltou' },
+        ]}
+        sheetTitle="Filtrar por status"
         className={selectClass}
-        aria-label="Filtrar por status"
-      >
-        <option value="">Todos os status</option>
-        <option value="SCHEDULED">Agendados</option>
-        <option value="CONFIRMED">Confirmados</option>
-        <option value="COMPLETED">Concluídos</option>
-        <option value="CANCELED">Cancelados</option>
-        <option value="NO_SHOW">Faltou</option>
-      </select>
+      />
     </div>
   )
 }

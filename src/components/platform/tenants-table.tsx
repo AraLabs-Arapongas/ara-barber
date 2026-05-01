@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import type { AdminTenantRow } from '@/lib/platform/tenants'
 
 const STATUSES = ['ALL', 'ACTIVE', 'SUSPENDED', 'ARCHIVED'] as const
@@ -94,17 +95,12 @@ function Select<T extends string>({
   return (
     <label className="flex items-center gap-2 text-[0.8125rem] text-fg-muted">
       {label}:
-      <select
+      <SelectSheet
         value={value}
-        onChange={(e) => onChange(e.target.value as T)}
-        className="rounded-md border border-border bg-bg px-2 py-1 text-[0.8125rem] text-fg"
-      >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+        onChange={(v) => onChange(v as T)}
+        options={options.map((o) => ({ value: o, label: o }))}
+        sheetTitle={label}
+      />
     </label>
   )
 }

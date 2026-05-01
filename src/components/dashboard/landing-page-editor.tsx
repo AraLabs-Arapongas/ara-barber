@@ -24,6 +24,7 @@ import { GripVertical, ImageIcon, Trash2, Plus, Save, Star, Upload } from 'lucid
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import {
   clearHeroImage,
   deleteTestimonial,
@@ -394,17 +395,12 @@ function DifferentialsEditor({ initial }: { initial: DifferentialState[] }) {
         {items.map((d, i) => (
           <div key={i} className="space-y-2 rounded-xl border border-border bg-surface p-3">
             <div className="flex items-center gap-2">
-              <select
+              <SelectSheet
                 value={d.icon || 'sparkles'}
-                onChange={(e) => update(i, 'icon', e.target.value)}
-                className="rounded-md border border-border bg-bg px-2 py-1.5 text-[0.8125rem] text-fg"
-              >
-                {DIFFERENTIAL_ICONS.map((ic) => (
-                  <option key={ic} value={ic}>
-                    {ic}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => update(i, 'icon', v)}
+                options={DIFFERENTIAL_ICONS.map((ic) => ({ value: ic, label: ic }))}
+                sheetTitle="Ícone do diferencial"
+              />
               <Input
                 value={d.title}
                 onChange={(e) => update(i, 'title', e.target.value)}
@@ -561,20 +557,15 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
             placeholder="O que o cliente disse"
             className="w-full rounded-md border border-border bg-bg px-3 py-2 text-[0.875rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:outline-none"
           />
-          <label className="block text-[0.8125rem] text-fg">
-            Estrelas:{' '}
-            <select
+          <div className="flex items-center gap-2 text-[0.8125rem] text-fg">
+            <span>Estrelas:</span>
+            <SelectSheet
               value={editing.rating}
-              onChange={(e) => setEditing({ ...editing, rating: Number(e.target.value) })}
-              className="rounded-md border border-border bg-bg px-2 py-1 text-[0.8125rem] text-fg"
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setEditing({ ...editing, rating: v })}
+              options={[5, 4, 3, 2, 1].map((n) => ({ value: n, label: String(n) }))}
+              sheetTitle="Estrelas"
+            />
+          </div>
           <div className="flex gap-2">
             <Button type="button" size="sm" onClick={save} disabled={pending} loading={pending}>
               Salvar

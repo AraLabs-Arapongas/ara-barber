@@ -4,6 +4,7 @@ import { useState, useTransition, type FormEvent } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import { updateBookingRules } from '@/app/admin/(authenticated)/actions/booking-rules'
 
 const SLOT_INTERVALS = [5, 10, 15, 20, 30, 60] as const
@@ -70,23 +71,18 @@ export function BookingRulesForm({ initial }: Props) {
             label="Intervalo entre horários (minutos)"
             hint="Granularidade dos horários disponíveis na agenda pública."
           >
-            <select
-              id="slot-interval"
+            <SelectSheet
               value={data.slot_interval_minutes}
-              onChange={(e) =>
+              onChange={(v) =>
                 setData((d) => ({
                   ...d,
-                  slot_interval_minutes: parseInt(e.target.value, 10),
+                  slot_interval_minutes: v,
                 }))
               }
-              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-            >
-              {SLOT_INTERVALS.map((v) => (
-                <option key={v} value={v}>
-                  {v} min
-                </option>
-              ))}
-            </select>
+              options={SLOT_INTERVALS.map((v) => ({ value: v, label: `${v} min` }))}
+              sheetTitle="Intervalo entre horários"
+              className="h-10 w-32 bg-bg-subtle"
+            />
           </Field>
 
           <Field
