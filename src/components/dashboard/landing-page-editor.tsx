@@ -19,11 +19,20 @@ import {
 } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ImageIcon, Trash2, Plus, Save, Star, Upload } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  GripVertical,
+  ImageIcon,
+  Trash2,
+  Plus,
+  Save,
+  Star,
+  Upload,
+} from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Alert } from '@/components/ui/alert'
 import {
   clearHeroImage,
   deleteTestimonial,
@@ -97,6 +106,61 @@ export function LandingPageEditor({
   )
 }
 
+/** Status compacto pra feedback de save (sucesso/erro) — sem caixa cheia. */
+function StatusInline({ msg }: { msg: { kind: 'success' | 'error'; text: string } | null }) {
+  if (!msg) return null
+  const Icon = msg.kind === 'success' ? CheckCircle2 : AlertCircle
+  return (
+    <p
+      role="status"
+      className={`inline-flex items-center gap-1.5 text-[0.8125rem] ${
+        msg.kind === 'success' ? 'text-success' : 'text-error'
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      {msg.text}
+    </p>
+  )
+}
+
+/** Linha padrão de ações: botão à esquerda, status à direita (não estica). */
+function ActionsRow({
+  children,
+  msg,
+}: {
+  children: React.ReactNode
+  msg: { kind: 'success' | 'error'; text: string } | null
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {children}
+      <StatusInline msg={msg} />
+    </div>
+  )
+}
+
+/** Wrapper consistente: cabeçalho + card de conteúdo. Cada seção usa
+ *  o mesmo container pra unificar o visual do editor. */
+function EditorSection({
+  title,
+  hint,
+  children,
+}: {
+  title: string
+  hint: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="space-y-3">
+      <header>
+        <h2 className="font-display text-[1.125rem] font-semibold text-fg">{title}</h2>
+        <p className="text-[0.8125rem] text-fg-muted">{hint}</p>
+      </header>
+      <div className="space-y-4 rounded-xl border border-border bg-surface p-4">{children}</div>
+    </section>
+  )
+}
+
 // ─── Blocos: toggle + drag ───────────────────────────────────────────
 
 function BlocksReorder({ initial }: { initial: BlockState[] }) {
@@ -140,13 +204,10 @@ function BlocksReorder({ initial }: { initial: BlockState[] }) {
   }
 
   return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="font-display text-[1.125rem] font-semibold text-fg">Blocos da página</h2>
-        <p className="text-[0.8125rem] text-fg-muted">
-          Arraste pra reordenar e use o switch pra ativar ou desativar.
-        </p>
-      </header>
+    <EditorSection
+      title="Blocos da página"
+      hint="Arraste pra reordenar e use o switch pra ativar ou desativar."
+    >
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -164,16 +225,13 @@ function BlocksReorder({ initial }: { initial: BlockState[] }) {
           </ul>
         </SortableContext>
       </DndContext>
-      <div className="flex items-center gap-3">
-        <Button onClick={save} disabled={pending} loading={pending} size="sm">
+      <ActionsRow msg={msg}>
+        <Button onClick={save} disabled={pending} size="sm">
           <Save className="h-4 w-4" aria-hidden="true" />
           Salvar ordem
         </Button>
-        {msg ? (
-          <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>{msg.text}</Alert>
-        ) : null}
-      </div>
-    </section>
+      </ActionsRow>
+    </EditorSection>
   )
 }
 
@@ -275,14 +333,11 @@ function HeroEditor({ initial }: { initial: { subheadline: string; imageUrl: str
   }
 
   return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="font-display text-[1.125rem] font-semibold text-fg">Hero</h2>
-        <p className="text-[0.8125rem] text-fg-muted">
-          Imagem de fundo e subtítulo do bloco principal. O título vem das configurações de marca.
-        </p>
-      </header>
-      <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+    <EditorSection
+      title="Hero"
+      hint="Imagem de fundo e subtítulo do bloco principal. O título vem das configurações de marca."
+    >
+      <div className="space-y-4">
         <div className="flex items-start gap-4">
           <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-subtle">
             {imageUrl ? (
@@ -338,18 +393,15 @@ function HeroEditor({ initial }: { initial: { subheadline: string; imageUrl: str
               className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[0.9375rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:outline-none"
             />
           </label>
-          <div className="flex items-center gap-3">
-            <Button type="submit" size="sm" disabled={pending} loading={pending}>
+          <ActionsRow msg={msg}>
+            <Button type="submit" size="sm" disabled={pending}>
               <Save className="h-4 w-4" aria-hidden="true" />
               Salvar texto
             </Button>
-          </div>
+          </ActionsRow>
         </form>
-        {msg ? (
-          <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>{msg.text}</Alert>
-        ) : null}
       </div>
-    </section>
+    </EditorSection>
   )
 }
 
@@ -383,16 +435,10 @@ function DifferentialsEditor({ initial }: { initial: DifferentialState[] }) {
   }
 
   return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="font-display text-[1.125rem] font-semibold text-fg">Diferenciais</h2>
-        <p className="text-[0.8125rem] text-fg-muted">
-          Até 6 cards com ícone, título e descrição curta.
-        </p>
-      </header>
+    <EditorSection title="Diferenciais" hint="Até 6 cards com ícone, título e descrição curta.">
       <div className="space-y-3">
         {items.map((d, i) => (
-          <div key={i} className="space-y-2 rounded-xl border border-border bg-surface p-3">
+          <div key={i} className="space-y-2 rounded-lg border border-border/70 bg-bg-subtle p-3">
             <div className="flex items-center gap-2">
               <select
                 value={d.icon || 'sparkles'}
@@ -427,22 +473,19 @@ function DifferentialsEditor({ initial }: { initial: DifferentialState[] }) {
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-3">
+      <ActionsRow msg={msg}>
         {items.length < 6 ? (
           <Button type="button" variant="secondary" size="sm" onClick={add}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Adicionar
           </Button>
         ) : null}
-        <Button type="button" size="sm" onClick={save} disabled={pending} loading={pending}>
+        <Button type="button" size="sm" onClick={save} disabled={pending}>
           <Save className="h-4 w-4" aria-hidden="true" />
           Salvar
         </Button>
-        {msg ? (
-          <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>{msg.text}</Alert>
-        ) : null}
-      </div>
-    </section>
+      </ActionsRow>
+    </EditorSection>
   )
 }
 
@@ -500,18 +543,13 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
   }
 
   return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="font-display text-[1.125rem] font-semibold text-fg">Depoimentos</h2>
-        <p className="text-[0.8125rem] text-fg-muted">Adicione comentários reais de clientes.</p>
-      </header>
-
+    <EditorSection title="Depoimentos" hint="Adicione comentários reais de clientes.">
       {list.length > 0 ? (
         <ul className="space-y-2">
           {list.map((t) => (
             <li
               key={t.id}
-              className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3"
+              className="flex items-start gap-3 rounded-lg border border-border/70 bg-bg-subtle p-3"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1 text-brand-accent">
@@ -576,7 +614,7 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
             </select>
           </label>
           <div className="flex gap-2">
-            <Button type="button" size="sm" onClick={save} disabled={pending} loading={pending}>
+            <Button type="button" size="sm" onClick={save} disabled={pending}>
               Salvar
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(null)}>
@@ -585,15 +623,14 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
           </div>
         </div>
       ) : (
-        <Button type="button" variant="secondary" size="sm" onClick={startNew}>
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          Adicionar depoimento
-        </Button>
+        <ActionsRow msg={msg}>
+          <Button type="button" variant="secondary" size="sm" onClick={startNew}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Adicionar depoimento
+          </Button>
+        </ActionsRow>
       )}
-      {msg ? (
-        <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>{msg.text}</Alert>
-      ) : null}
-    </section>
+    </EditorSection>
   )
 }
 
@@ -619,15 +656,8 @@ function SocialEditor({
   }
 
   return (
-    <section className="space-y-3">
-      <header>
-        <h2 className="font-display text-[1.125rem] font-semibold text-fg">Redes sociais</h2>
-        <p className="text-[0.8125rem] text-fg-muted">URLs completas (https://...).</p>
-      </header>
-      <form
-        onSubmit={onSubmit}
-        className="space-y-3 rounded-xl border border-border bg-surface p-4"
-      >
+    <EditorSection title="Redes sociais" hint="URLs completas (https://...).">
+      <form onSubmit={onSubmit} className="space-y-4">
         <label className="block text-sm font-medium text-fg">
           Instagram
           <Input
@@ -658,16 +688,13 @@ function SocialEditor({
             className="mt-1"
           />
         </label>
-        <div className="flex items-center gap-3">
-          <Button type="submit" size="sm" disabled={pending} loading={pending}>
+        <ActionsRow msg={msg}>
+          <Button type="submit" size="sm" disabled={pending}>
             <Save className="h-4 w-4" aria-hidden="true" />
             Salvar
           </Button>
-          {msg ? (
-            <Alert variant={msg.kind === 'success' ? 'success' : 'error'}>{msg.text}</Alert>
-          ) : null}
-        </div>
+        </ActionsRow>
       </form>
-    </section>
+    </EditorSection>
   )
 }
