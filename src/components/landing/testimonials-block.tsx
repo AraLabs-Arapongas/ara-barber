@@ -1,5 +1,6 @@
 import { Star, User } from 'lucide-react'
 import type { LandingTestimonial } from '@/lib/landing/queries'
+import { TestimonialsMarquee } from './testimonials-marquee'
 
 type Props = {
   testimonials: LandingTestimonial[]
@@ -15,20 +16,8 @@ export function TestimonialsBlock({ testimonials }: Props) {
       <h2 className="mt-3 max-w-xl font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
         O que <span className="font-light italic text-brand-accent">dizem</span> de nós
       </h2>
-      {/* Letreiro horizontal: lista duplicada + animação que translada
-          até -50% (uma lista inteira). Pausa no hover. Em motion-reduce
-          (acessibilidade) a animação some e o conteúdo fica estático,
-          permitindo scroll natural. */}
-      <div
-        className="group relative mt-10 -mx-6 overflow-hidden sm:-mx-10"
-        style={{
-          maskImage:
-            'linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)',
-          WebkitMaskImage:
-            'linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)',
-        }}
-      >
-        <ul className="flex w-max gap-5 px-6 pb-4 motion-safe:animate-marquee-x motion-safe:group-hover:[animation-play-state:paused] sm:gap-8 sm:px-10">
+      <div className="mt-10">
+        <TestimonialsMarquee>
           {[...testimonials, ...testimonials].map((t, idx) => (
             <li
               key={`${t.id}-${idx}`}
@@ -70,7 +59,7 @@ export function TestimonialsBlock({ testimonials }: Props) {
               </div>
             </li>
           ))}
-        </ul>
+        </TestimonialsMarquee>
       </div>
     </section>
   )
