@@ -1,6 +1,9 @@
 import 'server-only'
 
+import { cacheLife, cacheTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createSecretClient } from '@/lib/supabase/secret'
+import { cacheTags } from '@/lib/cache/tags'
 import type { Database } from '@/lib/supabase/types'
 
 export type AppointmentStatus = Database['public']['Enums']['appointment_status']
@@ -63,25 +66,37 @@ function rowToAppointment(row: Row): AgendaAppointment {
 
 /**
  * Busca appointments de um dia específico no timezone do tenant.
- * Usa RLS — só retorna rows que o usuário atual pode ver.
+ *
+ * **Cacheada** (Next 16 Cache Components). Usa secret client (bypass RLS)
+ * porque `'use cache'` proíbe cookies. Caller DEVE garantir auth via
+ * `assertStaff({ expectedTenantId: tenantId })` na rota/layout antes de
+ * chamar — sem isso, cache scoped por tenant ainda evita leakage entre
+ * tenants mas não impede usuário não-staff de ler.
+ *
+ * Invalidação:
+ *   - Mutations em appointments do dia (create/cancel/update) chamam
+ *     `updateTag(cacheTags.agendaDay(tenantId, dateISO))`.
+ *   - Realtime hook detecta postgres_changes e chama
+ *     `invalidateAgendaForDay()` antes de `router.refresh()`.
  */
 export async function getAgendaForDay(
   tenantId: string,
   dateISO: string,
   tenantTimezone: string,
 ): Promise<AgendaAppointment[]> {
+  'use cache'
+  cacheLife('days')
+  cacheTag(cacheTags.agendaDay(tenantId, dateISO))
+
   // Converte "YYYY-MM-DD" no timezone do tenant pra janela UTC correta
-  // Simples: assume tenant_timezone válido via Intl
   const dayStart = new Date(`${dateISO}T00:00:00`)
   const dayEnd = new Date(`${dateISO}T23:59:59`)
 
-  // Ajusta pro timezone do tenant — se UTC, ambos iguais
-  // Para timezones tipo America/Sao_Paulo, usamos offset do dia
   const tzOffsetMs = getTimezoneOffsetMs(tenantTimezone, dayStart)
   const startUTC = new Date(dayStart.getTime() - tzOffsetMs)
   const endUTC = new Date(dayEnd.getTime() - tzOffsetMs)
 
-  const supabase = await createClient()
+  const supabase = createSecretClient()
   const { data } = await supabase
     .from('appointments')
     .select(
@@ -105,14 +120,21 @@ export async function getAgendaForDay(
 /**
  * Agendamentos SCHEDULED (aguardando confirmação do staff) a partir de `fromISO`,
  * ordenados por horário ascendente. Limita a 10 pra não explodir a home.
- * RLS permite leitura via policy `appointments_tenant_staff_all`.
+ *
+ * **Cacheada** (Next 16). `fromISO` deve ser passado em granularidade de dia
+ * (ex: início do dia local) pra cache hits funcionarem — passar `now()` quebra
+ * o cache em cada request. Caller deve assertStaff(tenantId).
  */
 export async function getPendingConfirmations(
   tenantId: string,
   fromISO: string,
   limit = 10,
 ): Promise<AgendaAppointment[]> {
-  const supabase = await createClient()
+  'use cache'
+  cacheLife('days')
+  cacheTag(cacheTags.agendaPending(tenantId))
+
+  const supabase = createSecretClient()
   const { data } = await supabase
     .from('appointments')
     .select(
