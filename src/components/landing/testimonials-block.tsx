@@ -15,11 +15,11 @@ export function TestimonialsBlock({ testimonials }: Props) {
       <h2 className="mt-3 max-w-xl font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
         O que <span className="font-light italic text-brand-accent">dizem</span> de nós
       </h2>
-      <ul className="mt-10 -mx-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-6 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-8 sm:overflow-visible sm:px-0">
+      <ul className="mt-10 -mx-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-6 pb-4 sm:-mx-10 sm:gap-8 sm:px-10">
         {testimonials.map((t) => (
           <li
             key={t.id}
-            className="flex w-[80%] shrink-0 snap-start flex-col gap-4 sm:w-auto"
+            className="flex w-[82%] shrink-0 snap-start flex-col gap-4 rounded-2xl border border-border bg-surface p-6 sm:w-[55%] md:w-[42%]"
           >
             <div className="flex items-center gap-1 text-brand-accent">
               {Array.from({ length: 5 }).map((_, i) => (

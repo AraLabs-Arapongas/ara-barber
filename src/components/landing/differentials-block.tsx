@@ -30,14 +30,19 @@ export function DifferentialsBlock({ items }: Props) {
       <h2 className="mt-3 max-w-xl font-display text-[2rem] font-medium leading-[1] tracking-tight text-fg sm:text-[2.75rem]">
         Detalhes que <span className="font-light italic text-brand-accent">fazem diferença</span>
       </h2>
-      <ul className="mt-10 grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2">
+      <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {list.map((d, i) => {
           const Icon = (d.icon && ICONS[d.icon as keyof typeof ICONS]) || Sparkles
           return (
-            <li key={i} className="flex flex-col gap-3">
-              <Icon className="h-6 w-6 text-brand-accent" aria-hidden="true" strokeWidth={1.5} />
+            <li
+              key={i}
+              className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
+                <Icon className="h-5 w-5" aria-hidden="true" strokeWidth={1.75} />
+              </span>
               {d.title ? (
-                <h3 className="font-display text-[1.125rem] font-medium leading-tight text-fg sm:text-[1.25rem]">
+                <h3 className="mt-1 font-display text-[1.125rem] font-medium leading-tight text-fg sm:text-[1.25rem]">
                   {d.title}
                 </h3>
               ) : null}

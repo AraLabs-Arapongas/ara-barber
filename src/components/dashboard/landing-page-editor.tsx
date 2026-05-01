@@ -263,17 +263,24 @@ function SortableBlockRow({ block, onToggle }: { block: BlockState; onToggle: ()
         <p className="font-medium text-fg">{meta.label}</p>
         <p className="text-[0.75rem] text-fg-muted">{meta.hint}</p>
       </div>
-      <label className="inline-flex cursor-pointer items-center">
-        <input
-          type="checkbox"
-          checked={block.enabled}
-          onChange={onToggle}
-          className="peer sr-only"
+      {/* Switch controlado: o thumb é descendente de sibling do <input>,
+          então `peer-checked` não atinge — controla via state direto. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={block.enabled}
+        aria-label={`${block.enabled ? 'Desativar' : 'Ativar'} ${meta.label}`}
+        onClick={onToggle}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+          block.enabled ? 'bg-brand-primary' : 'bg-bg-subtle'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+            block.enabled ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
+          }`}
         />
-        <span className="relative h-6 w-11 rounded-full bg-bg-subtle transition-colors peer-checked:bg-brand-primary">
-          <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
-        </span>
-      </label>
+      </button>
     </li>
   )
 }
