@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/browser'
+import { invalidateAgendaForDay } from '@/lib/cache/invalidations'
 
 type Props = {
   tenantId: string
@@ -126,6 +127,18 @@ export function RealtimeAppointmentsRefresh({ tenantId, channelKey = 'all' }: Pr
           },
           (payload) => {
             console.warn('[realtime] appointments event', payload.eventType, payload)
+            // Extrai dateISO do evento pra invalidar cache do dia certo.
+            // payload.new pra INSERT/UPDATE; payload.old pra DELETE.
+            const startAt =
+              (payload.new as { start_at?: string } | undefined)?.start_at ??
+              (payload.old as { start_at?: string } | undefined)?.start_at
+            if (startAt) {
+              const dateISO = startAt.slice(0, 10)
+              // Fire-and-forget: server action invalida tag, depois disparamos refresh.
+              void invalidateAgendaForDay(tenantId, dateISO).catch((e) =>
+                console.warn('[realtime] invalidate failed', e),
+              )
+            }
             requestRefresh(`postgres:${payload.eventType}`)
           },
         )

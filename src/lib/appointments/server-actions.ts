@@ -1,10 +1,16 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { recordAudit } from '@/lib/audit/log'
+import { cacheTags } from '@/lib/cache/tags'
 import type { AgendaAppointment, AppointmentStatus } from '@/lib/appointments/queries'
+
+/** Extrai o YYYY-MM-DD em UTC (basta pra invalidar cache; cache scope inclui timezone). */
+function isoDateOf(iso: string): string {
+  return iso.slice(0, 10)
+}
 
 const CreateInput = z.object({
   tenantId: z.string().uuid(),
@@ -89,6 +95,8 @@ export async function createAppointment(
     },
   })
 
+  updateTag(cacheTags.agendaDay(input.tenantId, isoDateOf(input.startAt)))
+  updateTag(cacheTags.agendaPending(input.tenantId))
   revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/meus-agendamentos')
   return { ok: true, appointmentId: data.id }
@@ -179,6 +187,8 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
     },
   })
 
+  updateTag(cacheTags.agendaDay(appt.tenant_id, isoDateOf(appt.start_at)))
+  updateTag(cacheTags.agendaPending(appt.tenant_id))
   revalidatePath('/meus-agendamentos')
   return { ok: true }
 }
@@ -259,6 +269,14 @@ export async function cancelCustomerGroupBooking(
     changes: { reason: parsed.data.reason ?? null },
   })
 
+  // Combo pode ter segments em dias diferentes — invalida todos.
+  const { data: allSegments } = await supabase
+    .from('appointments')
+    .select('start_at')
+    .eq('group_id', group.id)
+  const uniqueDates = new Set((allSegments ?? []).map((s) => isoDateOf(s.start_at)))
+  for (const d of uniqueDates) updateTag(cacheTags.agendaDay(group.tenant_id, d))
+  updateTag(cacheTags.agendaPending(group.tenant_id))
   revalidatePath('/meus-agendamentos')
   return { ok: true }
 }

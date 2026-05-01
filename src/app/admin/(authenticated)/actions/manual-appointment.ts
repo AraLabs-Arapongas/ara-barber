@@ -1,10 +1,11 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { z } from 'zod'
 
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { recordAudit } from '@/lib/audit/log'
+import { cacheTags } from '@/lib/cache/tags'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 
@@ -173,6 +174,8 @@ export async function createManualAppointment(
     },
   })
 
+  updateTag(cacheTags.agendaDay(tenant.id, parsed.data.startAtISO.slice(0, 10)))
+  updateTag(cacheTags.agendaPending(tenant.id))
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/dashboard/agenda')
   revalidatePath('/admin/dashboard/clientes')

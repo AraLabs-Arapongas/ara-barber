@@ -1,10 +1,11 @@
 'use server'
 
 import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { canTransition } from '@/lib/appointments/status-rules'
+import { cacheTags } from '@/lib/cache/tags'
 
 const StatusEnum = z.enum(['CONFIRMED', 'CANCELED', 'NO_SHOW', 'COMPLETED'])
 
@@ -76,6 +77,8 @@ export async function transitionAppointmentStatus(raw: TransitionInput): Promise
 
   if (updateErr) return { ok: false, error: 'Falha ao atualizar. Tente novamente.' }
 
+  updateTag(cacheTags.agendaDay(appt.tenant_id, appt.start_at.slice(0, 10)))
+  updateTag(cacheTags.agendaPending(appt.tenant_id))
   revalidatePath('/admin/dashboard/agenda')
   return { ok: true }
 }
