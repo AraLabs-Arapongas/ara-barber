@@ -51,6 +51,10 @@ export default async function RootPage() {
 
   if (tenantMissing) return <TenantNotFound />
   if (area === 'tenant') return <TenantPublicHome />
+  // Platform admin: a área (admin.aralabs.com.br) só tem rotas em
+  // /login e /dashboard. Visitar a raiz manda pro login (que então
+  // redireciona pra dashboard se já tiver sessão).
+  if (area === 'platform') redirect('/login')
   if (process.env.NEXT_PUBLIC_ENV !== 'development') {
     redirect('https://aralabs.com.br')
   }
