@@ -12,9 +12,6 @@ export default async function RegrasPage() {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Regras de agendamento
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Como seus clientes podem agendar e cancelar pelo link público.
-        </p>
       </header>
       <BookingRulesForm
         initial={{

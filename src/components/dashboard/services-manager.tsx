@@ -159,7 +159,6 @@ export function ServicesManager({ services, professionals }: Props) {
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
             Serviços
           </h1>
-          <p className="mt-1 text-[0.875rem] text-fg-muted">O que seu negócio oferece.</p>
           <Button type="button" size="sm" onClick={openCreate} className="mt-3">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Adicionar serviço

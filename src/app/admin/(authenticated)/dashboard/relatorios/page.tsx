@@ -46,7 +46,6 @@ export default async function RelatoriosPage({ searchParams }: PageProps) {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Relatórios
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">Resumo operacional do período.</p>
       </header>
       <ReportsSummary
         appointments={appointments}

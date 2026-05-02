@@ -3,7 +3,9 @@ import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { getTenantBookingUrl } from '@/lib/tenant/public-url'
 import { getAgendaForDay } from '@/lib/appointments/queries'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
+import { Plus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { StaffPushBanner } from '@/components/push/staff-push-banner'
 import { AgendaFilters } from '@/components/agenda/agenda-filters'
@@ -190,7 +192,7 @@ export default async function AgendaPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
-      <header className="mb-4 flex items-start justify-between gap-3">
+      <header className="mb-6 flex items-start justify-between gap-3">
         <div>
           <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
             Operação
@@ -198,6 +200,12 @@ export default async function AgendaPage({ searchParams }: PageProps) {
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
             Agenda
           </h1>
+          <Link href="/admin/dashboard/agenda/novo" className="mt-3 inline-block">
+            <Button type="button" size="sm">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Novo agendamento
+            </Button>
+          </Link>
         </div>
         <div className="mt-1 flex items-center gap-2">
           <AgendaHeaderActions publicUrl={publicUrl} />

@@ -170,7 +170,7 @@ export function WeekAgendaStrip({
             <p className="mb-2 text-sm text-fg-muted">{totalLabel}</p>
           )}
 
-          <div className="relative h-32 w-full min-w-0">
+          <div className="relative h-32 w-full min-w-0 [&_*]:outline-none [&_.recharts-bar-rectangle]:focus:outline-none [&_.recharts-surface]:focus:outline-none">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={120}>
               <BarChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 4 }}>
                 <XAxis

@@ -53,9 +53,6 @@ export default async function BloqueiosPage({ searchParams }: PageProps) {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Bloqueios, folgas e feriados
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Bloqueie horários do negócio inteiro ou de um profissional específico.
-        </p>
       </header>
       <BlocksManager
         blocks={blocks}

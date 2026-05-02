@@ -33,9 +33,6 @@ export default async function PaginaPublicaPage() {
         <h1 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
           Página pública
         </h1>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Configure o que aparece na sua landing — blocos, ordem, conteúdo.
-        </p>
         <Link
           href="/"
           target="_blank"

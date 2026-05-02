@@ -171,6 +171,18 @@ h3 {
   background-size: 200px 200px;
 }
 
+/* Cursor pointer global: links e qualquer elemento clicável.
+ * Botões já vêm com cursor:pointer do user-agent, mas <a>, <summary>,
+ * [role="button"] e [data-slot="trigger"] precisam ser explicitados. */
+a[href],
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+summary {
+  cursor: pointer;
+}
+
 /* Focus-visible global: ring dourado suave */
 *:focus-visible {
   outline: 2px solid var(--color-ring);

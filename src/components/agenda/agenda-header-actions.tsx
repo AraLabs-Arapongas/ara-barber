@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { Link2, Plus } from 'lucide-react'
+import { Link2 } from 'lucide-react'
 import { copyToClipboard } from '@/lib/clipboard'
 
 /**
- * 2 botões compactos pro header da Agenda — Novo agendamento + Copiar link.
- * Persistentes (aparecem com ou sem agendamentos no dia, eliminando os
- * botões duplicados do empty state).
+ * Botão "Copiar link" do header da Agenda. O "Novo agendamento"
+ * virou Button labeled abaixo do título (padrão dos outros headers
+ * — ver Profissionais, Serviços).
  */
 export function AgendaHeaderActions({ publicUrl }: { publicUrl: string }) {
   const [copied, setCopied] = useState(false)
@@ -21,24 +20,14 @@ export function AgendaHeaderActions({ publicUrl }: { publicUrl: string }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Link
-        href="/admin/dashboard/agenda/novo"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary text-bg transition-colors hover:opacity-90"
-        aria-label="Novo agendamento"
-        title="Novo agendamento"
-      >
-        <Plus className="h-4 w-4" />
-      </Link>
-      <button
-        type="button"
-        onClick={copy}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg"
-        aria-label={copied ? 'Link copiado!' : 'Copiar link de agendamento'}
-        title={copied ? 'Copiado!' : 'Copiar link de agendamento'}
-      >
-        <Link2 className="h-4 w-4" />
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={copy}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-bg text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg"
+      aria-label={copied ? 'Link copiado!' : 'Copiar link de agendamento'}
+      title={copied ? 'Copiado!' : 'Copiar link de agendamento'}
+    >
+      <Link2 className="h-4 w-4" />
+    </button>
   )
 }

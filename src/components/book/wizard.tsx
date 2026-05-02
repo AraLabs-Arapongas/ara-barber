@@ -361,9 +361,8 @@ export function CustomerBookingWizard({
 
           {isAuthenticated ? (
             <Card>
-              <CardContent className="py-5">
-                <p className="mb-3 text-[0.8125rem] font-medium text-fg">Seus dados</p>
-                <form onSubmit={submit} className="space-y-3">
+              <CardContent className="py-4">
+                <form onSubmit={submit} className="space-y-2.5">
                   <Input
                     label="Seu nome"
                     required
@@ -381,9 +380,8 @@ export function CustomerBookingWizard({
                     onChange={(e) => setPhone(formatBrPhone(e.target.value))}
                     placeholder="(00) 00000-0000"
                     maxLength={16}
-                    hint="Pro estabelecimento te avisar em caso de mudança."
                   />
-                  <p className="text-[0.75rem] leading-relaxed text-fg-subtle">
+                  <p className="pt-1 text-[0.6875rem] leading-snug text-fg-subtle">
                     Ao confirmar, você concorda com os{' '}
                     <a
                       href="/termos-uso"
@@ -391,7 +389,7 @@ export function CustomerBookingWizard({
                       rel="noopener"
                       className="font-medium text-brand-primary hover:underline"
                     >
-                      Termos de uso
+                      Termos
                     </a>{' '}
                     e a{' '}
                     <a

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { Check } from 'lucide-react'
 import { transitionAppointmentStatus } from '@/app/admin/(authenticated)/actions/appointment-status'
 
@@ -13,9 +12,13 @@ type Props = {
  * Botão inline usado na home do staff pra confirmar um agendamento
  * SCHEDULED em um toque, sem abrir o detalhe. Reusa a server action
  * existente de transição de status.
+ *
+ * `revalidatePath` no server action já dispara re-render automático
+ * via App Router; chamar `router.refresh()` aqui era redundante e
+ * dobrava a latência percebida (botão "Confirmando..." ficava preso
+ * durante o duplo fetch).
  */
 export function ConfirmAppointmentInline({ appointmentId }: Props) {
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -30,9 +33,7 @@ export function ConfirmAppointmentInline({ appointmentId }: Props) {
       })
       if (!result.ok) {
         setError(result.error)
-        return
       }
-      router.refresh()
     })
   }
 

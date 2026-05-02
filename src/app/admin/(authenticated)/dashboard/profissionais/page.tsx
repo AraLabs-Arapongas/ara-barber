@@ -7,6 +7,7 @@ import {
 } from '@/components/dashboard/professionals-manager'
 import { hasNoSchedule, worksToday } from '@/lib/admin/derivations'
 import { weekdayInTenantTZ } from '@/lib/booking/slots'
+import { getProfessionalUsage } from '@/lib/billing/professional-quota'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -25,7 +26,7 @@ export default async function ProfessionalsPage() {
   const dateISO = todayISO(tenant.timezone)
   const weekday = weekdayInTenantTZ(dateISO, tenant.timezone)
 
-  const [profsRes, availRes, svcRes, profServicesRes, todayAppts] = await Promise.all([
+  const [profsRes, availRes, svcRes, profServicesRes, todayAppts, usage] = await Promise.all([
     supabase
       .from('professionals')
       .select('id, name, display_name, phone, is_active, user_id')
@@ -41,6 +42,7 @@ export default async function ProfessionalsPage() {
       .select('professional_id, service_id')
       .eq('tenant_id', tenant.id),
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
+    getProfessionalUsage(tenant.id),
   ])
 
   const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
@@ -79,5 +81,5 @@ export default async function ProfessionalsPage() {
     }
   })
 
-  return <ProfessionalsManager professionals={professionals} />
+  return <ProfessionalsManager professionals={professionals} usage={usage} />
 }

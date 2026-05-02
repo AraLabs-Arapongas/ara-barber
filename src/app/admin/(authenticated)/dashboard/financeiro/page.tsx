@@ -55,12 +55,6 @@ export default async function FinanceiroPage({ searchParams }: PageProps) {
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
             Financeiro
           </h1>
-          <p className="mt-1 text-[0.875rem] text-fg-muted">
-            Resumo dos valores baseado em agendamentos e status.{' '}
-            <span className="text-fg-subtle">
-              Não representa pagamento real — pagamento online entra em fase futura.
-            </span>
-          </p>
         </div>
         <MoneyVisibilityToggle className="mt-1" />
       </header>
