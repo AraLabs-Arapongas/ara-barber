@@ -18,6 +18,24 @@
 
 _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão curta, link pro commit/PR se houver._
 
+- **2026-05-01 — Pricing oficial: R$ 79/mês após 60d trial.**
+  Saiu de placeholder pra confirmado. 1º cliente piloto começa esta
+  semana (validação). Contrato + termos ainda em fechamento mas
+  pricing já é oficial pra qualquer comunicação. Ver entrada
+  "Bloqueadores reais pro launch do piloto" — itens #4 (acordo) e
+  #7 (cobrança dia 61) seguem pendentes mas não bloqueiam soft
+  launch da landing.
+
+- **2026-05-01 — Landing page do produto + demos públicas.**
+  Decisão: `aralabs.com.br/ara-agenda` (path no storefront, marca-mãe
+  AraLabs forte; subdomínio dedicado entra se virar spin-off).
+  Estrutura: Hero + "Veja em ação" (3 demos clicáveis) + verticais +
+  features + preço + FAQ + CTA. Soft launch (noindex) até 1º piloto
+  rodar 30d. Demos: barbearia, consultório, lava-jato — provam
+  versatilidade vertical-neutral. Cron diário reseta dados dos demos
+  (cliente pode reservar de verdade pra testar fluxo completo, banner
+  avisa). Mora no repo `aralabs-storefront`.
+
 - **2026-04-30 — Platform admin em produção.**
   `https://admin.aralabs.com.br` operacional com user
   `admin@aralabs.com.br` (role `PLATFORM_ADMIN`). Telas: Dashboard
