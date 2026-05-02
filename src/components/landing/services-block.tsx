@@ -42,10 +42,10 @@ export function ServicesBlock({ services }: Props) {
           </li>
         ))}
       </ul>
-      <div className="mt-8">
+      <div className="mt-10 flex justify-center">
         <Link
           href="/book"
-          className="group inline-flex items-center gap-2 text-[0.875rem] font-medium uppercase tracking-[0.16em] text-brand-primary"
+          className="group inline-flex items-center gap-3 rounded-full bg-brand-accent px-9 py-4 text-[0.9375rem] font-medium text-brand-accent-fg shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.99]"
         >
           Ver todos e agendar
           <ArrowRight

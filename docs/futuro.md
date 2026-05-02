@@ -25,6 +25,31 @@ _Cronológico inverso (mais recente primeiro). Cada item: data, decisão, razão
   "Bloqueadores reais pro launch do piloto" — itens #4 (acordo) e
   #7 (cobrança dia 61) seguem pendentes mas não bloqueiam soft
   launch da landing.
+  **Multi-profissional definido (2026-05-02):** R$ 79/mês inclui até
+  10 profissionais. R$ 19,90 por profissional adicional. Justificativa
+  no custo: infra é dominada por overhead fixo (~R$ 257/mês Vercel +
+  Supabase), variável por tenant é R$ 2-25/mês mesmo no caso grande,
+  margem fica >70% em qualquer cenário. Modelo cobre 95%+ do beachhead
+  (barbearia/salão típico = 2-5 prof) sem fricção e captura valor de
+  equipes grandes (rede de 15 = R$ 178; ainda bate Trinks/Booksy).
+  Landing reflete em Hero, Pricing card, FAQ #5 e meta description.
+  **Cota aplicada no produto (2026-05-02):** migration
+  `20260502000001_plans_professional_quota.sql` adiciona
+  `plans.included_professionals` (default 10) e
+  `plans.extra_professional_price_cents` (default 1990). Helper
+  `getProfessionalUsage()` em `lib/billing/`. Tela `/profissionais`
+  mostra banner de uso ("8 de 10 inclusos" / "12 ativos = +R$
+  39,80/mês"). Adicionar/reativar acima da cota dispara modal
+  obrigatório com checkbox de consentimento (audit trail pra quando
+  cobrança real entrar). Excluir só funciona em inativo sem histórico
+  (FK preserva relatórios).
+  **Pioneiros (2026-05-02):** janela "até 31/07/2026" (data fixa, não
+  "primeiros N"). Quem aderir nesse período: 60 dias grátis + selo
+  "Pioneiro" permanente no perfil público. Selo precisa ser
+  implementado: campo `tenants.is_pioneer boolean` + render no header
+  da home pública do tenant. **Pendente:** migration do flag, lógica
+  de marcar automaticamente tenants criados antes de 2026-08-01,
+  componente visual do selo.
 
 - **2026-05-01 — Landing page do produto + demos públicas.**
   Decisão: `aralabs.com.br/ara-agenda` (path no storefront, marca-mãe

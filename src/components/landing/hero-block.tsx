@@ -29,7 +29,7 @@ export function HeroBlock({
   const mobileSrc = imageUrl
 
   return (
-    <section className="relative -mx-4 overflow-hidden sm:-mx-6">
+    <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden">
       {/* Container: portrait em mobile (80vh), 16:9 em desktop pra
           aproveitar a paisagem sem ocupar a tela toda. */}
       <div className="relative min-h-[80vh] lg:aspect-[16/9] lg:min-h-0">
