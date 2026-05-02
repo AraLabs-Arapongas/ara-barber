@@ -13,6 +13,12 @@ import { InitialsAvatar } from '@/components/ui/initials-avatar'
 import { formatBrPhone } from '@/lib/format'
 import { formatCentsToBrl } from '@/lib/money'
 import { createProfessional } from '@/app/admin/(authenticated)/actions/professionals'
+import {
+  QuotaConfirmModal,
+  QuotaInline,
+  type QuotaConfirmation,
+  type QuotaUsage,
+} from './professional-quota'
 
 export type ProfessionalListItem = {
   id: string
@@ -35,9 +41,16 @@ function trimSeconds(time: string): string {
 
 type Props = {
   professionals: ProfessionalListItem[]
+  usage: QuotaUsage
 }
 
-export function ProfessionalsManager({ professionals }: Props) {
+type PendingForm = {
+  name: string
+  displayName?: string
+  phone?: string
+}
+
+export function ProfessionalsManager({ professionals, usage }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -46,6 +59,8 @@ export function ProfessionalsManager({ professionals }: Props) {
   const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [confirmData, setConfirmData] = useState<QuotaConfirmation | null>(null)
+  const [pendingForm, setPendingForm] = useState<PendingForm | null>(null)
 
   useEffect(() => {
     if (searchParams?.get('new') === '1') {
@@ -66,6 +81,38 @@ export function ProfessionalsManager({ professionals }: Props) {
     setError(null)
   }
 
+  function submitCreate(payload: PendingForm, acknowledgeExtraCharge = false) {
+    startTransition(async () => {
+      const result = await createProfessional({
+        name: payload.name,
+        displayName: payload.displayName,
+        phone: payload.phone,
+        acknowledgeExtraCharge,
+      })
+      if (result.ok) {
+        setPhone('')
+        setPendingForm(null)
+        setConfirmData(null)
+        closeSheet()
+        router.refresh()
+        return
+      }
+      if ('requiresExtraChargeConfirmation' in result) {
+        // Mantém o sheet aberto por baixo; abre modal de confirmação
+        setPendingForm(payload)
+        setConfirmData({
+          extraUnitPriceCents: result.extraUnitPriceCents,
+          currentExtraMonthlyCents: result.currentExtraMonthlyCents,
+          newExtraMonthlyCents: result.newExtraMonthlyCents,
+          activeCount: result.activeCount,
+          included: result.included,
+        })
+        return
+      }
+      setError(result.error)
+    })
+  }
+
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
@@ -76,26 +123,19 @@ export function ProfessionalsManager({ professionals }: Props) {
       return
     }
     const displayName = String(fd.get('displayName') ?? '').trim() || undefined
-
-    startTransition(async () => {
-      const result = await createProfessional({
-        name,
-        displayName,
-        phone: phone || undefined,
-      })
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      form.reset()
-      setPhone('')
-      closeSheet()
-      router.refresh()
-    })
+    setError(null)
+    submitCreate({ name, displayName, phone: phone || undefined })
   }
 
-  const workingToday = professionals.filter((p) => p.worksToday !== null).length
-  const withoutSchedule = professionals.filter((p) => p.hasNoSchedule).length
+  function handleConfirmExtra() {
+    if (!pendingForm) return
+    submitCreate(pendingForm, true)
+  }
+
+  function handleCancelExtra() {
+    setConfirmData(null)
+    setPendingForm(null)
+  }
 
   return (
     <>
@@ -107,17 +147,11 @@ export function ProfessionalsManager({ professionals }: Props) {
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
             Profissionais
           </h1>
-          <p className="mt-1 text-[0.875rem] text-fg-muted">Quem atende no seu negócio.</p>
-          {professionals.length > 0 ? (
-            <p className="mt-2 text-[0.8125rem] text-fg-muted">
-              {workingToday} {workingToday === 1 ? 'trabalhando' : 'trabalhando'} hoje
-              {withoutSchedule > 0 ? ` · ${withoutSchedule} sem horário configurado` : ''}
-            </p>
-          ) : null}
           <Button type="button" size="sm" onClick={openCreate} className="mt-3">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Adicionar profissional
           </Button>
+          <QuotaInline usage={usage} className="mt-2" />
         </header>
 
         {professionals.length > 0 ? (
@@ -241,6 +275,16 @@ export function ProfessionalsManager({ professionals }: Props) {
           </div>
         </form>
       </BottomSheet>
+
+      <QuotaConfirmModal
+        open={confirmData !== null}
+        data={confirmData}
+        pending={pending}
+        confirmLabel="Confirmar e adicionar"
+        actionVerb="adicionar"
+        onCancel={handleCancelExtra}
+        onConfirm={handleConfirmExtra}
+      />
     </>
   )
 }

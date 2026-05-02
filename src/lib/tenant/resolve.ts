@@ -37,8 +37,19 @@ export function parseHostToSlug(host: string): ParsedHost {
   return { area: 'root', slug: null }
 }
 
-// Cache in-memory de 60s. Cold start do serverless limpa; aceitável para Fase 1.
-type CacheEntry = { id: string | null; expires: number }
+/**
+ * Cache em memória apenas para resultados POSITIVOS (tenant existe).
+ *
+ * Histórico: a versão anterior cacheava null por 60s, o que causava
+ * 404 fantasma por 1 minuto se um único fetch falhasse (cold start,
+ * race no boot, blip de rede). Como dev server e proxy reusam o
+ * mesmo processo, qualquer null cacheado virava sticky.
+ *
+ * Decisão: nunca cacheia null. Misses pagam 1 query por request,
+ * mas 404 é raro e evita o pior bug (perder acesso ao próprio
+ * tenant até reiniciar). Erros são logados mas NÃO viram cache.
+ */
+type CacheEntry = { id: string; expires: number }
 const cache = new Map<string, CacheEntry>()
 const TTL_MS = 60_000
 
@@ -51,12 +62,19 @@ export async function resolveTenantIdBySlug(slug: string): Promise<string | null
   const { data, error } = await supabase.from('tenants').select('id').eq('slug', slug).maybeSingle()
 
   if (error) {
-    console.error('resolveTenantIdBySlug error', error)
+    // Erro de rede/permissão: log e retorna null SEM cachear. Próximo
+    // request retenta imediatamente em vez de ficar 60s preso.
+    console.error('resolveTenantIdBySlug error', { slug, error })
     return null
   }
 
   const id = data?.id ?? null
-  cache.set(slug, { id, expires: now + TTL_MS })
+  if (id) {
+    cache.set(slug, { id, expires: now + TTL_MS })
+  } else {
+    // Tenant não existe: limpa qualquer entrada stale e NÃO cacheia.
+    cache.delete(slug)
+  }
   return id
 }
 

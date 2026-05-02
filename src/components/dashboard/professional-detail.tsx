@@ -3,16 +3,21 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition, type FormEvent } from 'react'
-import { CalendarX, ChevronLeft, Phone, Power, User } from 'lucide-react'
+import { CalendarX, ChevronLeft, Phone, Power, Trash2, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { formatBrPhone } from '@/lib/format'
 import {
+  deleteProfessional,
   toggleProfessionalActive,
   updateProfessional,
 } from '@/app/admin/(authenticated)/actions/professionals'
+import {
+  QuotaConfirmModal,
+  type QuotaConfirmation,
+} from './professional-quota'
 import { toggleProfessionalService } from '@/app/admin/(authenticated)/actions/professional-services'
 import { saveWeeklyAvailability } from '@/app/admin/(authenticated)/actions/availability'
 
@@ -83,6 +88,7 @@ export function ProfessionalDetail({
         <ServicesSection proId={pro.id} services={services} linkedServiceIds={linkedServiceIds} />
         <JourneySection proId={pro.id} entries={availability} />
         <BlocksLinkSection proId={pro.id} count={blocks.length} />
+        <DangerZone pro={pro} />
       </div>
     </main>
   )
@@ -123,31 +129,138 @@ function BlocksLinkSection({ proId, count }: { proId: string; count: number }) {
 function ActiveBadge({ pro }: { pro: DetailPro }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const [confirmData, setConfirmData] = useState<QuotaConfirmation | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  function toggle() {
+  function runToggle(acknowledgeExtraCharge = false) {
     startTransition(async () => {
-      await toggleProfessionalActive({ id: pro.id, isActive: !pro.isActive })
-      router.refresh()
+      const result = await toggleProfessionalActive({
+        id: pro.id,
+        isActive: !pro.isActive,
+        acknowledgeExtraCharge,
+      })
+      if (result.ok) {
+        setConfirmData(null)
+        setError(null)
+        router.refresh()
+        return
+      }
+      if ('requiresExtraChargeConfirmation' in result) {
+        setConfirmData({
+          extraUnitPriceCents: result.extraUnitPriceCents,
+          currentExtraMonthlyCents: result.currentExtraMonthlyCents,
+          newExtraMonthlyCents: result.newExtraMonthlyCents,
+          activeCount: result.activeCount,
+          included: result.included,
+        })
+        return
+      }
+      setError(result.error)
     })
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      disabled={pending}
-      className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide transition-colors disabled:opacity-50 ${
-        pro.isActive
-          ? 'bg-success-bg text-success hover:bg-success-bg/80'
-          : 'bg-bg-subtle text-fg-subtle hover:bg-border'
-      }`}
-      aria-label={pro.isActive ? 'Desativar' : 'Ativar'}
-    >
-      <span className="inline-flex items-center gap-1">
-        <Power className="h-3 w-3" />
-        {pro.isActive ? 'Ativo' : 'Inativo'}
-      </span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => runToggle(false)}
+        disabled={pending}
+        className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide transition-colors disabled:opacity-50 ${
+          pro.isActive
+            ? 'bg-success-bg text-success hover:bg-success-bg/80'
+            : 'bg-bg-subtle text-fg-subtle hover:bg-border'
+        }`}
+        aria-label={pro.isActive ? 'Desativar' : 'Ativar'}
+        title={error ?? undefined}
+      >
+        <span className="inline-flex items-center gap-1">
+          <Power className="h-3 w-3" />
+          {pro.isActive ? 'Ativo' : 'Inativo'}
+        </span>
+      </button>
+
+      <QuotaConfirmModal
+        open={confirmData !== null}
+        data={confirmData}
+        pending={pending}
+        confirmLabel="Confirmar e reativar"
+        actionVerb="reativar"
+        onCancel={() => setConfirmData(null)}
+        onConfirm={() => runToggle(true)}
+      />
+    </>
+  )
+}
+
+function DangerZone({ pro }: { pro: DetailPro }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
+
+  if (pro.isActive) return null
+
+  function runDelete() {
+    startTransition(async () => {
+      const result = await deleteProfessional({ id: pro.id })
+      if (result.ok) {
+        router.replace('/admin/dashboard/profissionais')
+        router.refresh()
+        return
+      }
+      setError(result.error)
+      setConfirming(false)
+    })
+  }
+
+  return (
+    <section>
+      <SectionTitle>Excluir profissional</SectionTitle>
+      <Card className="shadow-xs">
+        <CardContent className="space-y-3 py-4">
+          <p className="text-[0.875rem] text-fg-muted">
+            Excluir remove o cadastro de forma permanente. Só funciona se ele
+            não tiver agendamentos no histórico — caso tenha, mantenha
+            desativado pra preservar os relatórios.
+          </p>
+          {error ? <Alert variant="error">{error}</Alert> : null}
+          {confirming ? (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={() => setConfirming(false)}
+                disabled={pending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                fullWidth
+                loading={pending}
+                onClick={runDelete}
+                className="!bg-danger !text-white hover:!bg-danger/90"
+              >
+                Excluir definitivamente
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setError(null)
+                setConfirming(true)
+              }}
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Excluir profissional
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   )
 }
 

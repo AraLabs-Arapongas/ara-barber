@@ -459,7 +459,9 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          extra_professional_price_cents: number
           id: string
+          included_professionals: number
           is_active: boolean
           is_default: boolean
           monthly_price_cents: number
@@ -474,7 +476,9 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          extra_professional_price_cents?: number
           id?: string
+          included_professionals?: number
           is_active?: boolean
           is_default?: boolean
           monthly_price_cents: number
@@ -489,7 +493,9 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          extra_professional_price_cents?: number
           id?: string
+          included_professionals?: number
           is_active?: boolean
           is_default?: boolean
           monthly_price_cents?: number
@@ -823,12 +829,14 @@ export type Database = {
           id: string
           instagram_url: string | null
           is_custom_trial: boolean
+          is_pioneer: boolean
           logo_url: string | null
           min_advance_hours: number
           monthly_price_cents: number
           name: string
           notes_internal: string | null
           operation_mode_pin_hash: string | null
+          pioneer_since: string | null
           postal_code: string | null
           primary_color: string | null
           secondary_color: string | null
@@ -879,12 +887,14 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_custom_trial?: boolean
+          is_pioneer?: boolean
           logo_url?: string | null
           min_advance_hours?: number
           monthly_price_cents?: number
           name: string
           notes_internal?: string | null
           operation_mode_pin_hash?: string | null
+          pioneer_since?: string | null
           postal_code?: string | null
           primary_color?: string | null
           secondary_color?: string | null
@@ -935,12 +945,14 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_custom_trial?: boolean
+          is_pioneer?: boolean
           logo_url?: string | null
           min_advance_hours?: number
           monthly_price_cents?: number
           name?: string
           notes_internal?: string | null
           operation_mode_pin_hash?: string | null
+          pioneer_since?: string | null
           postal_code?: string | null
           primary_color?: string | null
           secondary_color?: string | null

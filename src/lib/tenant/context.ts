@@ -38,6 +38,9 @@ export type TenantContext = {
   homeHeadlineAccent: string | null
   status: Database['public']['Enums']['tenant_status']
   billingStatus: Database['public']['Enums']['billing_status']
+  /** Aderiu até 31/07/2026 — exibe selo de Pioneiro permanente. */
+  isPioneer: boolean
+  pioneerSince: string | null
   cancellationWindowHours: number
   minAdvanceHours: number
   slotIntervalMinutes: number
@@ -97,7 +100,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_hours, min_advance_hours, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials, is_pioneer, pioneer_since',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -119,6 +122,8 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     homeHeadlineAccent: data.home_headline_accent,
     status: data.status,
     billingStatus: data.billing_status,
+    isPioneer: data.is_pioneer ?? false,
+    pioneerSince: data.pioneer_since,
     cancellationWindowHours: data.cancellation_window_hours ?? 2,
     minAdvanceHours: data.min_advance_hours ?? 0,
     slotIntervalMinutes: data.slot_interval_minutes ?? 15,
