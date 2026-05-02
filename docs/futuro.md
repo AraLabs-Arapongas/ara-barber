@@ -277,6 +277,24 @@ _Coisas que viraram spec/análise mas a implementação foi adiada por razão co
   Spec:
   `aralabs-storefront/docs/superpowers/specs/2026-04-29-admin-multiproduct-design.md`.
 
+- **2026-05-02 — Auto-add domínio do tenant na Vercel via API.**
+  `provisionTenant` poderia chamar `POST
+  /v10/projects/{id}/domains` da Vercel logo após inserir o tenant,
+  pra eliminar o gap de ~30s-5min de provisionamento de cert SSL
+  Let's Encrypt (durante esse gap, novo tenant pode dar 403 fantasma
+  na edge). Postergado: hoje fluxo manual (admin acompanha cada
+  criação, espera o cert, e o owner que recebe link de senha geralmente
+  só clica minutos depois). Custos: precisa `VERCEL_TOKEN` +
+  `VERCEL_PROJECT_ID` em env, mais um ponto de falha externa.
+  **Gatilho pra reabrir (obrigatório):** signup self-serve no site
+  público (qualquer um cria conta sem admin acompanhar). Nesse momento,
+  5min de "?? não funciona" entre signup e primeiro acesso mata
+  onboarding — usuário bounce sem completar setup. Implementação
+  precisa estar pronta ANTES do signup self-serve subir, não depois.
+  Bonus: se cert falhar, capturar erro e mostrar "Sua conta está
+  pronta, aguarde alguns minutos pro endereço ficar disponível" em
+  vez de 403 silencioso.
+
 ---
 
 ## Ideias em aberto

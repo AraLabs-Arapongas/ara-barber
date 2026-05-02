@@ -11,6 +11,43 @@ import { createSecretClient } from '@/lib/supabase/secret'
 
 export type CreateTenantState = { error?: string }
 
+const RESERVED_SUBDOMAINS = new Set(['www', 'api', 'app', 'admin'])
+const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/
+
+export type SlugCheckResult =
+  | { status: 'available' }
+  | { status: 'taken' }
+  | { status: 'invalid'; reason: string }
+  | { status: 'reserved' }
+
+/**
+ * Verifica se um slug está disponível pra novo tenant. Server action
+ * chamada do client com debounce. Não escreve nada — só leitura.
+ */
+export async function checkSlugAvailabilityAction(
+  rawSlug: string,
+): Promise<SlugCheckResult> {
+  await assertPlatformAdmin()
+  const slug = rawSlug.trim().toLowerCase()
+  if (!slug) return { status: 'invalid', reason: 'Slug vazio' }
+  if (!SLUG_REGEX.test(slug)) {
+    return {
+      status: 'invalid',
+      reason: 'Use só letras (a-z), números e hífens; 1-50 caracteres; sem hífen no início/fim.',
+    }
+  }
+  if (RESERVED_SUBDOMAINS.has(slug)) return { status: 'reserved' }
+
+  const supabase = createSecretClient()
+  const { data } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  return data ? { status: 'taken' } : { status: 'available' }
+}
+
 export async function createTenantAction(
   _prev: CreateTenantState,
   formData: FormData,

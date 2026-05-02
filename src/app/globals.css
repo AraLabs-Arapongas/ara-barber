@@ -172,14 +172,21 @@ h3 {
 }
 
 /* Cursor pointer global: links e qualquer elemento clicável.
- * Botões já vêm com cursor:pointer do user-agent, mas <a>, <summary>,
- * [role="button"] e [data-slot="trigger"] precisam ser explicitados. */
+ * Tailwind v4 removeu o cursor:pointer do preflight pros <button>
+ * (preflight v4 segue o "spec moderno" — UA browsers não mostram
+ * pointer em botões). Forçamos pra recuperar a affordance.
+ * `:not(:disabled)` evita pointer em botão desabilitado (ainda mostra
+ * `not-allowed` quando aplicado por classe Tailwind). */
+button:not(:disabled),
 a[href],
-[role="button"],
+[role="button"]:not([aria-disabled='true']),
 [role="tab"],
 [role="menuitem"],
 [role="option"],
-summary {
+summary,
+input[type='checkbox'],
+input[type='radio'],
+label[for] {
   cursor: pointer;
 }
 

@@ -41,6 +41,32 @@ export async function provisionTenant(
 ): Promise<ProvisionResult> {
   const subdomain = input.subdomain ?? input.slug
 
+  // 0. Plano default — todo tenant novo entra no plano marcado como
+  // is_default=true (PRO hoje). Sem plano, queries de cota/billing
+  // ficam quebradas e o staff não tem como abrir conta.
+  const { data: defaultPlan, error: planErr } = await supabase
+    .from('plans')
+    .select('id, trial_days_default')
+    .eq('is_default', true)
+    .eq('is_active', true)
+    .maybeSingle()
+  if (planErr || !defaultPlan) {
+    throw new Error(
+      `default plan: ${planErr?.message ?? 'nenhum plano com is_default=true e is_active=true'}`,
+    )
+  }
+
+  // Trial padrão = `plan.trial_days_default`. Pioneiros (criados até
+  // 31/07/2026) ganham 60 dias automaticamente via trigger
+  // `tenants_set_pioneer_flag_trigger` — mas o trigger SÓ marca
+  // is_pioneer/pioneer_since, não mexe em trial. Daí calculamos aqui:
+  // se a data atual cai dentro da janela de pioneiros, sobrescrevemos
+  // com 60 dias. Mantém o source-of-truth single (a data limite).
+  const PIONEER_DEADLINE_UTC = new Date('2026-08-01T03:00:00Z')
+  const isPioneerWindow = new Date() < PIONEER_DEADLINE_UTC
+  const trialDays = isPioneerWindow ? 60 : defaultPlan.trial_days_default
+  const trialEnds = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000)
+
   // 1. Tenant
   const { data: tenant, error: tenantErr } = await supabase
     .from('tenants')
@@ -51,6 +77,10 @@ export async function provisionTenant(
       timezone: input.timezone,
       primary_color: '#0f172a',
       billing_status: 'TRIALING',
+      current_plan_id: defaultPlan.id,
+      trial_starts_at: new Date().toISOString(),
+      trial_ends_at: trialEnds.toISOString(),
+      trial_days_granted: trialDays,
       booking_window_days: 14,
       min_advance_hours: 0,
       slot_interval_minutes: 15,
