@@ -1,20 +1,36 @@
+import type { ReactNode } from 'react'
+
+type Props = {
+  /** Default: "Nenhum agendamento neste dia." */
+  title?: ReactNode
+  /** Default: instrução sobre o + e link público. */
+  description?: ReactNode
+  /** Botão/CTA opcional renderizado abaixo do texto. */
+  action?: ReactNode
+}
+
 /**
- * Empty state da Agenda — só ilustração + texto. As ações (Novo agendamento,
- * Copiar link) ficam no header da página, não duplicadas aqui.
+ * Empty state da Agenda — ilustração + texto + ação opcional.
+ * Reutilizado pela tela /agenda e pela home staff.
  */
-export function AgendaEmptyState() {
+export function AgendaEmptyState({
+  title = 'Nenhum agendamento neste dia.',
+  description = (
+    <>
+      Use o <span className="font-medium text-fg">+</span> no topo pra adicionar manualmente, ou
+      compartilhe seu link pra clientes agendarem sozinhos.
+    </>
+  ),
+  action,
+}: Props = {}) {
   return (
     <div className="my-8 flex flex-col items-center justify-center gap-3 px-4 py-8 text-center">
       <EmptyCalendarIllustration className="h-32 w-32 text-fg-muted/40" />
       <div>
-        <p className="font-display text-[1.0625rem] font-semibold text-fg">
-          Nenhum agendamento neste dia.
-        </p>
-        <p className="mt-1 text-[0.875rem] text-fg-muted">
-          Use o <span className="font-medium text-fg">+</span> no topo pra adicionar manualmente, ou
-          compartilhe seu link pra clientes agendarem sozinhos.
-        </p>
+        <p className="font-display text-[1.0625rem] font-semibold text-fg">{title}</p>
+        <p className="mt-1 text-[0.875rem] text-fg-muted">{description}</p>
       </div>
+      {action ? <div className="mt-3">{action}</div> : null}
     </div>
   )
 }

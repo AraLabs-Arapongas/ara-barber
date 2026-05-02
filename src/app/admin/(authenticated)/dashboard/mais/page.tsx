@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
+import { PioneerBadge } from '@/components/pioneer-badge'
 import {
   Building2,
   Link2,
@@ -153,7 +155,8 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
   },
 ]
 
-export default function MaisPage() {
+export default async function MaisPage() {
+  const tenant = await getCurrentTenantOrNotFound()
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
       <header className="mb-6">
@@ -163,6 +166,11 @@ export default function MaisPage() {
         <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
           Mais
         </h1>
+        {tenant.isPioneer ? (
+          <div className="mt-3">
+            <PioneerBadge showSince pioneerSince={tenant.pioneerSince} />
+          </div>
+        ) : null}
       </header>
 
       <div className="space-y-6">

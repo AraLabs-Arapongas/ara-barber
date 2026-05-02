@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { BellRing, Calendar, CheckCircle2, Clock } from 'lucide-react'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import {
   getAgendaForDay,
@@ -7,18 +6,19 @@ import {
   type AgendaAppointment,
 } from '@/lib/appointments/queries'
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
+import { AgendaEmptyState } from '@/components/agenda/empty-state'
 import { STATUS_LABELS, STATUS_TONE } from '@/lib/appointments/labels'
-import { formatCentsToBrl } from '@/lib/money'
-import { ConfirmAppointmentInline } from '@/components/dashboard/confirm-appointment-inline'
 import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
-import { AttentionSection, type AttentionItem } from '@/components/home/attention-section'
-import { MoneyStatCard } from '@/components/home/money-stat-card'
-import { WeekAgendaStrip, type WeekDay } from '@/components/home/week-agenda-strip'
-import { MoneyVisibilityToggle } from '@/components/ui/money-visibility-toggle'
+import { TenantLogo } from '@/components/branding/tenant-logo'
+import {
+  NotificationBell,
+  type AttentionItem,
+  type PendingAppointment,
+} from '@/components/dashboard/notification-bell'
+import { NotificationSound } from '@/components/dashboard/notification-sound'
 import { hasNoSchedule } from '@/lib/admin/derivations'
-import { PioneerBadge } from '@/components/pioneer-badge'
-import { dateTimeInTenantTZ } from '@/lib/booking/slots'
+import { WeekDayStrip } from '@/components/home/week-day-strip'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -30,6 +30,31 @@ function todayISO(tenantTimezone: string): string {
   return fmt.format(new Date())
 }
 
+function isValidISODate(s: string | null | undefined): s is string {
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+}
+
+function shiftDateISO(iso: string, deltaDays: number): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  dt.setUTCDate(dt.getUTCDate() + deltaDays)
+  return dt.toISOString().slice(0, 10)
+}
+
+function buildWeek(anchorISO: string): { weekDateISOs: string[]; sundayISO: string } {
+  const [y, m, d] = anchorISO.split('-').map(Number)
+  const anchor = new Date(Date.UTC(y, m - 1, d))
+  const sunday = new Date(anchor)
+  sunday.setUTCDate(sunday.getUTCDate() - anchor.getUTCDay())
+  const weekDateISOs: string[] = []
+  for (let i = 0; i < 7; i++) {
+    const dt = new Date(sunday)
+    dt.setUTCDate(dt.getUTCDate() + i)
+    weekDateISOs.push(dt.toISOString().slice(0, 10))
+  }
+  return { weekDateISOs, sundayISO: weekDateISOs[0] }
+}
+
 function timeLabel(iso: string, tenantTimezone: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenantTimezone,
@@ -38,33 +63,23 @@ function timeLabel(iso: string, tenantTimezone: string): string {
   }).format(new Date(iso))
 }
 
-export default async function DashboardHome() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function DashboardHome({ searchParams }: PageProps) {
   const tenant = await getCurrentTenantOrNotFound()
   const supabase = await createClient()
 
-  const dateISO = todayISO(tenant.timezone)
+  const sp = await searchParams
+  const rawDate = Array.isArray(sp.date) ? sp.date[0] : sp.date
+  const dateToday = todayISO(tenant.timezone)
+  const dateISO = isValidISODate(rawDate) ? rawDate : dateToday
   const nowISO = new Date().toISOString()
 
-  // Calcula domingo→sábado da semana atual em TZ do tenant. Faz aritmética
-  // de calendário em UTC tratando YYYY-MM-DD como datas puras (sem horário),
-  // o que evita off-by-one em virada de dia.
-  const [yyyy, mm, dd] = dateISO.split('-').map(Number)
-  const todayUTC = new Date(Date.UTC(yyyy, mm - 1, dd))
-  const sundayUTC = new Date(todayUTC)
-  sundayUTC.setUTCDate(sundayUTC.getUTCDate() - todayUTC.getUTCDay())
-  const weekDateISOs: string[] = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sundayUTC)
-    d.setUTCDate(d.getUTCDate() + i)
-    weekDateISOs.push(d.toISOString().slice(0, 10))
-  }
-  const weekStartUTC = dateTimeInTenantTZ(weekDateISOs[0], '00:00', tenant.timezone).toISOString()
-  const weekEndUTC = dateTimeInTenantTZ(weekDateISOs[6], '23:59', tenant.timezone).toISOString()
-
-  const [today, pending, svcRes, profsRes, availRes, weekApptsRes] = await Promise.all([
+  const [today, pending, profsRes, availRes] = await Promise.all([
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
     getPendingConfirmations(tenant.id, nowISO),
-    supabase.from('services').select('id, price_cents').eq('tenant_id', tenant.id),
     supabase
       .from('professionals')
       .select('id, name')
@@ -74,59 +89,12 @@ export default async function DashboardHome() {
       .from('professional_availability')
       .select('professional_id, weekday, start_time, end_time')
       .eq('tenant_id', tenant.id),
-    supabase
-      .from('appointments')
-      .select('start_at, service_id, price_cents_snapshot')
-      .eq('tenant_id', tenant.id)
-      .not('status', 'in', '(CANCELED,NO_SHOW)')
-      .gte('start_at', weekStartUTC)
-      .lte('start_at', weekEndUTC),
   ])
-  const priceById = new Map((svcRes.data ?? []).map((s) => [s.id, s.price_cents]))
 
-  // Agrupa agendamentos da semana por data em TZ do tenant.
-  const weekFmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tenant.timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
-  const weekByDate = new Map<string, { count: number; revenueCents: number }>()
-  for (const date of weekDateISOs) weekByDate.set(date, { count: 0, revenueCents: 0 })
-  for (const a of weekApptsRes.data ?? []) {
-    const dateInTZ = weekFmt.format(new Date(a.start_at))
-    const entry = weekByDate.get(dateInTZ)
-    if (!entry) continue
-    entry.count += 1
-    entry.revenueCents += a.price_cents_snapshot ?? priceById.get(a.service_id) ?? 0
-  }
-  const weekDays: WeekDay[] = weekDateISOs.map((d) => {
-    const entry = weekByDate.get(d) ?? { count: 0, revenueCents: 0 }
-    return { dateISO: d, count: entry.count, revenueCents: entry.revenueCents }
-  })
-
-  // eslint-disable-next-line react-hooks/purity -- server component, precisa saber o "agora"
-  const now = Date.now()
   const active = today.filter((a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW')
-  const next = active
-    .filter((a) => new Date(a.startAt).getTime() >= now - 30 * 60000)
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())[0]
 
-  const todayRevenueCents = active.reduce(
-    (sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0),
-    0,
-  )
-  const completedRevenueCents = active
-    .filter((a) => a.status === 'COMPLETED')
-    .reduce((sum, a) => sum + (a.priceCentsSnapshot ?? priceById.get(a.serviceId) ?? 0), 0)
-  const completed = today.filter((a) => a.status === 'COMPLETED').length
-  const canceled = today.filter((a) => a.status === 'CANCELED' || a.status === 'NO_SHOW').length
-  const pendingActive = active.filter((a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED')
-
-  const availability = (availRes.data ?? []).map((a) => ({
-    professionalId: a.professional_id,
-  }))
-  const attentionItems: AttentionItem[] = (profsRes.data ?? [])
+  const availability = (availRes.data ?? []).map((a) => ({ professionalId: a.professional_id }))
+  const attention: AttentionItem[] = (profsRes.data ?? [])
     .filter((p) => hasNoSchedule(availability, p.id))
     .map((p) => ({
       kind: 'no-schedule',
@@ -134,186 +102,118 @@ export default async function DashboardHome() {
       professionalName: p.name,
     }))
 
-  const headerDate = new Intl.DateTimeFormat('pt-BR', {
+  const pendingForBell: PendingAppointment[] = pending.map((a) => ({
+    id: a.id,
+    startAtISO: a.startAt,
+    serviceName: a.serviceName,
+    customerName: a.customerName,
+    professionalName: a.professionalName,
+  }))
+
+  // Strip semanal: ancora na data selecionada (não em "hoje"), pra que
+  // navegar entre semanas funcione em qualquer ponto. Tratamos YYYY-MM-DD
+  // como data local; meio-dia UTC pra evitar off-by-one no nome do mês.
+  const [hy, hm, hd] = dateISO.split('-').map(Number)
+  const headerDateObj = new Date(Date.UTC(hy, hm - 1, hd, 12))
+  const { weekDateISOs, sundayISO } = buildWeek(dateISO)
+  const prevWeekDateISO = shiftDateISO(sundayISO, -7)
+  const nextWeekDateISO = shiftDateISO(sundayISO, 7)
+  const monthLabel = new Intl.DateTimeFormat('pt-BR', {
     timeZone: tenant.timezone,
-    weekday: 'long',
-    day: 'numeric',
     month: 'long',
-  }).format(new Date())
+  }).format(headerDateObj)
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
+    <main className="mx-auto w-full max-w-2xl px-5 pt-6 pb-10 sm:px-8">
       <RealtimeAppointmentsRefresh tenantId={tenant.id} channelKey="staff-home" />
-      <header className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-[0.75rem] font-medium uppercase tracking-[0.16em] text-fg-subtle">
-              Hoje
-            </p>
-            {tenant.isPioneer ? (
-              <PioneerBadge showSince pioneerSince={tenant.pioneerSince} />
+
+      {/* Header: logo + nome do negócio + sino. Inspirado no mockup mobile —
+          straight to the point, sem cards de resumo. Stats e chart semanal
+          moram em /relatorios. */}
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <TenantLogo logoUrl={tenant.logoUrl} name={tenant.name} size={55} />
+          <div className="min-w-0 leading-none">
+            <h1 className="truncate font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
+              {tenant.name}
+            </h1>
+            {tenant.tagline ? (
+              <p className="mt-0.5 truncate text-[0.75rem] leading-tight text-fg-muted">
+                {tenant.tagline}
+              </p>
             ) : null}
           </div>
-          <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-fg">
-            {headerDate}
-          </h1>
         </div>
-        <MoneyVisibilityToggle className="mt-1" />
+        <div className="flex items-center gap-1">
+          <NotificationSound tenantId={tenant.id} />
+          <NotificationBell
+            pending={pendingForBell}
+            attention={attention}
+            tenantTimezone={tenant.timezone}
+          />
+        </div>
       </header>
 
-      <AgendaPreview
-        appointments={active.sort(
-          (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
-        )}
-        tenantTimezone={tenant.timezone}
+      <WeekDayStrip
+        weekDateISOs={weekDateISOs}
+        todayISO={dateToday}
+        selectedDateISO={dateISO}
+        monthLabel={monthLabel}
+        hrefBase="/admin/dashboard"
+        prevWeekDateISO={prevWeekDateISO}
+        nextWeekDateISO={nextWeekDateISO}
       />
 
-      <PendingConfirmations appointments={pending} tenantTimezone={tenant.timezone} />
-
-      <AttentionSection items={attentionItems} />
-
-      <WeekAgendaStrip days={weekDays} todayISO={dateISO} />
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <StatCard
-          icon={<Calendar className="h-4 w-4" />}
-          label="Agenda hoje"
-          value={String(active.length)}
-          hint={`${completed} ${completed === 1 ? 'concluído' : 'concluídos'}`}
-        />
-        <MoneyStatCard
-          label="Previsto"
-          value={formatCentsToBrl(todayRevenueCents)}
-          hint={`${formatCentsToBrl(completedRevenueCents)} já feito`}
-        />
-        <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label="Pendentes"
-          value={String(pendingActive.length)}
-          hint={pendingActive.length === 0 ? 'tudo em dia' : 'aguardando'}
-        />
-        <StatCard
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          label="Concluídos"
-          value={String(completed)}
-          hint={`${canceled} ${canceled === 1 ? 'cancelado/falta' : 'cancelados/faltas'}`}
+      <div className="mt-6">
+        <AgendaPreview
+          appointments={active.sort(
+            (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+          )}
+          tenantTimezone={tenant.timezone}
+          isToday={dateISO === dateToday}
         />
       </div>
-
-      {next ? (
-        <Card className="mt-4 overflow-hidden">
-          <div className="bg-brand-primary/10 px-5 py-3 text-[0.75rem] font-medium uppercase tracking-[0.14em] text-brand-primary">
-            Próximo atendimento
-          </div>
-          <CardContent className="pt-4 pb-5">
-            <p className="text-[0.8125rem] text-fg-muted">
-              {timeLabel(next.startAt, tenant.timezone)}
-            </p>
-            <p className="mt-1 font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-fg">
-              {next.serviceName ?? 'Serviço'}
-            </p>
-            <p className="mt-0.5 text-[0.875rem] text-fg-muted">
-              com {next.professionalName ?? 'profissional'} · {next.customerName ?? 'cliente'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
     </main>
-  )
-}
-
-function PendingConfirmations({
-  appointments,
-  tenantTimezone,
-}: {
-  appointments: AgendaAppointment[]
-  tenantTimezone: string
-}) {
-  if (appointments.length === 0) return null
-  const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: tenantTimezone,
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  return (
-    <section className="mt-6">
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="flex items-center gap-1.5 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-warning">
-          <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
-          Precisam confirmar ({appointments.length})
-        </h2>
-      </div>
-      <Card className="shadow-xs">
-        <ul className="divide-y divide-border">
-          {appointments.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-fg">{a.serviceName ?? 'Serviço'}</p>
-                <p className="truncate text-[0.8125rem] text-fg-muted">
-                  {dateTimeFmt.format(new Date(a.startAt))} · {a.customerName ?? 'cliente'}
-                  {a.professionalName ? ` · ${a.professionalName}` : ''}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <ConfirmAppointmentInline appointmentId={a.id} />
-                <Link
-                  href={`/admin/dashboard/agenda/${a.id}`}
-                  className="text-[0.75rem] text-fg-muted hover:text-fg"
-                  aria-label="Ver detalhe do agendamento"
-                >
-                  Ver
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Card>
-    </section>
-  )
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  hint: string
-}) {
-  return (
-    <Card className="shadow-xs">
-      <CardContent className="py-4">
-        <div className="mb-2 flex items-center gap-2 text-fg-muted">
-          {icon}
-          <span className="text-[0.75rem] font-medium uppercase tracking-[0.14em]">{label}</span>
-        </div>
-        <p className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-fg">
-          {value}
-        </p>
-        <p className="text-[0.75rem] text-fg-muted">{hint}</p>
-      </CardContent>
-    </Card>
   )
 }
 
 function AgendaPreview({
   appointments,
   tenantTimezone,
+  isToday,
 }: {
   appointments: AgendaAppointment[]
   tenantTimezone: string
+  isToday: boolean
 }) {
-  if (appointments.length === 0) return null
+  const sectionLabel = isToday ? 'Hoje' : 'Neste dia'
+  if (appointments.length === 0) {
+    return (
+      <Card className="shadow-xs">
+        <AgendaEmptyState
+          title={isToday ? 'Nenhum agendamento hoje.' : 'Nenhum agendamento neste dia.'}
+          description={
+            isToday
+              ? 'Aproveite pra atualizar serviços ou bloquear horários.'
+              : 'Selecione outro dia ou crie um novo agendamento.'
+          }
+          action={
+            <Link
+              href="/admin/dashboard/agenda/novo"
+              className="inline-flex items-center justify-center rounded-full bg-brand-primary px-5 py-2.5 text-[0.875rem] font-medium text-brand-primary-fg transition-colors hover:opacity-90"
+            >
+              Novo agendamento
+            </Link>
+          }
+        />
+      </Card>
+    )
+  }
   return (
-    <section className="mt-6">
+    <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
         <h2 className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-fg-subtle">
-          Próximos
+          {sectionLabel}
         </h2>
         <Link href="/admin/dashboard/agenda" className="text-[0.75rem] text-fg-muted hover:text-fg">
           Ver agenda
@@ -321,7 +221,7 @@ function AgendaPreview({
       </div>
       <Card className="shadow-xs">
         <ul className="divide-y divide-border">
-          {appointments.slice(0, 5).map((a) => (
+          {appointments.map((a) => (
             <li key={a.id} className="flex items-center gap-3 px-4 py-3">
               <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-md bg-bg-subtle">
                 <span className="font-display text-[0.9375rem] font-semibold text-fg">

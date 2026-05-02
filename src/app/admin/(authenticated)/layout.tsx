@@ -5,6 +5,7 @@ import { ThemeInjector } from '@/components/branding/theme-injector'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { BottomTabNav } from '@/components/nav/bottom-tab-nav'
 import { GlobalFab } from '@/components/nav/global-fab'
+import { SwipeNavigator } from '@/components/dashboard/swipe-navigator'
 
 export default async function AdminAuthenticatedLayout({
   children,
@@ -32,9 +33,11 @@ export default async function AdminAuthenticatedLayout({
           accentColor: tenant.accentColor,
         }}
       />
-      <div className="min-h-screen bg-bg text-fg pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
-        {children}
-      </div>
+      <SwipeNavigator>
+        <div className="min-h-screen bg-bg text-fg pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+          {children}
+        </div>
+      </SwipeNavigator>
       <GlobalFab />
       <BottomTabNav />
     </>
