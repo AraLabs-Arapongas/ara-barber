@@ -79,7 +79,9 @@ function geocodeAddress(props: Props): string | null {
 export function ContactBlock(props: Props) {
   const wa = props.whatsapp ? digits(props.whatsapp) : null
   const address = displayAddress(props)
-  const mapQuery = geocodeAddress(props) ?? address
+  // `mapQuery` só faz sentido quando `address` existe (ambos derivam dos
+  // mesmos campos). Garantir não-null aqui evita TS reclamar lá embaixo.
+  const mapQuery = address ? (geocodeAddress(props) ?? address) : null
   const hasAny = wa || props.contactPhone || address || props.businessHours.length > 0
   if (!hasAny) return null
 
@@ -111,7 +113,7 @@ export function ContactBlock(props: Props) {
             </a>
           ) : null}
 
-          {address ? (
+          {address && mapQuery ? (
             <>
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`}
