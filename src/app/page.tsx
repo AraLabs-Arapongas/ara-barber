@@ -177,7 +177,7 @@ async function TenantPublicHome() {
           </header>
         ) : null}
 
-        <main className="mx-auto flex w-full max-w-3xl flex-col gap-20 px-4 pb-16 sm:gap-28 sm:px-6 sm:pb-20">
+        <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pb-16 sm:gap-6 sm:px-6 sm:pb-20">
 
           {ordered.map(([blockType]) => {
             switch (blockType) {

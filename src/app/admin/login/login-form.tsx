@@ -12,10 +12,16 @@ const INITIAL: LoginState = {}
 const STORAGE_KEY = 'ara-agenda:admin-login:last-email'
 const LEGACY_STORAGE_KEY = 'ara-barber:salon-login:last-email'
 
+// Em dev, pré-preenche com as credenciais do seed (dono@dev.test / dev1234)
+// pra acelerar o ciclo de login. Em prod fica vazio.
+const IS_DEV = process.env.NODE_ENV === 'development'
+const DEV_EMAIL = IS_DEV ? 'dono@dev.test' : ''
+const DEV_PASSWORD = IS_DEV ? 'dev1234' : ''
+
 export function AdminLoginForm() {
   const [state, formAction, pending] = useActionState(loginStaffAction, INITIAL)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(DEV_EMAIL)
+  const [password, setPassword] = useState(DEV_PASSWORD)
   const [rememberMe, setRememberMe] = useState(true)
 
   // Lê e-mail salvo só no client, depois da hidratação. Evita mismatch

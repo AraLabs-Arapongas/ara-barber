@@ -59,7 +59,14 @@ function formatPhoneBR(raw: string | null): string | null {
   return raw // fallback: deixa como veio
 }
 
-function fullAddress(props: Props): string | null {
+/** Versão exibida ao usuário: rua + complemento + cidade. Sem UF/CEP (ruído). */
+function displayAddress(props: Props): string | null {
+  const parts = [props.addressLine1, props.addressLine2, props.city].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : null
+}
+
+/** Versão completa pra geocoding do mapa (mantém UF/CEP pra precisão). */
+function geocodeAddress(props: Props): string | null {
   const parts = [
     props.addressLine1,
     props.addressLine2,
@@ -71,7 +78,8 @@ function fullAddress(props: Props): string | null {
 
 export function ContactBlock(props: Props) {
   const wa = props.whatsapp ? digits(props.whatsapp) : null
-  const address = fullAddress(props)
+  const address = displayAddress(props)
+  const mapQuery = geocodeAddress(props) ?? address
   const hasAny = wa || props.contactPhone || address || props.businessHours.length > 0
   if (!hasAny) return null
 
@@ -87,43 +95,55 @@ export function ContactBlock(props: Props) {
       </h2>
 
       <div className="mt-10 grid gap-10 sm:grid-cols-2">
-        <div className="space-y-6">
+        <div className="flex flex-col gap-3">
           {wa ? (
             <a
               href={`https://wa.me/${wa}`}
               target="_blank"
               rel="noreferrer noopener"
-              className="group flex items-start gap-4"
+              aria-label={`WhatsApp ${formatPhoneBR(props.whatsapp)}`}
+              className="group flex items-center gap-4"
             >
-              <WhatsAppIcon className="mt-0.5 h-6 w-6 shrink-0" />
-              <div>
-                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
-                  WhatsApp
-                </p>
-                <p className="mt-1 font-display text-[1.125rem] text-fg group-hover:text-brand-primary">
-                  {formatPhoneBR(props.whatsapp)}
-                </p>
-              </div>
+              <WhatsAppIcon className="h-6 w-6 shrink-0" />
+              <p className="font-display text-[1rem] leading-relaxed text-fg group-hover:text-brand-primary">
+                {formatPhoneBR(props.whatsapp)}
+              </p>
             </a>
           ) : null}
 
           {address ? (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="group flex items-start gap-4"
-            >
-              <MapPin className="mt-1 h-5 w-5 text-brand-accent" strokeWidth={1.5} aria-hidden="true" />
-              <div className="min-w-0">
-                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-fg-subtle">
-                  Endereço
-                </p>
-                <p className="mt-1 font-display text-[1rem] leading-relaxed text-fg group-hover:text-brand-primary">
+            <>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={`Como chegar: ${address}`}
+                className="group flex items-start gap-4"
+              >
+                <MapPin
+                  className="mt-1 h-5 w-5 shrink-0 fill-[#EA4335] text-[#EA4335]"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                <p className="min-w-0 font-display text-[1rem] leading-relaxed text-fg group-hover:text-brand-primary">
                   {address}
                 </p>
+              </a>
+
+              {/* Mapa embed (legacy maps.google.com — não precisa de API key).
+                  Em mobile usa aspect 4:3; em sm+ vira flex-1 pra encher o
+                  espaço vertical que a coluna de Horário ocupa ao lado. */}
+              <div className="mt-1 flex-1 overflow-hidden rounded-2xl border border-border/60">
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`Mapa de ${address}`}
+                  className="block aspect-[4/3] h-full min-h-[260px] w-full sm:aspect-auto"
+                  style={{ border: 0 }}
+                />
               </div>
-            </a>
+            </>
           ) : null}
         </div>
 
