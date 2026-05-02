@@ -269,7 +269,7 @@ export async function deactivateUserAction(
   return { ok: true }
 }
 
-export async function sendPasswordResetAction(
+export async function sendMagicLinkAction(
   _prev: UserActionState,
   formData: FormData,
 ): Promise<UserActionState> {
@@ -282,8 +282,10 @@ export async function sendPasswordResetAction(
   if (!parsed.success) return { error: 'Input inválido' }
   const supabase = createSecretClient()
 
-  // Resolve the right reset URL: tenant staff land on their own subdomain;
-  // platform admins (no tenant) land on the apex admin host.
+  // Resolve a URL de callback: staff de tenant volta pro próprio
+  // subdomínio (cookie da sessão fica isolado); platform admin volta
+  // pro apex admin. `next` aponta pro destino pós-login (dashboard
+  // do tenant ou do platform).
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('tenant_id, tenants(subdomain)')
@@ -297,22 +299,30 @@ export async function sendPasswordResetAction(
   const subdomain = Array.isArray(tenants)
     ? (tenants[0]?.subdomain ?? null)
     : (tenants?.subdomain ?? null)
-  const resetUrl = subdomain
-    ? `https://${subdomain}.aralabs.com.br/admin/reset-password`
-    : `https://admin.aralabs.com.br/reset-password`
+  const callbackUrl = subdomain
+    ? `https://${subdomain}.aralabs.com.br/auth/callback?next=/admin/dashboard`
+    : `https://admin.aralabs.com.br/auth/callback?next=/dashboard`
 
-  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: resetUrl,
+  const { error } = await supabase.auth.signInWithOtp({
+    email: parsed.data.email,
+    options: {
+      emailRedirectTo: callbackUrl,
+      shouldCreateUser: false,
+    },
   })
   if (error) return { error: error.message }
   await recordAudit({
     tenantId: null,
     actorUserId: actor.id,
     actorRole: 'PLATFORM_ADMIN',
-    action: 'user.password_reset_sent',
+    action: 'user.magic_link_sent',
     entityType: 'user_profile',
     entityId: parsed.data.profileId,
     changes: { email: parsed.data.email },
   })
   return { ok: true }
 }
+
+// Backward-compat alias: renomeei a action de password→magic link mas
+// alguma UI antiga pode importar pelo nome velho. Remove em ~30d.
+export const sendPasswordResetAction = sendMagicLinkAction

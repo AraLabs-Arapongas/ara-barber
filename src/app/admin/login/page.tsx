@@ -67,7 +67,8 @@ export default async function AdminLoginPage() {
                   <span className="text-brand-accent">.</span>
                 </h2>
                 <p className="mt-2 text-[0.875rem] leading-relaxed text-fg-muted">
-                  Use o e-mail que o responsável pelo negócio cadastrou pra você.
+                  Use o e-mail cadastrado. Mandamos um link pra você entrar — sem senha pra
+                  decorar.
                 </p>
               </div>
 

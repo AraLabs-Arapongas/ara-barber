@@ -1,32 +1,43 @@
 'use client'
 
-import Link from 'next/link'
-import { useActionState, useEffect, useState } from 'react'
-import { Mail, Lock, ArrowRight } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Mail, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert } from '@/components/ui/alert'
-import { loginStaffAction, type LoginState } from './actions'
+import { createClient } from '@/lib/supabase/browser'
 
-const INITIAL: LoginState = {}
 const STORAGE_KEY = 'ara-agenda:admin-login:last-email'
 const LEGACY_STORAGE_KEY = 'ara-barber:salon-login:last-email'
 
-// Em dev, pré-preenche com as credenciais do seed (dono@dev.test / dev1234)
-// pra acelerar o ciclo de login. Em prod fica vazio.
+// Em dev, pré-preenche com email do seed pra acelerar o ciclo (basta
+// clicar enviar e abrir o link no Inbucket em http://127.0.0.1:54324).
 const IS_DEV = process.env.NODE_ENV === 'development'
 const DEV_EMAIL = IS_DEV ? 'dono@dev.test' : ''
-const DEV_PASSWORD = IS_DEV ? 'dev1234' : ''
 
+type Status = 'idle' | 'sending' | 'sent' | 'error'
+
+/**
+ * Login do staff por OTP (magic link). Sem senha — owner recebe link
+ * por email no primeiro acesso e em qualquer login subsequente.
+ *
+ * `shouldCreateUser: false` garante que apenas users já existentes
+ * (criados pelo platform admin via `provisionTenant`) recebem link;
+ * email desconhecido recebe a mesma resposta de "enviado" (privacy:
+ * não vaza se email existe ou não).
+ *
+ * `emailRedirectTo` usa `window.location.origin` pra preservar o
+ * subdomínio do tenant — link enviado de `flor-de-mirra.aralabs.com.br`
+ * volta pra `flor-de-mirra.aralabs.com.br/auth/callback`, não vaza pra
+ * outro tenant. Validação de role + tenant_id acontece no layout
+ * autenticado via `assertStaff`.
+ */
 export function AdminLoginForm() {
-  const [state, formAction, pending] = useActionState(loginStaffAction, INITIAL)
   const [email, setEmail] = useState(DEV_EMAIL)
-  const [password, setPassword] = useState(DEV_PASSWORD)
-  const [rememberMe, setRememberMe] = useState(true)
+  const [status, setStatus] = useState<Status>('idle')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // Lê e-mail salvo só no client, depois da hidratação. Evita mismatch
-  // server vs client (que quebra seleção e gera warning de controlled).
-  // Migra do key legado (pré-rebrand 2026-04-26) pro novo, one-shot.
+  // Lê email salvo no client (one-shot migration de chave legada).
   useEffect(() => {
     let saved = window.localStorage.getItem(STORAGE_KEY)
     if (!saved) {
@@ -43,23 +54,62 @@ export function AdminLoginForm() {
     }
   }, [])
 
-  function handleSubmit() {
-    // onSubmit dispara antes da action; persiste/remove o e-mail aqui.
-    if (typeof window === 'undefined') return
-    if (rememberMe && email) {
-      window.localStorage.setItem(STORAGE_KEY, email.trim())
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY)
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setStatus('sending')
+    setErrorMsg(null)
+
+    const trimmed = email.trim().toLowerCase()
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOtp({
+      email: trimmed,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
+        shouldCreateUser: false,
+      },
+    })
+
+    if (error) {
+      setStatus('error')
+      setErrorMsg(error.message)
+      return
     }
+
+    window.localStorage.setItem(STORAGE_KEY, trimmed)
+    setStatus('sent')
+  }
+
+  if (status === 'sent') {
+    return (
+      <div className="space-y-3 text-[0.875rem] leading-relaxed text-fg-muted">
+        <p>
+          Enviamos um link de acesso pra{' '}
+          <span className="font-medium text-fg">{email}</span>. Abra o email e clique no link
+          pra entrar.
+        </p>
+        <p className="text-[0.8125rem] text-fg-subtle">
+          Não chegou? Olhe na pasta de spam ou{' '}
+          <button
+            type="button"
+            onClick={() => setStatus('idle')}
+            className="text-fg-muted underline-offset-4 hover:text-fg hover:underline"
+          >
+            tente outro email
+          </button>
+          .
+        </p>
+      </div>
+    )
   }
 
   return (
-    <form action={formAction} onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <Input
         aria-label="E-mail"
         name="email"
         type="email"
         required
+        autoFocus
         autoComplete="email"
         placeholder="voce@empresa.com"
         value={email}
@@ -67,33 +117,9 @@ export function AdminLoginForm() {
         leftIcon={<Mail className="h-4 w-4" />}
       />
 
-      <Input
-        aria-label="Senha"
-        name="password"
-        type="password"
-        required
-        minLength={6}
-        autoComplete="current-password"
-        placeholder="••••••••"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        leftIcon={<Lock className="h-4 w-4" />}
-      />
-
-      <label className="mt-1 flex cursor-pointer items-center gap-2 px-1 text-[0.8125rem] text-fg-muted">
-        <input
-          type="checkbox"
-          name="rememberMe"
-          checked={rememberMe}
-          onChange={(e) => setRememberMe(e.target.checked)}
-          className="h-4 w-4 accent-brand-primary"
-        />
-        Lembrar-me neste aparelho
-      </label>
-
-      {state.error ? (
-        <Alert variant="error" title="Não foi possível entrar">
-          {state.error}
+      {status === 'error' && errorMsg ? (
+        <Alert variant="error" title="Não foi possível enviar">
+          {errorMsg}
         </Alert>
       ) : null}
 
@@ -101,23 +127,17 @@ export function AdminLoginForm() {
         type="submit"
         size="lg"
         fullWidth
-        loading={pending}
-        loadingText="Entrando..."
+        loading={status === 'sending'}
+        loadingText="Enviando..."
         className="mt-3"
       >
-        Entrar
+        Receber link de acesso
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Button>
 
-      <div className="flex flex-col items-center gap-1 pt-2 text-[0.75rem] text-fg-subtle">
-        <Link
-          href="/admin/forgot-password"
-          className="text-fg-muted underline-offset-4 hover:text-fg hover:underline"
-        >
-          Esqueci a senha
-        </Link>
-        <span>Sem cadastro? Fale com o dono.</span>
-      </div>
+      <p className="pt-2 text-center text-[0.75rem] text-fg-subtle">
+        Sem cadastro? Fale com o dono.
+      </p>
     </form>
   )
 }

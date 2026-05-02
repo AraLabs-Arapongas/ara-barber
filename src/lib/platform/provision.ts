@@ -131,14 +131,22 @@ export async function provisionTenant(
   })
   if (profileErr) throw new Error(`user_profiles: ${profileErr.message}`)
 
-  // 5. Reset password email
-  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(input.ownerEmail, {
-    redirectTo: `https://${subdomain}.aralabs.com.br/admin/reset-password`,
+  // 5. Magic link de boas-vindas — owner recebe email com link e
+  // entra direto no dashboard. Sem fluxo de senha (eliminado em
+  // 2026-05-02 quando staff virou OTP-only). `shouldCreateUser`:false
+  // por segurança (user já foi criado acima); se vier true por engano,
+  // criaria registro órfão sem profile/tenant.
+  const { error: otpErr } = await supabase.auth.signInWithOtp({
+    email: input.ownerEmail,
+    options: {
+      emailRedirectTo: `https://${subdomain}.aralabs.com.br/auth/callback?next=/admin/dashboard`,
+      shouldCreateUser: false,
+    },
   })
 
   return {
     tenantId: tenant.id,
     ownerUserId: userId,
-    resetEmailSent: !resetErr,
+    resetEmailSent: !otpErr,
   }
 }
