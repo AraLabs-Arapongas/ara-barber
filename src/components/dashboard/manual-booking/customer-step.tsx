@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { formatBrPhone } from '@/lib/format'
 
 type Customer = {
   id: string
@@ -55,20 +56,29 @@ export function CustomerStep({
   }, [search, customers])
 
   const [newName, setNewName] = useState(value?.kind === 'new' ? value.name : '')
-  const [newPhone, setNewPhone] = useState(value?.kind === 'new' ? (value.phone ?? '') : '')
+  const [newPhone, setNewPhone] = useState(
+    value?.kind === 'new' ? formatBrPhone(value.phone ?? '') : '',
+  )
   const [newEmail, setNewEmail] = useState(value?.kind === 'new' ? (value.email ?? '') : '')
 
-  const phoneError: string | null = (() => {
-    const trimmed = newPhone.trim()
-    if (!trimmed) return null
-    const digits = trimmed.replace(/\D/g, '')
-    if (digits.length < 8) return 'Telefone deve ter pelo menos 8 dígitos.'
-    return null
-  })()
+  const phoneDigits = newPhone.replace(/\D/g, '')
+  const phoneError: string | null =
+    phoneDigits === ''
+      ? null
+      : phoneDigits.length < 10
+        ? 'Telefone incompleto. Use (00) 00000-0000.'
+        : null
+
+  const emailError: string | null =
+    newEmail.trim() === ''
+      ? null
+      : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())
+        ? null
+        : 'E-mail inválido.'
 
   const canContinue =
     (mode === 'pick' && value?.kind === 'existing') ||
-    (mode === 'new' && newName.trim().length > 0 && !phoneError)
+    (mode === 'new' && newName.trim().length > 0 && !phoneError && !emailError)
 
   function selectExisting(c: Customer) {
     onChange({
@@ -162,31 +172,32 @@ export function CustomerStep({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onBlur={commitNew}
+            maxLength={120}
           />
-          <div>
-            <Input
-              label="Telefone"
-              type="tel"
-              placeholder="(11) 91234-5678"
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-              onBlur={commitNew}
-              hint="Opcional"
-            />
-            {phoneError ? (
-              <p className="mt-1 text-sm text-fg-danger" role="alert">
-                {phoneError}
-              </p>
-            ) : null}
-          </div>
+          <Input
+            label="Telefone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            placeholder="(00) 00000-0000"
+            value={newPhone}
+            onChange={(e) => setNewPhone(formatBrPhone(e.target.value))}
+            onBlur={commitNew}
+            maxLength={16}
+            hint={phoneError ?? 'Opcional'}
+            error={phoneError ?? undefined}
+          />
           <Input
             label="E-mail"
             type="email"
+            autoComplete="email"
             placeholder="cliente@email.com"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             onBlur={commitNew}
-            hint="Opcional"
+            maxLength={200}
+            hint={emailError ?? 'Opcional'}
+            error={emailError ?? undefined}
           />
         </div>
       )}
