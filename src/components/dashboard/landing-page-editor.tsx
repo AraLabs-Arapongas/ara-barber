@@ -33,6 +33,7 @@ import {
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import {
   clearHeroImage,
   deleteTestimonial,
@@ -569,29 +570,34 @@ function DifferentialsEditor({ initial }: { initial: DifferentialState[] }) {
     <EditorSection title="Diferenciais" hint="Até 6 cards com ícone, título e descrição curta.">
       <div className="space-y-3">
         {items.map((d, i) => (
-          <div key={i} className="space-y-2 rounded-lg border border-border/70 bg-bg-subtle p-3">
-            <div className="flex items-center gap-2">
-              <select
+          <div
+            key={i}
+            className="relative space-y-2 rounded-lg border border-border/70 bg-bg-subtle p-3"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => remove(i)}
+              className="!absolute right-2 top-2"
+              aria-label="Remover diferencial"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <div className="grid gap-2 pr-10 sm:grid-cols-[10rem_1fr]">
+              <SelectSheet
                 value={d.icon || 'sparkles'}
-                onChange={(e) => update(i, 'icon', e.target.value)}
-                className="rounded-md border border-border bg-bg px-2 py-1.5 text-[0.8125rem] text-fg"
-              >
-                {DIFFERENTIAL_ICONS.map((ic) => (
-                  <option key={ic} value={ic}>
-                    {ic}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => update(i, 'icon', v)}
+                options={DIFFERENTIAL_ICONS.map((ic) => ({ value: ic, label: ic }))}
+                sheetTitle="Ícone"
+                className="h-12 w-full rounded-xl border-transparent bg-bg px-3 text-[0.9375rem] hover:bg-bg-subtle/80"
+              />
               <Input
                 value={d.title}
                 onChange={(e) => update(i, 'title', e.target.value)}
                 placeholder="Título"
                 maxLength={60}
-                className="flex-1"
               />
-              <Button type="button" variant="ghost" size="sm" onClick={() => remove(i)}>
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-              </Button>
             </div>
             <textarea
               value={d.text}
@@ -599,7 +605,7 @@ function DifferentialsEditor({ initial }: { initial: DifferentialState[] }) {
               maxLength={220}
               rows={2}
               placeholder="Descrição curta"
-              className="w-full rounded-md border border-border bg-bg px-3 py-2 text-[0.875rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:outline-none"
+              className="w-full rounded-xl border border-transparent bg-bg px-3 py-2.5 text-[0.875rem] text-fg placeholder:text-fg-subtle focus:border-brand-primary focus:outline-none"
             />
           </div>
         ))}
