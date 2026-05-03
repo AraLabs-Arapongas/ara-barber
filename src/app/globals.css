@@ -179,15 +179,35 @@ h3 {
  * `not-allowed` quando aplicado por classe Tailwind). */
 button:not(:disabled),
 a[href],
+nav a,
 [role="button"]:not([aria-disabled='true']),
+[role="link"],
 [role="tab"],
 [role="menuitem"],
+[role="menuitemradio"],
+[role="menuitemcheckbox"],
 [role="option"],
+[role="switch"],
 summary,
-input[type='checkbox'],
-input[type='radio'],
+select:not(:disabled),
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled),
+input[type='submit']:not(:disabled),
+input[type='button']:not(:disabled),
+input[type='reset']:not(:disabled),
+input[type='file']:not(:disabled),
 label[for] {
   cursor: pointer;
+}
+
+/* Elementos desabilitados: cursor de "bloqueado" em vez de pointer. */
+button:disabled,
+a[aria-disabled='true'],
+[role="button"][aria-disabled='true'],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
 }
 
 /* Focus-visible global: ring dourado suave */
