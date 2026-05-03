@@ -223,7 +223,8 @@ secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1s"
 # Number of characters used in the email OTP.
-otp_length = 8
+# 6 dígitos pra alinhar com o input do staff login (código humano-friendly).
+otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
@@ -241,6 +242,13 @@ otp_expiry = 3600
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+
+# Magic link template — usado pelo signInWithOtp do staff login.
+# Em pt-BR, code-only (sem link clicável) pra alinhar com a UI que
+# só pede o código de 6 dígitos. {{ .Token }} é o OTP code.
+[auth.email.template.magic_link]
+subject = "Seu código de acesso ao Aragenda"
+content_path = "./supabase/templates/magic-link.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

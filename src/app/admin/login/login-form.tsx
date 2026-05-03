@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, type FormEvent } from 'react'
-import { Mail, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Mail, ArrowRight, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert } from '@/components/ui/alert'
@@ -10,34 +11,27 @@ import { createClient } from '@/lib/supabase/browser'
 const STORAGE_KEY = 'ara-agenda:admin-login:last-email'
 const LEGACY_STORAGE_KEY = 'ara-barber:salon-login:last-email'
 
-// Em dev, pré-preenche com email do seed pra acelerar o ciclo (basta
-// clicar enviar e abrir o link no Inbucket em http://127.0.0.1:54324).
 const IS_DEV = process.env.NODE_ENV === 'development'
 const DEV_EMAIL = IS_DEV ? 'dono@dev.test' : ''
 
-type Status = 'idle' | 'sending' | 'sent' | 'error'
+type Status = 'idle' | 'sending' | 'sent' | 'verifying' | 'error'
 
 /**
- * Login do staff por OTP (magic link). Sem senha — owner recebe link
- * por email no primeiro acesso e em qualquer login subsequente.
+ * Login do staff por OTP code-only. Email recebe código de 6 dígitos
+ * (Supabase pode incluir link no template padrão, mas a UI só pede o
+ * código — caminho único, sem ambiguidade nem dependência de redirect
+ * URL allowlist do Supabase).
  *
- * `shouldCreateUser: false` garante que apenas users já existentes
- * (criados pelo platform admin via `provisionTenant`) recebem link;
- * email desconhecido recebe a mesma resposta de "enviado" (privacy:
- * não vaza se email existe ou não).
- *
- * `emailRedirectTo` usa `window.location.origin` pra preservar o
- * subdomínio do tenant — link enviado de `flor-de-mirra.aralabs.com.br`
- * volta pra `flor-de-mirra.aralabs.com.br/auth/callback`, não vaza pra
- * outro tenant. Validação de role + tenant_id acontece no layout
- * autenticado via `assertStaff`.
+ * Em dev, email é `dono@dev.test` e o código cai no Inbucket em
+ * http://127.0.0.1:54324.
  */
 export function AdminLoginForm() {
+  const router = useRouter()
   const [email, setEmail] = useState(DEV_EMAIL)
+  const [code, setCode] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // Lê email salvo no client (one-shot migration de chave legada).
   useEffect(() => {
     let saved = window.localStorage.getItem(STORAGE_KEY)
     if (!saved) {
@@ -54,17 +48,19 @@ export function AdminLoginForm() {
     }
   }, [])
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleRequest(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setStatus('sending')
     setErrorMsg(null)
 
     const trimmed = email.trim().toLowerCase()
     const supabase = createClient()
+    // Sem `emailRedirectTo` — não usamos magic link, só código.
+    // shouldCreateUser:false bloqueia signup acidental (user precisa
+    // ter sido provisionado pelo platform admin antes).
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmed,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
         shouldCreateUser: false,
       },
     })
@@ -79,31 +75,96 @@ export function AdminLoginForm() {
     setStatus('sent')
   }
 
-  if (status === 'sent') {
+  async function handleVerify(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const cleanCode = code.replace(/\D/g, '')
+    if (cleanCode.length !== 6) {
+      setErrorMsg('O código tem 6 dígitos.')
+      return
+    }
+    setStatus('verifying')
+    setErrorMsg(null)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: cleanCode,
+      type: 'email',
+    })
+
+    if (error) {
+      setStatus('sent')
+      setErrorMsg('Código inválido ou expirado. Confira no email ou peça outro.')
+      return
+    }
+
+    // Sessão criada — força reload pra layout autenticado validar staff role.
+    router.replace('/admin/dashboard')
+    router.refresh()
+  }
+
+  if (status === 'sent' || status === 'verifying') {
     return (
-      <div className="space-y-3 text-[0.875rem] leading-relaxed text-fg-muted">
-        <p>
-          Enviamos um link de acesso pra{' '}
-          <span className="font-medium text-fg">{email}</span>. Abra o email e clique no link
-          pra entrar.
+      <div className="space-y-4">
+        <p className="text-[0.875rem] leading-relaxed text-fg-muted">
+          Enviamos um <span className="font-medium text-fg">código de 6 dígitos</span> pra{' '}
+          <span className="font-medium text-fg">{email}</span>. Cole abaixo pra entrar:
         </p>
-        <p className="text-[0.8125rem] text-fg-subtle">
-          Não chegou? Olhe na pasta de spam ou{' '}
+
+        <form onSubmit={handleVerify} className="space-y-3">
+          <Input
+            aria-label="Código de 6 dígitos"
+            name="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            maxLength={7} // permite "123 456" com espaço
+            placeholder="000000"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            leftIcon={<KeyRound className="h-4 w-4" />}
+            className="text-center text-[1.25rem] font-mono tracking-[0.4em]"
+          />
+
+          {errorMsg ? (
+            <Alert variant="error" title="Erro">
+              {errorMsg}
+            </Alert>
+          ) : null}
+
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            loading={status === 'verifying'}
+            loadingText="Entrando..."
+          >
+            Entrar com código
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </form>
+
+        <p className="text-center text-[0.75rem] text-fg-subtle">
+          Não chegou?{' '}
           <button
             type="button"
-            onClick={() => setStatus('idle')}
+            onClick={() => {
+              setStatus('idle')
+              setCode('')
+              setErrorMsg(null)
+            }}
             className="text-fg-muted underline-offset-4 hover:text-fg hover:underline"
           >
-            tente outro email
+            Pedir outro
           </button>
-          .
         </p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleRequest} className="space-y-3">
       <Input
         aria-label="E-mail"
         name="email"
@@ -131,7 +192,7 @@ export function AdminLoginForm() {
         loadingText="Enviando..."
         className="mt-3"
       >
-        Receber link de acesso
+        Receber código por email
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Button>
 

@@ -131,15 +131,13 @@ export async function provisionTenant(
   })
   if (profileErr) throw new Error(`user_profiles: ${profileErr.message}`)
 
-  // 5. Magic link de boas-vindas — owner recebe email com link e
-  // entra direto no dashboard. Sem fluxo de senha (eliminado em
-  // 2026-05-02 quando staff virou OTP-only). `shouldCreateUser`:false
-  // por segurança (user já foi criado acima); se vier true por engano,
-  // criaria registro órfão sem profile/tenant.
+  // 5. OTP de boas-vindas — owner recebe código de 6 dígitos por
+  // email. Cola no /admin/login e entra. Sem magic link (caminho
+  // único, sem dependência de redirect URL allowlist do Supabase).
+  // `shouldCreateUser`:false por segurança (user já foi criado acima).
   const { error: otpErr } = await supabase.auth.signInWithOtp({
     email: input.ownerEmail,
     options: {
-      emailRedirectTo: `https://${subdomain}.aralabs.com.br/auth/callback?next=/admin/dashboard`,
       shouldCreateUser: false,
     },
   })
