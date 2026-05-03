@@ -13,6 +13,7 @@ export type BookingRules = {
   slot_interval_minutes: number
   cancellation_window_minutes: number
   customer_can_cancel: boolean
+  auto_confirm_bookings: boolean
   booking_window_days: number
   combo_buffer_minutes: number
 }
@@ -168,6 +169,27 @@ export function BookingRulesForm({ initial }: Props) {
               </span>
               <span className="mt-0.5 block text-[0.8125rem] text-fg-muted">
                 Se desligado, só o staff cancela pelo painel.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={data.auto_confirm_bookings}
+              onChange={(e) =>
+                setData((d) => ({ ...d, auto_confirm_bookings: e.target.checked }))
+              }
+              className="mt-1 h-4 w-4 cursor-pointer accent-brand-primary"
+            />
+            <span className="flex-1">
+              <span className="block text-[0.9375rem] font-medium text-fg">
+                Confirmar reservas automaticamente
+              </span>
+              <span className="mt-0.5 block text-[0.8125rem] text-fg-muted">
+                Quando ligado, reservas do cliente já entram como confirmadas, sem
+                precisar você aprovar no painel. Bom pra alto volume; mantenha
+                desligado se quiser revisar cada uma.
               </span>
             </span>
           </label>

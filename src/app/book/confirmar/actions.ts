@@ -6,6 +6,7 @@ import { createAppointment } from '@/lib/appointments/server-actions'
 import { recordAudit } from '@/lib/audit/log'
 import { ensureCustomerForTenant, updateMyCustomerProfile } from '@/lib/customers/ensure'
 import { createClient } from '@/lib/supabase/server'
+import { createSecretClient } from '@/lib/supabase/secret'
 
 const SegmentInput = z.object({
   serviceId: z.string().uuid(),
@@ -104,6 +105,26 @@ export async function confirmBookingAction(
         ? 'Algum horário ficou indisponível. Volte e escolha outros.'
         : 'Falha ao criar combo.',
     }
+  }
+
+  // Auto-confirm: RPC sempre cria SCHEDULED. Se tenant ligou auto-confirm,
+  // promove grupo + segments pra CONFIRMED logo após. Update via secret
+  // client porque cliente não tem RLS pra mudar status (só staff tem).
+  const secret = createSecretClient()
+  const { data: tenantCfg } = await secret
+    .from('tenants')
+    .select('auto_confirm_bookings')
+    .eq('id', input.tenantId)
+    .maybeSingle()
+  if (tenantCfg?.auto_confirm_bookings) {
+    await Promise.all([
+      secret.from('appointment_groups').update({ status: 'CONFIRMED' }).eq('id', groupId),
+      secret
+        .from('appointments')
+        .update({ status: 'CONFIRMED' })
+        .eq('group_id', groupId)
+        .eq('tenant_id', input.tenantId),
+    ])
   }
 
   const {

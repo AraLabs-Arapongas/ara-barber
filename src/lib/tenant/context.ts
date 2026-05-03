@@ -45,6 +45,7 @@ export type TenantContext = {
   minAdvanceMinutes: number
   slotIntervalMinutes: number
   customerCanCancel: boolean
+  autoConfirmBookings: boolean
   bookingWindowDays: number
   comboBufferMinutes: number
   contactPhone: string | null
@@ -101,7 +102,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_minutes, min_advance_minutes, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_number, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials, is_pioneer, pioneer_since',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_minutes, min_advance_minutes, slot_interval_minutes, customer_can_cancel, auto_confirm_bookings, booking_window_days, contact_phone, whatsapp, address_line1, address_number, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials, is_pioneer, pioneer_since',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -129,6 +130,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     minAdvanceMinutes: data.min_advance_minutes ?? 0,
     slotIntervalMinutes: data.slot_interval_minutes ?? 15,
     customerCanCancel: data.customer_can_cancel ?? true,
+    autoConfirmBookings: data.auto_confirm_bookings ?? false,
     bookingWindowDays: data.booking_window_days ?? 14,
     comboBufferMinutes: data.combo_buffer_minutes ?? 10,
     contactPhone: data.contact_phone,

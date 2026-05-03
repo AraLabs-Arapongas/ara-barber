@@ -816,6 +816,7 @@ export type Database = {
           current_plan_id: string | null
           custom_domain: string | null
           customer_can_cancel: boolean
+          auto_confirm_bookings: boolean
           differentials: Json | null
           email: string | null
           facebook_url: string | null
@@ -877,6 +878,7 @@ export type Database = {
           current_plan_id?: string | null
           custom_domain?: string | null
           customer_can_cancel?: boolean
+          auto_confirm_bookings?: boolean
           differentials?: Json | null
           email?: string | null
           facebook_url?: string | null
@@ -938,6 +940,7 @@ export type Database = {
           current_plan_id?: string | null
           custom_domain?: string | null
           customer_can_cancel?: boolean
+          auto_confirm_bookings?: boolean
           differentials?: Json | null
           email?: string | null
           facebook_url?: string | null

@@ -28,6 +28,7 @@ const Input = z.object({
     .min(0, 'Janela mínima é 0h.')
     .max(168, 'Janela máxima é 168h (7 dias).'),
   customer_can_cancel: z.boolean(),
+  auto_confirm_bookings: z.boolean(),
   booking_window_days: z
     .number()
     .int('Janela de agendamento deve ser um inteiro.')

@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createSecretClient } from '@/lib/supabase/secret'
 import { recordAudit } from '@/lib/audit/log'
 import type { AgendaAppointment, AppointmentStatus } from '@/lib/appointments/queries'
 
@@ -48,6 +49,17 @@ export async function createAppointment(
   if (checkErr) return { ok: false, error: 'Falha ao checar disponibilidade.' }
   if (!noConflict) return { ok: false, error: 'Horário não disponível. Escolha outro.' }
 
+  // Auto-confirm: tenant pode escolher pular o estado SCHEDULED.
+  // Lê via secret client porque cliente anônimo não tem RLS pra ver
+  // colunas operacionais do tenant.
+  const tenantConfig = createSecretClient()
+  const { data: tenantCfg } = await tenantConfig
+    .from('tenants')
+    .select('auto_confirm_bookings')
+    .eq('id', input.tenantId)
+    .maybeSingle()
+  const initialStatus = tenantCfg?.auto_confirm_bookings ? 'CONFIRMED' : 'SCHEDULED'
+
   const { data, error } = await supabase
     .from('appointments')
     .insert({
@@ -57,6 +69,7 @@ export async function createAppointment(
       service_id: input.serviceId,
       start_at: input.startAt,
       end_at: input.endAt,
+      status: initialStatus,
       customer_name_snapshot: input.customerNameSnapshot,
       price_cents_snapshot: input.priceCentsSnapshot,
       notes: input.notes ?? null,
