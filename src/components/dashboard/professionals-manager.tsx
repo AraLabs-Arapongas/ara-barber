@@ -25,6 +25,7 @@ export type ProfessionalListItem = {
   name: string
   displayName: string | null
   phone: string | null
+  photoUrl: string | null
   isActive: boolean
   worksToday: { startTime: string; endTime: string } | null
   hasNoSchedule: boolean
@@ -167,7 +168,11 @@ export function ProfessionalsManager({ professionals, usage }: Props) {
                   <Link href={`/admin/dashboard/profissionais/${p.id}`} className="block">
                     <Card className="shadow-xs transition-colors hover:bg-bg-subtle">
                       <div className="flex items-start gap-3 px-4 py-3 sm:px-5">
-                        <InitialsAvatar name={p.displayName || p.name} size={40} />
+                        <InitialsAvatar
+                          name={p.displayName || p.name}
+                          photoUrl={p.photoUrl}
+                          size={40}
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className="truncate font-medium text-fg">

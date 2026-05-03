@@ -2,6 +2,8 @@ import { cn } from '@/lib/utils'
 
 type Props = {
   name: string
+  /** Quando setado, mostra a foto em vez das iniciais. */
+  photoUrl?: string | null
   size?: number
   className?: string
 }
@@ -13,8 +15,27 @@ function deriveInitials(name: string): string {
   return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
 }
 
-export function InitialsAvatar({ name, size = 40, className }: Props) {
+/**
+ * Avatar circular: mostra `photoUrl` se houver, senão iniciais em
+ * pílula da cor primária. `<img>` cru em vez de next/image porque o
+ * componente é usado em listas curtas (5-15 items) e não compensa
+ * o overhead do loader pra esse volume.
+ */
+export function InitialsAvatar({ name, photoUrl, size = 40, className }: Props) {
   const initials = deriveInitials(name)
+
+  if (photoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={photoUrl}
+        alt={name}
+        className={cn('shrink-0 rounded-full object-cover', className)}
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+
   return (
     <div
       className={cn(

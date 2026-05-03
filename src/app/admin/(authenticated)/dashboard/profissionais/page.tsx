@@ -29,7 +29,7 @@ export default async function ProfessionalsPage() {
   const [profsRes, availRes, svcRes, profServicesRes, todayAppts, usage] = await Promise.all([
     supabase
       .from('professionals')
-      .select('id, name, display_name, phone, is_active, user_id')
+      .select('id, name, display_name, phone, photo_url, is_active, user_id')
       .eq('tenant_id', tenant.id)
       .order('created_at', { ascending: true }),
     supabase
@@ -68,6 +68,7 @@ export default async function ProfessionalsPage() {
       name: p.name,
       displayName: p.display_name,
       phone: p.phone,
+      photoUrl: p.photo_url,
       isActive: p.is_active,
       worksToday: worksToday(availability, p.id, weekday),
       hasNoSchedule: hasNoSchedule(availability, p.id),
