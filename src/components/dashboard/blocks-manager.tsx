@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useConfirm } from '@/components/ui/confirm/provider'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import { createBlock, deleteBlock } from '@/app/admin/(authenticated)/actions/blocks'
 
 export type BlockRow = {
@@ -197,25 +198,17 @@ export function BlocksManager({
 
               {scope === 'PROFESSIONAL' ? (
                 <div>
-                  <label
-                    htmlFor="block-professional"
-                    className="mb-1.5 block text-[0.8125rem] font-medium text-fg"
-                  >
+                  <span className="mb-1.5 block text-[0.8125rem] font-medium text-fg">
                     Profissional
-                  </label>
-                  <select
-                    id="block-professional"
+                  </span>
+                  <SelectSheet
                     value={professionalId}
-                    onChange={(e) => setProfessionalId(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-                  >
-                    <option value="">Selecione…</option>
-                    {professionals.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setProfessionalId(String(v))}
+                    options={professionals.map((p) => ({ value: p.id, label: p.name }))}
+                    placeholder="Selecione…"
+                    sheetTitle="Profissional"
+                    className="w-full"
+                  />
                 </div>
               ) : null}
 
