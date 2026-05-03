@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, type FormEvent } from 'react'
+import { useMemo, useState, useTransition, type FormEvent } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,16 +22,117 @@ type Props = {
   initial: BookingRules
 }
 
+type NumericKey =
+  | 'min_advance_minutes'
+  | 'cancellation_window_minutes'
+  | 'booking_window_days'
+  | 'combo_buffer_minutes'
+
+type NumericFieldConfig = {
+  key: NumericKey
+  id: string
+  label: string
+  hint: string
+  min: number
+  max: number
+}
+
+// Min/max alinhados com o Zod do action `updateBookingRules`. Mantém a UX
+// permissiva (campo aceita vazio durante edição) e a validação acontece
+// só no blur/submit pra permitir, ex: apagar tudo e digitar "7" no booking
+// window — antes o min=1 reclampava pra 1 antes do user terminar de digitar.
+const NUMERIC_FIELDS: NumericFieldConfig[] = [
+  {
+    key: 'min_advance_minutes',
+    id: 'min-advance',
+    label: 'Antecedência mínima para agendar (minutos)',
+    hint: 'Cliente só agenda a partir desse tempo a contar de agora. 60 = 1h, 1440 = 1 dia.',
+    min: 0,
+    max: 10080,
+  },
+  {
+    key: 'combo_buffer_minutes',
+    id: 'combo-buffer',
+    label: 'Buffer entre serviços do combo (minutos)',
+    hint: 'Tempo extra entre dois serviços com profissionais diferentes (transição). Mesmo profissional não usa buffer.',
+    min: 0,
+    max: 60,
+  },
+  {
+    key: 'booking_window_days',
+    id: 'booking-window',
+    label: 'Janela máxima de agendamento (dias)',
+    hint: 'Quantos dias à frente o cliente pode agendar.',
+    min: 1,
+    max: 365,
+  },
+  {
+    key: 'cancellation_window_minutes',
+    id: 'cancel-window',
+    label: 'Janela mínima para cancelamento (minutos)',
+    hint: 'Quantos minutos antes do horário o cliente ainda pode cancelar. 60 = 1h, 1440 = 1 dia.',
+    min: 0,
+    max: 10080,
+  },
+]
+
 export function BookingRulesForm({ initial }: Props) {
-  const [data, setData] = useState<BookingRules>(initial)
+  // Drafts string permitem campo vazio durante edição. Validação só
+  // acontece no submit / lookup de erro, sem reclampar enquanto digita.
+  const [drafts, setDrafts] = useState<Record<NumericKey, string>>(() => ({
+    min_advance_minutes: String(initial.min_advance_minutes),
+    cancellation_window_minutes: String(initial.cancellation_window_minutes),
+    booking_window_days: String(initial.booking_window_days),
+    combo_buffer_minutes: String(initial.combo_buffer_minutes),
+  }))
+  const [slotInterval, setSlotInterval] = useState<number>(initial.slot_interval_minutes)
+  const [customerCanCancel, setCustomerCanCancel] = useState(initial.customer_can_cancel)
+  const [autoConfirmBookings, setAutoConfirmBookings] = useState(initial.auto_confirm_bookings)
+
   const [pending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+
+  // Compila erros por campo a cada render. Evita estado redundante.
+  const errors = useMemo(() => {
+    const out: Partial<Record<NumericKey, string>> = {}
+    for (const f of NUMERIC_FIELDS) {
+      const raw = drafts[f.key].trim()
+      if (raw === '') {
+        out[f.key] = 'Obrigatório.'
+        continue
+      }
+      if (!/^\d+$/.test(raw)) {
+        out[f.key] = 'Apenas números inteiros.'
+        continue
+      }
+      const n = parseInt(raw, 10)
+      if (n < f.min || n > f.max) {
+        out[f.key] = `Entre ${f.min} e ${f.max}.`
+      }
+    }
+    return out
+  }, [drafts])
+
+  const hasErrors = Object.keys(errors).length > 0
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setMsg(null)
+    if (hasErrors) {
+      setMsg({ kind: 'error', text: 'Corrija os campos destacados antes de salvar.' })
+      return
+    }
+    const payload: BookingRules = {
+      min_advance_minutes: parseInt(drafts.min_advance_minutes, 10),
+      slot_interval_minutes: slotInterval,
+      cancellation_window_minutes: parseInt(drafts.cancellation_window_minutes, 10),
+      customer_can_cancel: customerCanCancel,
+      auto_confirm_bookings: autoConfirmBookings,
+      booking_window_days: parseInt(drafts.booking_window_days, 10),
+      combo_buffer_minutes: parseInt(drafts.combo_buffer_minutes, 10),
+    }
     startTransition(async () => {
-      const result = await updateBookingRules(data)
+      const result = await updateBookingRules(payload)
       if (!result.ok) {
         setMsg({ kind: 'error', text: result.error })
         return
@@ -44,123 +145,28 @@ export function BookingRulesForm({ initial }: Props) {
     <form onSubmit={handleSubmit}>
       <Card className="shadow-xs">
         <CardContent className="space-y-5 py-5">
-          <Field
-            id="min-advance"
-            label="Antecedência mínima para agendar (horas)"
-            hint="O cliente só consegue agendar a partir desse tempo a contar de agora."
-          >
-            <input
-              id="min-advance"
-              type="number"
-              min={0}
-              max={168}
-              step={1}
-              value={data.min_advance_minutes}
-              onChange={(e) =>
-                setData((d) => ({
-                  ...d,
-                  min_advance_minutes: clampInt(e.target.value, 0, 168),
-                }))
-              }
-              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+          <NumericField
+            config={NUMERIC_FIELDS[0]}
+            value={drafts[NUMERIC_FIELDS[0].key]}
+            onChange={(v) => setDrafts((d) => ({ ...d, [NUMERIC_FIELDS[0].key]: v }))}
+            error={errors[NUMERIC_FIELDS[0].key]}
+          />
+          <SlotIntervalField value={slotInterval} onChange={setSlotInterval} />
+          {NUMERIC_FIELDS.slice(1).map((f) => (
+            <NumericField
+              key={f.key}
+              config={f}
+              value={drafts[f.key]}
+              onChange={(v) => setDrafts((d) => ({ ...d, [f.key]: v }))}
+              error={errors[f.key]}
             />
-          </Field>
-
-          <Field
-            id="slot-interval"
-            label="Intervalo entre horários (minutos)"
-            hint="Granularidade dos horários disponíveis na agenda pública."
-          >
-            <select
-              id="slot-interval"
-              value={data.slot_interval_minutes}
-              onChange={(e) =>
-                setData((d) => ({
-                  ...d,
-                  slot_interval_minutes: parseInt(e.target.value, 10),
-                }))
-              }
-              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-            >
-              {SLOT_INTERVALS.map((v) => (
-                <option key={v} value={v}>
-                  {v} min
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field
-            id="combo-buffer"
-            label="Buffer entre serviços do combo (minutos)"
-            hint="Tempo extra entre dois serviços com profissionais diferentes (transição). Mesmo profissional não usa buffer."
-          >
-            <input
-              id="combo-buffer"
-              type="number"
-              min={0}
-              max={60}
-              step={1}
-              value={data.combo_buffer_minutes}
-              onChange={(e) =>
-                setData((d) => ({
-                  ...d,
-                  combo_buffer_minutes: clampInt(e.target.value, 0, 60),
-                }))
-              }
-              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-            />
-          </Field>
-
-          <Field
-            id="booking-window"
-            label="Janela máxima de agendamento (dias)"
-            hint="Quantos dias à frente o cliente pode agendar."
-          >
-            <input
-              id="booking-window"
-              type="number"
-              min={1}
-              max={365}
-              step={1}
-              value={data.booking_window_days}
-              onChange={(e) =>
-                setData((d) => ({
-                  ...d,
-                  booking_window_days: clampInt(e.target.value, 1, 365),
-                }))
-              }
-              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-            />
-          </Field>
-
-          <Field
-            id="cancel-window"
-            label="Janela mínima para cancelamento (horas)"
-            hint="Quantas horas antes do horário o cliente ainda pode cancelar."
-          >
-            <input
-              id="cancel-window"
-              type="number"
-              min={0}
-              max={168}
-              step={1}
-              value={data.cancellation_window_minutes}
-              onChange={(e) =>
-                setData((d) => ({
-                  ...d,
-                  cancellation_window_minutes: clampInt(e.target.value, 0, 168),
-                }))
-              }
-              className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
-            />
-          </Field>
+          ))}
 
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
-              checked={data.customer_can_cancel}
-              onChange={(e) => setData((d) => ({ ...d, customer_can_cancel: e.target.checked }))}
+              checked={customerCanCancel}
+              onChange={(e) => setCustomerCanCancel(e.target.checked)}
               className="mt-1 h-4 w-4 cursor-pointer accent-brand-primary"
             />
             <span className="flex-1">
@@ -176,10 +182,8 @@ export function BookingRulesForm({ initial }: Props) {
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
-              checked={data.auto_confirm_bookings}
-              onChange={(e) =>
-                setData((d) => ({ ...d, auto_confirm_bookings: e.target.checked }))
-              }
+              checked={autoConfirmBookings}
+              onChange={(e) => setAutoConfirmBookings(e.target.checked)}
               className="mt-1 h-4 w-4 cursor-pointer accent-brand-primary"
             />
             <span className="flex-1">
@@ -199,7 +203,7 @@ export function BookingRulesForm({ initial }: Props) {
           ) : null}
 
           <div>
-            <Button type="submit" loading={pending}>
+            <Button type="submit" loading={pending} disabled={hasErrors}>
               Salvar regras
             </Button>
           </div>
@@ -209,30 +213,80 @@ export function BookingRulesForm({ initial }: Props) {
   )
 }
 
-function Field({
-  id,
-  label,
-  hint,
-  children,
+function NumericField({
+  config,
+  value,
+  onChange,
+  error,
 }: {
-  id: string
-  label: string
-  hint?: string
-  children: React.ReactNode
+  config: NumericFieldConfig
+  value: string
+  onChange: (v: string) => void
+  error?: string
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-[0.8125rem] font-medium text-fg">
-        {label}
+      <label
+        htmlFor={config.id}
+        className="mb-1 block text-[0.8125rem] font-medium text-fg"
+      >
+        {config.label}
       </label>
-      {hint ? <p className="mb-2 text-[0.8125rem] text-fg-muted">{hint}</p> : null}
-      {children}
+      <p className="mb-2 text-[0.8125rem] text-fg-muted">{config.hint}</p>
+      <input
+        id={config.id}
+        type="text"
+        inputMode="numeric"
+        pattern="\d*"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ''))}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${config.id}-error` : undefined}
+        className={`h-10 w-32 rounded-lg border bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:bg-surface-raised focus:outline-none ${
+          error
+            ? 'border-error focus:border-error'
+            : 'border-transparent focus:border-brand-primary'
+        }`}
+      />
+      {error ? (
+        <p id={`${config.id}-error`} className="mt-1 text-[0.75rem] text-error">
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
 
-function clampInt(value: string, min: number, max: number): number {
-  const n = parseInt(value || '0', 10)
-  if (!Number.isFinite(n)) return min
-  return Math.max(min, Math.min(max, n))
+function SlotIntervalField({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="mb-5">
+      <label
+        htmlFor="slot-interval"
+        className="mb-1 block text-[0.8125rem] font-medium text-fg"
+      >
+        Intervalo entre horários (minutos)
+      </label>
+      <p className="mb-2 text-[0.8125rem] text-fg-muted">
+        Granularidade dos horários disponíveis na agenda pública.
+      </p>
+      <select
+        id="slot-interval"
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
+      >
+        {SLOT_INTERVALS.map((v) => (
+          <option key={v} value={v}>
+            {v} min
+          </option>
+        ))}
+      </select>
+    </div>
+  )
 }

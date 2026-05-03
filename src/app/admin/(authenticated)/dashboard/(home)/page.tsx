@@ -237,26 +237,39 @@ function AgendaPreview({
       </div>
       <Card className="shadow-xs">
         <ul className="divide-y divide-border">
-          {appointments.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-md bg-bg-subtle">
-                <span className="font-display text-[0.9375rem] font-semibold text-fg">
-                  {timeLabel(a.startAt, tenantTimezone)}
-                </span>
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-fg">{a.serviceName ?? 'Serviço'}</p>
-                <p className="truncate text-[0.8125rem] text-fg-muted">
-                  {a.professionalName ?? 'profissional'} · {a.customerName ?? 'cliente'}
-                </p>
-              </div>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[a.status]}`}
-              >
-                {STATUS_LABELS[a.status]}
-              </span>
-            </li>
-          ))}
+          {appointments.map((a) => {
+            const durationMin = Math.round(
+              (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60000,
+            )
+            return (
+              <li key={a.id}>
+                <Link
+                  href={`/admin/dashboard/agenda/${a.id}`}
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-bg-subtle"
+                >
+                  <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bg-subtle">
+                    <span className="font-display text-[0.9375rem] font-semibold leading-none text-fg">
+                      {timeLabel(a.startAt, tenantTimezone)}
+                    </span>
+                    <span className="text-[0.6875rem] leading-none text-fg-muted">
+                      {durationMin} min
+                    </span>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-fg">{a.serviceName ?? 'Serviço'}</p>
+                    <p className="truncate text-[0.8125rem] text-fg-muted">
+                      {a.professionalName ?? 'profissional'} · {a.customerName ?? 'cliente'}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium uppercase tracking-wide ${STATUS_TONE[a.status]}`}
+                  >
+                    {STATUS_LABELS[a.status]}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       </Card>
     </section>
