@@ -15,13 +15,20 @@ export async function getOnboardingState(tenantId: string): Promise<OnboardingSt
   const supabase = createSecretClient()
   const { data, error } = await supabase
     .from('tenants')
-    .select('onboarding_completed_at, onboarding_step')
+    .select(
+      'onboarding_completed_at, onboarding_branding_completed_at, onboarding_communication_completed_at, onboarding_step',
+    )
     .eq('id', tenantId)
     .maybeSingle()
   if (error) throw error
   if (!data) {
-    // Tenant não existe — defensivo: retorna como completed pra não loop.
-    return { completed: true, currentStep: null, completedSteps: 4 }
+    // Tenant não existe — defensivo: retorna como all completed pra não loop.
+    return resolveOnboardingState({
+      onboarding_completed_at: new Date().toISOString(),
+      onboarding_branding_completed_at: new Date().toISOString(),
+      onboarding_communication_completed_at: new Date().toISOString(),
+      onboarding_step: null,
+    })
   }
   return resolveOnboardingState(data)
 }

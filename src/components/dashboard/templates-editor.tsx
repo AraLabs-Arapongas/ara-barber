@@ -28,6 +28,14 @@ const EVENT_LABELS: Record<UpsertTemplateInput['event'], string> = {
   CUSTOM: 'Mensagem personalizada',
 }
 
+const WHATSAPP_USAGE_HINT: Partial<Record<UpsertTemplateInput['event'], string>> = {
+  BOOKING_CONFIRMATION: 'Botão "WhatsApp: confirmação" no detalhe do agendamento.',
+  BOOKING_REMINDER: 'Botão "WhatsApp: lembrete" no detalhe (envio manual antes do horário).',
+  BOOKING_CANCELLATION: 'Botão "WhatsApp: cancelamento" quando você cancela pelo painel.',
+  SHARE_LINK: 'Botão "Divulgar" na tela "Link de agendamento".',
+  CUSTOM: 'Disponível para uso futuro — sem botão dedicado ainda.',
+}
+
 /**
  * Placeholders aceitos pelos templates. `applyTemplate` (ver
  * src/lib/contact/whatsapp.ts) substitui `{chave}` pelos valores
@@ -91,11 +99,18 @@ function TemplateCard({
     })
   }
 
+  const usageHint = channel === 'WHATSAPP' ? WHATSAPP_USAGE_HINT[initial.event] : null
+
   return (
     <Card className="shadow-xs">
       <CardContent className="space-y-3 py-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-medium text-fg">{EVENT_LABELS[initial.event] ?? initial.event}</h3>
+          <div className="min-w-0">
+            <h3 className="font-medium text-fg">{EVENT_LABELS[initial.event] ?? initial.event}</h3>
+            {usageHint ? (
+              <p className="mt-0.5 text-[0.75rem] text-fg-subtle">{usageHint}</p>
+            ) : null}
+          </div>
           <label className="flex shrink-0 items-center gap-2 text-[0.8125rem] text-fg-muted">
             <input
               type="checkbox"

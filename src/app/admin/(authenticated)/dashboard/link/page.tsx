@@ -4,11 +4,26 @@ import { ChevronLeft } from 'lucide-react'
 import { LinkSharePanel } from '@/components/dashboard/link-share-panel'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { getTenantBookingUrl, getTenantPublicUrl } from '@/lib/tenant/public-url'
+import { createSecretClient } from '@/lib/supabase/secret'
+
+const SHARE_LINK_DEFAULT = 'Oi! Agora você pode agendar comigo direto por aqui: {link}'
 
 export default async function LinkPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const publicUrl = await getTenantBookingUrl(tenant)
   const publicHomeUrl = await getTenantPublicUrl(tenant)
+
+  // Carrega template SHARE_LINK do tenant (fallback pro default).
+  const supabase = createSecretClient()
+  const { data: shareTpl } = await supabase
+    .from('tenant_message_templates')
+    .select('body, enabled')
+    .eq('tenant_id', tenant.id)
+    .eq('channel', 'WHATSAPP')
+    .eq('event', 'SHARE_LINK')
+    .maybeSingle()
+  const shareTemplate =
+    shareTpl?.enabled && shareTpl.body ? shareTpl.body : SHARE_LINK_DEFAULT
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -36,6 +51,7 @@ export default async function LinkPage() {
         publicUrl={publicUrl}
         publicHomeUrl={publicHomeUrl}
         tenantSlug={tenant.slug}
+        shareTemplate={shareTemplate}
       />
     </main>
   )

@@ -72,16 +72,22 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
     .maybeSingle()
   const cancellationWindowMinutes = tenantRow?.cancellation_window_minutes ?? 2
 
-  // Template WhatsApp pra "Enviar pelo WhatsApp" — só renderizamos o botão
-  // quando o template está habilitado (staff pode ter desativado em
-  // /admin/dashboard/comunicacao/whatsapp).
-  const { data: whatsappTemplate } = await supabase
+  // Templates WhatsApp pra os botões de envio manual.
+  // Buscamos os 3 eventos relevantes ao detalhe do agendamento:
+  // confirmação, lembrete, cancelamento. Botão só aparece se template
+  // está habilitado e tem body (staff pode ter desativado).
+  const { data: whatsappTemplates } = await supabase
     .from('tenant_message_templates')
-    .select('body, enabled')
+    .select('event, body, enabled')
     .eq('tenant_id', tenant.id)
     .eq('channel', 'WHATSAPP')
-    .eq('event', 'BOOKING_CONFIRMATION')
-    .maybeSingle()
+    .in('event', ['BOOKING_CONFIRMATION', 'BOOKING_REMINDER', 'BOOKING_CANCELLATION'])
+
+  const whatsappByEvent = new Map(
+    (whatsappTemplates ?? [])
+      .filter((t) => t.enabled && t.body)
+      .map((t) => [t.event, t.body as string]),
+  )
 
   const ctx = {
     actor: 'staff' as const,
@@ -120,7 +126,11 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
     profissional: row.professional?.display_name || row.professional?.name || '',
     link: publicUrl,
   }
-  const showWhatsappButton = whatsappTemplate?.enabled === true && whatsappTemplate.body
+  const confirmationTpl = whatsappByEvent.get('BOOKING_CONFIRMATION')
+  const reminderTpl = whatsappByEvent.get('BOOKING_REMINDER')
+  const cancellationTpl = whatsappByEvent.get('BOOKING_CANCELLATION')
+  const isCanceled = row.status === 'CANCELED'
+  const isUpcoming = new Date(row.start_at).getTime() > Date.now()
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-10 sm:px-8">
@@ -171,13 +181,32 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
             value={customerName}
             sub={customerPhone ?? undefined}
           />
-          {showWhatsappButton ? (
-            <div className="pl-11">
-              <WhatsappButton
-                phone={customerPhone}
-                template={whatsappTemplate.body}
-                vars={whatsappVars}
-              />
+          {confirmationTpl || reminderTpl || cancellationTpl ? (
+            <div className="space-y-2 pl-11">
+              {confirmationTpl && !isCanceled ? (
+                <WhatsappButton
+                  phone={customerPhone}
+                  template={confirmationTpl}
+                  vars={whatsappVars}
+                  label="WhatsApp: confirmação"
+                />
+              ) : null}
+              {reminderTpl && !isCanceled && isUpcoming ? (
+                <WhatsappButton
+                  phone={customerPhone}
+                  template={reminderTpl}
+                  vars={whatsappVars}
+                  label="WhatsApp: lembrete"
+                />
+              ) : null}
+              {cancellationTpl && isCanceled ? (
+                <WhatsappButton
+                  phone={customerPhone}
+                  template={cancellationTpl}
+                  vars={whatsappVars}
+                  label="WhatsApp: cancelamento"
+                />
+              ) : null}
             </div>
           ) : null}
           <InfoRow

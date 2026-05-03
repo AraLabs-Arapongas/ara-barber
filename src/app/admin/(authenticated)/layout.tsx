@@ -44,7 +44,7 @@ export default async function AdminAuthenticatedLayout({
   // sem cookie → redireciona. Step='skipped' E cookie='1' → fica livre,
   // banner persistente segue mostrando o progresso.
   const onboarding = await getOnboardingState(tenant.id)
-  if (!onboarding.completed) {
+  if (!onboarding.allCompleted) {
     const cookieStore = await cookies()
     const dismissed = cookieStore.get('ara_setup_dismissed')?.value === '1'
     const tenantStep = (await fetchOnboardingStep(tenant.id)) as 'tour' | 'skipped' | null
@@ -61,7 +61,7 @@ export default async function AdminAuthenticatedLayout({
         }}
       />
       <div className="min-h-screen overflow-x-hidden bg-bg text-fg pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
-        {!onboarding.completed ? <OnboardingBanner state={onboarding} /> : null}
+        {!onboarding.allCompleted ? <OnboardingBanner state={onboarding} /> : null}
         {children}
       </div>
       <GlobalFab />

@@ -6,5 +6,5 @@ import { nextStepPath } from '@/lib/onboarding/derivations'
 export default async function SetupEntryPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const state = await getOnboardingState(tenant.id)
-  redirect(nextStepPath(state.currentStep))
+  redirect(nextStepPath(state))
 }

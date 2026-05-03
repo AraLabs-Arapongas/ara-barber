@@ -8,7 +8,7 @@ import { createSecretClient } from '@/lib/supabase/secret'
 export default async function ServicesStepPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const state = await getOnboardingState(tenant.id)
-  if (state.completed) redirect('/admin/dashboard')
+  if (state.stage1.completed) redirect('/admin/dashboard')
 
   const supabase = createSecretClient()
   const { data: existing } = await supabase
@@ -26,7 +26,7 @@ export default async function ServicesStepPage() {
 
   return (
     <>
-      <ProgressIndicator current={2} />
+      <ProgressIndicator stage={1} stepInStage={2} stepTitle="Serviços" />
       <p className="mb-6 text-[0.875rem] text-fg-muted">
         O que seu negócio oferece? Você pode adicionar mais depois em{' '}
         <span className="text-fg">Mais → Serviços</span>.

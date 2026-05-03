@@ -8,7 +8,7 @@ import { createSecretClient } from '@/lib/supabase/secret'
 export default async function ProfessionalsStepPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const state = await getOnboardingState(tenant.id)
-  if (state.completed) redirect('/admin/dashboard')
+  if (state.stage1.completed) redirect('/admin/dashboard')
 
   const supabase = createSecretClient()
   const { data: existing } = await supabase
@@ -23,7 +23,7 @@ export default async function ProfessionalsStepPage() {
 
   return (
     <>
-      <ProgressIndicator current={3} />
+      <ProgressIndicator stage={1} stepInStage={3} stepTitle="Profissionais" />
       <p className="mb-6 text-[0.875rem] text-fg-muted">
         Quem atende? Pode adicionar mais depois em{' '}
         <span className="text-fg">Mais → Profissionais</span>.

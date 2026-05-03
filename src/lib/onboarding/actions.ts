@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
+import { z } from 'zod'
 import { assertStaff } from '@/lib/auth/guards'
 import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { createSecretClient } from '@/lib/supabase/secret'
@@ -241,7 +242,7 @@ export async function saveLinksStep(
     tenantId: tenant.id,
     actorUserId: user.id,
     actorRole: user.profile.role,
-    action: 'onboarding.completed',
+    action: 'onboarding.stage1.completed',
     entityType: 'tenant',
     entityId: tenant.id,
     changes: {
@@ -251,7 +252,155 @@ export async function saveLinksStep(
   })
   revalidatePath('/admin/setup')
   revalidatePath('/admin/dashboard')
-  redirect('/admin/dashboard?welcome=1')
+  // Pula pra tela de transição "Etapa 1 concluída" (oferece continuar pra Etapa 2).
+  redirect('/admin/setup/etapa-1-concluida')
+}
+
+// === STAGE 2: BRANDING ===
+
+const BrandStepSchema = z.object({
+  primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor primária inválida.'),
+  accent_color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Cor de destaque inválida.')
+    .optional()
+    .or(z.literal('')),
+  logo_url: z.string().max(500).optional().or(z.literal('')),
+})
+
+export async function saveBrandStep(
+  _prev: StepActionState,
+  formData: FormData,
+): Promise<StepActionState> {
+  const { tenant, user } = await ensureStaff()
+  let payload: unknown
+  try {
+    payload = parseJsonField(formData)
+  } catch {
+    return { error: 'Payload inválido' }
+  }
+  const parsed = BrandStepSchema.safeParse(payload)
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => i.message).join('; ') }
+  }
+  const supabase = createSecretClient()
+  const { error: updErr } = await supabase
+    .from('tenants')
+    .update({
+      primary_color: parsed.data.primary_color,
+      accent_color: parsed.data.accent_color || null,
+      logo_url: parsed.data.logo_url || null,
+      onboarding_step: 'landing',
+    })
+    .eq('id', tenant.id)
+  if (updErr) return { error: `update: ${updErr.message}` }
+  await recordAudit({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    actorRole: user.profile.role,
+    action: 'onboarding.step.brand',
+    entityType: 'tenant',
+    entityId: tenant.id,
+    changes: parsed.data,
+  })
+  revalidatePath('/admin/setup')
+  redirect('/admin/setup/pagina-publica')
+}
+
+const LandingStepSchema = z.object({
+  enabled_blocks: z.array(z.string()).max(10),
+})
+
+export async function saveLandingStep(
+  _prev: StepActionState,
+  formData: FormData,
+): Promise<StepActionState> {
+  const { tenant, user } = await ensureStaff()
+  let payload: unknown
+  try {
+    payload = parseJsonField(formData)
+  } catch {
+    return { error: 'Payload inválido' }
+  }
+  const parsed = LandingStepSchema.safeParse(payload)
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => i.message).join('; ') }
+  }
+  const supabase = createSecretClient()
+  // Atualiza enabled flag de todos os blocks do tenant baseado na seleção.
+  const { data: blocks } = await supabase
+    .from('landing_blocks')
+    .select('id, block_type')
+    .eq('tenant_id', tenant.id)
+  const enabledSet = new Set(parsed.data.enabled_blocks)
+  for (const b of blocks ?? []) {
+    await supabase
+      .from('landing_blocks')
+      .update({ enabled: enabledSet.has(b.block_type) })
+      .eq('id', b.id)
+  }
+  await supabase
+    .from('tenants')
+    .update({
+      onboarding_branding_completed_at: new Date().toISOString(),
+      onboarding_step: null,
+    })
+    .eq('id', tenant.id)
+  await recordAudit({
+    tenantId: tenant.id,
+    actorUserId: user.id,
+    actorRole: user.profile.role,
+    action: 'onboarding.stage2.completed',
+    entityType: 'tenant',
+    entityId: tenant.id,
+    changes: { enabled_count: parsed.data.enabled_blocks.length },
+  })
+  revalidatePath('/admin/setup')
+  revalidatePath('/admin/dashboard')
+  redirect('/admin/setup/etapa-2-concluida')
+}
+
+// === STAGE 3: COMMUNICATION ===
+// Templates já são editados via tela completa em /comunicacao/* — aqui só
+// rastreamos progresso (user passa pelos 3 steps no wizard, mesmo que só
+// confirme defaults).
+
+export async function advanceCommunicationStep(
+  _prev: StepActionState,
+  formData: FormData,
+): Promise<StepActionState> {
+  const { tenant, user } = await ensureStaff()
+  const next = formData.get('next')
+  if (typeof next !== 'string') return { error: 'Step inválido' }
+  const supabase = createSecretClient()
+
+  if (next === 'finish') {
+    await supabase
+      .from('tenants')
+      .update({
+        onboarding_communication_completed_at: new Date().toISOString(),
+        onboarding_step: null,
+      })
+      .eq('id', tenant.id)
+    await recordAudit({
+      tenantId: tenant.id,
+      actorUserId: user.id,
+      actorRole: user.profile.role,
+      action: 'onboarding.stage3.completed',
+      entityType: 'tenant',
+      entityId: tenant.id,
+      changes: {},
+    })
+    revalidatePath('/admin/setup')
+    revalidatePath('/admin/dashboard')
+    redirect('/admin/setup/etapa-3-concluida')
+  }
+  // Sub-step intermediário: só atualiza onboarding_step e redireciona.
+  await supabase.from('tenants').update({ onboarding_step: next }).eq('id', tenant.id)
+  revalidatePath('/admin/setup')
+  if (next === 'whatsapp') redirect('/admin/setup/whatsapp')
+  if (next === 'push') redirect('/admin/setup/push')
+  redirect('/admin/setup')
 }
 
 export async function dismissWizardAction(): Promise<void> {

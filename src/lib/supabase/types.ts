@@ -838,6 +838,8 @@ export type Database = {
           name: string
           notes_internal: string | null
           onboarding_completed_at: string | null
+          onboarding_branding_completed_at: string | null
+          onboarding_communication_completed_at: string | null
           onboarding_step: string | null
           operation_mode_pin_hash: string | null
           pioneer_since: string | null
@@ -900,6 +902,8 @@ export type Database = {
           name: string
           notes_internal?: string | null
           onboarding_completed_at?: string | null
+          onboarding_branding_completed_at?: string | null
+          onboarding_communication_completed_at?: string | null
           onboarding_step?: string | null
           operation_mode_pin_hash?: string | null
           pioneer_since?: string | null
@@ -962,6 +966,8 @@ export type Database = {
           name?: string
           notes_internal?: string | null
           onboarding_completed_at?: string | null
+          onboarding_branding_completed_at?: string | null
+          onboarding_communication_completed_at?: string | null
           onboarding_step?: string | null
           operation_mode_pin_hash?: string | null
           pioneer_since?: string | null

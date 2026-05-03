@@ -15,9 +15,12 @@ type Props = {
    *  página pública" pra owner conferir a vitrine sem cair no booking. */
   publicHomeUrl: string
   tenantSlug: string
+  /** Body do template `WHATSAPP/SHARE_LINK` do tenant (ou default). Pode
+   *  conter `{link}` que substituímos pela `publicUrl`. */
+  shareTemplate: string
 }
 
-export function LinkSharePanel({ publicUrl, publicHomeUrl, tenantSlug }: Props) {
+export function LinkSharePanel({ publicUrl, publicHomeUrl, tenantSlug, shareTemplate }: Props) {
   const [copied, setCopied] = useState(false)
   const qrRef = useRef<SVGSVGElement>(null)
 
@@ -44,10 +47,9 @@ export function LinkSharePanel({ publicUrl, publicHomeUrl, tenantSlug }: Props) 
   }
 
   // wa.me sem número aceita só ?text= — o usuário escolhe o destinatário
-  // depois. Em fase posterior (C5-3) podemos puxar template de tenant_message_templates.
-  const whatsappShareLink = `https://wa.me/?text=${encodeURIComponent(
-    `Oi! Agora você pode agendar comigo direto por aqui: ${publicUrl}`,
-  )}`
+  // depois. Aplica o template SHARE_LINK do tenant substituindo {link}.
+  const messageBody = shareTemplate.replace(/\{link\}/g, publicUrl)
+  const whatsappShareLink = `https://wa.me/?text=${encodeURIComponent(messageBody)}`
 
   return (
     <div className="space-y-4">

@@ -8,7 +8,7 @@ import { createSecretClient } from '@/lib/supabase/secret'
 export default async function LinksStepPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const state = await getOnboardingState(tenant.id)
-  if (state.completed) redirect('/admin/dashboard')
+  if (state.stage1.completed) redirect('/admin/dashboard')
 
   const supabase = createSecretClient()
   const [{ data: services }, { data: pros }, { data: existingLinks }] = await Promise.all([
@@ -30,7 +30,7 @@ export default async function LinksStepPage() {
 
   return (
     <>
-      <ProgressIndicator current={4} />
+      <ProgressIndicator stage={1} stepInStage={4} stepTitle="Quem faz o quê" />
       <p className="mb-6 text-[0.875rem] text-fg-muted">
         Marque quem atende cada serviço. Por padrão, todos atendem tudo.
       </p>

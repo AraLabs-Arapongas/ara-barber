@@ -8,7 +8,7 @@ import { createSecretClient } from '@/lib/supabase/secret'
 export default async function HoursStepPage() {
   const tenant = await getCurrentTenantOrNotFound()
   const state = await getOnboardingState(tenant.id)
-  if (state.completed) redirect('/admin/dashboard')
+  if (state.stage1.completed) redirect('/admin/dashboard')
 
   const supabase = createSecretClient()
   const { data: existing } = await supabase
@@ -37,7 +37,7 @@ export default async function HoursStepPage() {
 
   return (
     <>
-      <ProgressIndicator current={1} />
+      <ProgressIndicator stage={1} stepInStage={1} stepTitle="Horários de funcionamento" />
       <p className="mb-6 text-[0.875rem] text-fg-muted">
         Quando seu negócio fica aberto? Você pode ajustar depois em{' '}
         <span className="text-fg">Mais → Disponibilidade</span>.
