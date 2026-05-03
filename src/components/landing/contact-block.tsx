@@ -20,6 +20,7 @@ type Props = {
   whatsapp: string | null
   contactPhone: string | null
   addressLine1: string | null
+  addressNumber: string | null
   addressLine2: string | null
   city: string | null
   state: string | null
@@ -61,14 +62,21 @@ function formatPhoneBR(raw: string | null): string | null {
 
 /** Versão exibida ao usuário: rua + complemento + cidade. Sem UF/CEP (ruído). */
 function displayAddress(props: Props): string | null {
-  const parts = [props.addressLine1, props.addressLine2, props.city].filter(Boolean)
+  // "Rua, Número — Bairro, Cidade"
+  const street = props.addressNumber
+    ? `${props.addressLine1 ?? ''}, ${props.addressNumber}`.trim()
+    : props.addressLine1
+  const parts = [street, props.addressLine2, props.city].filter(Boolean)
   return parts.length > 0 ? parts.join(', ') : null
 }
 
 /** Versão completa pra geocoding do mapa (mantém UF/CEP pra precisão). */
 function geocodeAddress(props: Props): string | null {
+  const street = props.addressNumber
+    ? `${props.addressLine1 ?? ''}, ${props.addressNumber}`.trim()
+    : props.addressLine1
   const parts = [
-    props.addressLine1,
+    street,
     props.addressLine2,
     [props.city, props.state].filter(Boolean).join(' - '),
     props.postalCode,

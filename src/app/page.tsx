@@ -171,13 +171,15 @@ async function TenantPublicHome() {
 
       <CustomerShell showTabBar={loggedIn}>
         <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between gap-3 px-5 pt-5 sm:px-8 sm:pt-7">
-          {/* Link discreto pro painel staff. Só ícone-like (sem chamar
-              atenção do cliente final). Owner/recepção sabem onde tá. */}
+          {/* Link discreto pro painel staff — só mobile/tablet. No
+              desktop, o staff entra via bookmark/URL direto e o link
+              flutuando no canto superior fica solto fora do conteúdo
+              centralizado (vaza pra fora do container). */}
           <Link
             href="/admin/login"
             aria-label="Painel da equipe"
             title="Painel da equipe"
-            className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-white/80 backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-white"
+            className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-white/80 backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-white lg:hidden"
           >
             Equipe
           </Link>
@@ -222,6 +224,7 @@ async function TenantPublicHome() {
                     whatsapp={tenant.whatsapp}
                     contactPhone={tenant.contactPhone}
                     addressLine1={tenant.addressLine1}
+                    addressNumber={tenant.addressNumber}
                     addressLine2={tenant.addressLine2}
                     city={tenant.city}
                     state={tenant.state}

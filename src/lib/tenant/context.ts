@@ -52,6 +52,7 @@ export type TenantContext = {
   /** Tagline/subtítulo curto exibido sob o nome no header (ex: "Centro de beleza"). */
   tagline: string | null
   addressLine1: string | null
+  addressNumber: string | null
   addressLine2: string | null
   city: string | null
   state: string | null
@@ -100,7 +101,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
   const { data } = await supabase
     .from('tenants')
     .select(
-      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_minutes, min_advance_minutes, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials, is_pioneer, pioneer_since',
+      'id, slug, subdomain, name, timezone, primary_color, secondary_color, accent_color, logo_url, favicon_url, home_headline_top, home_headline_accent, status, billing_status, cancellation_window_minutes, min_advance_minutes, slot_interval_minutes, customer_can_cancel, booking_window_days, contact_phone, whatsapp, address_line1, address_number, address_line2, city, state, postal_code, combo_buffer_minutes, hero_eyebrow, hero_image_url, hero_image_url_desktop, hero_subheadline, instagram_url, facebook_url, tiktok_url, differentials, is_pioneer, pioneer_since',
     )
     .eq('id', tenantId)
     .maybeSingle()
@@ -137,6 +138,7 @@ export const getCurrentTenantOrNotFound = cache(async (): Promise<TenantContext>
     // (headline hero + tagline header), criar `tagline` em tenants.
     tagline: data.home_headline_accent,
     addressLine1: data.address_line1,
+    addressNumber: data.address_number,
     addressLine2: data.address_line2,
     city: data.city,
     state: data.state,

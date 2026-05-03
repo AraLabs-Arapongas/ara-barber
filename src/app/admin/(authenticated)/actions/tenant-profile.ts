@@ -41,6 +41,7 @@ const ProfileInput = z.object({
     .or(z.literal('')),
   email: z.string().email('E-mail inválido.').max(200).optional().or(z.literal('')),
   address_line1: z.string().max(200).optional().or(z.literal('')),
+  address_number: z.string().max(20).optional().or(z.literal('')),
   address_line2: z.string().max(200).optional().or(z.literal('')),
   city: z.string().max(100).optional().or(z.literal('')),
   state: z

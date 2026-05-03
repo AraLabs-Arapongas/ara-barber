@@ -804,6 +804,7 @@ export type Database = {
           accent_color: string | null
           address_line1: string | null
           address_line2: string | null
+          address_number: string | null
           billing_model: Database["public"]["Enums"]["billing_model"]
           billing_status: Database["public"]["Enums"]["billing_status"]
           booking_window_days: number
@@ -864,6 +865,7 @@ export type Database = {
           accent_color?: string | null
           address_line1?: string | null
           address_line2?: string | null
+          address_number?: string | null
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
           booking_window_days?: number
@@ -924,6 +926,7 @@ export type Database = {
           accent_color?: string | null
           address_line1?: string | null
           address_line2?: string | null
+          address_number?: string | null
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
           booking_window_days?: number

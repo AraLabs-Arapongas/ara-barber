@@ -13,7 +13,7 @@ export default async function PerfilPage() {
   const { data } = await supabase
     .from('tenants')
     .select(
-      'name, contact_phone, whatsapp, email, address_line1, address_line2, city, state, postal_code',
+      'name, contact_phone, whatsapp, email, address_line1, address_number, address_line2, city, state, postal_code',
     )
     .eq('id', tenant.id)
     .maybeSingle()
@@ -49,6 +49,7 @@ export default async function PerfilPage() {
           whatsapp: data.whatsapp ?? '',
           email: data.email ?? '',
           address_line1: data.address_line1 ?? '',
+          address_number: data.address_number ?? '',
           address_line2: data.address_line2 ?? '',
           city: data.city ?? '',
           state: data.state ?? '',

@@ -15,6 +15,7 @@ type Initial = {
   whatsapp: string
   email: string
   address_line1: string
+  address_number: string
   address_line2: string
   city: string
   state: string
@@ -53,8 +54,8 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   }
 
   // Quando user termina de digitar CEP (8 dígitos), busca ViaCEP e
-  // autopreenche endereço/cidade/UF se vier vazio. Não sobrescreve
-  // campos que o user já tenha preenchido manualmente.
+  // SOBRESCREVE rua/bairro/cidade/UF — se trocou o CEP, quer dados
+  // novos. Número fica intacto (CEP nunca traz número).
   async function handleCepChange(e: ChangeEvent<HTMLInputElement>) {
     const formatted = formatCep(e.target.value)
     patch({ postal_code: formatted })
@@ -65,10 +66,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
     if (!result) return
     setData((d) => ({
       ...d,
-      address_line1: d.address_line1 || result.street,
-      address_line2: d.address_line2 || result.neighborhood,
-      city: d.city || result.city,
-      state: d.state || result.uf,
+      address_line1: result.street,
+      address_line2: result.neighborhood,
+      city: result.city,
+      state: result.uf,
     }))
   }
 
@@ -133,15 +134,26 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         />
       </Field>
 
-      <Field label="Endereço (rua e número)">
-        <Input
-          autoComplete="street-address"
-          placeholder="Rua, número"
-          value={data.address_line1}
-          onChange={(e) => patch({ address_line1: e.target.value })}
-          maxLength={200}
-        />
-      </Field>
+      <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
+        <Field label="Rua / Logradouro">
+          <Input
+            autoComplete="street-address"
+            placeholder="Av. Brasil"
+            value={data.address_line1}
+            onChange={(e) => patch({ address_line1: e.target.value })}
+            maxLength={200}
+          />
+        </Field>
+        <Field label="Número">
+          <Input
+            inputMode="text"
+            placeholder="123"
+            value={data.address_number}
+            onChange={(e) => patch({ address_number: e.target.value })}
+            maxLength={20}
+          />
+        </Field>
+      </div>
 
       <Field label="Complemento / bairro">
         <Input
@@ -153,7 +165,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         />
       </Field>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+      <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
         <Field label="Cidade">
           <Input
             autoComplete="address-level2"
@@ -169,7 +181,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
             options={STATE_OPTIONS}
             placeholder="UF"
             sheetTitle="Estado"
-            className="min-w-[7rem]"
+            className="h-12 w-full rounded-xl border-transparent bg-bg-subtle px-3 text-[0.9375rem] hover:bg-bg-subtle/80"
           />
         </Field>
       </div>
