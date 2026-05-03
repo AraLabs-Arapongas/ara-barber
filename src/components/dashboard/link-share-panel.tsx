@@ -8,11 +8,16 @@ import { Card, CardContent } from '@/components/ui/card'
 import { copyToClipboard } from '@/lib/clipboard'
 
 type Props = {
+  /** URL que vai direto pro wizard de booking (`/book`). Compartilhada
+   *  com cliente, exibida no input e codificada no QR. */
   publicUrl: string
+  /** URL da home pública do tenant (`/`). Usada só pelo botão "Abrir
+   *  página pública" pra owner conferir a vitrine sem cair no booking. */
+  publicHomeUrl: string
   tenantSlug: string
 }
 
-export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
+export function LinkSharePanel({ publicUrl, publicHomeUrl, tenantSlug }: Props) {
   const [copied, setCopied] = useState(false)
   const qrRef = useRef<SVGSVGElement>(null)
 
@@ -54,7 +59,7 @@ export function LinkSharePanel({ publicUrl, tenantSlug }: Props) {
           <div className="flex flex-wrap gap-2">
             <Button onClick={copy}>{copied ? 'Copiado!' : 'Copiar link'}</Button>
             <a
-              href={publicUrl}
+              href={publicHomeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonVariants({ variant: 'secondary' })}
