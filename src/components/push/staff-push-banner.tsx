@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, BellOff, Check } from 'lucide-react'
+import { Bell, BellOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { requestAndSubscribe, isPushSupported, currentPermission } from '@/lib/push/register'
 
@@ -51,16 +51,10 @@ export function StaffPushBanner() {
     else if (r.reason === 'denied') setStatus('denied')
   }
 
-  if (status === 'loading' || status === 'unsupported') return null
-
-  if (status === 'granted') {
-    return (
-      <div className="mb-4 flex items-center gap-2 rounded-xl border border-success/30 bg-success-bg px-4 py-2.5 text-[0.8125rem] text-success">
-        <Check className="h-4 w-4 shrink-0" />
-        <span>Avisos ativos neste aparelho.</span>
-      </div>
-    )
-  }
+  // Não renderiza nada quando: loading, sem suporte do browser, OU
+  // já está com permissão concedida. Banner verde "ativos" só polui
+  // a tela — o sino na home já indica o estado real.
+  if (status === 'loading' || status === 'unsupported' || status === 'granted') return null
 
   if (status === 'denied') {
     return (
