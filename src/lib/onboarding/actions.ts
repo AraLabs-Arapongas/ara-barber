@@ -92,11 +92,14 @@ export async function saveServicesStep(
     return { error: parsed.error.issues.map((i) => i.message).join('; ') }
   }
   const supabase = createSecretClient()
-  const { error: delErr } = await supabase
+  // NÃO deletamos services existentes — appointments antigos têm FK
+  // pra services. Em vez disso, soft-disable (is_active=false) e
+  // inserimos os novos. Permite redo do wizard sem destruir histórico.
+  const { error: deactErr } = await supabase
     .from('services')
-    .delete()
+    .update({ is_active: false })
     .eq('tenant_id', tenant.id)
-  if (delErr) return { error: `delete: ${delErr.message}` }
+  if (deactErr) return { error: `deactivate: ${deactErr.message}` }
   const { error: insErr } = await supabase.from('services').insert(
     parsed.data.services.map((s) => ({
       tenant_id: tenant.id,
@@ -140,11 +143,13 @@ export async function saveProfessionalsStep(
     return { error: parsed.error.issues.map((i) => i.message).join('; ') }
   }
   const supabase = createSecretClient()
-  const { error: delErr } = await supabase
+  // Mesma lógica do services: soft-disable em vez de delete pra preservar
+  // FK de appointments antigos.
+  const { error: deactErr } = await supabase
     .from('professionals')
-    .delete()
+    .update({ is_active: false })
     .eq('tenant_id', tenant.id)
-  if (delErr) return { error: `delete: ${delErr.message}` }
+  if (deactErr) return { error: `deactivate: ${deactErr.message}` }
   const { error: insErr } = await supabase.from('professionals').insert(
     parsed.data.professionals.map((p) => ({
       tenant_id: tenant.id,
