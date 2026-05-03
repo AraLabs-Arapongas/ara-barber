@@ -92,24 +92,53 @@ export async function saveServicesStep(
     return { error: parsed.error.issues.map((i) => i.message).join('; ') }
   }
   const supabase = createSecretClient()
-  // NÃO deletamos services existentes — appointments antigos têm FK
-  // pra services. Em vez disso, soft-disable (is_active=false) e
-  // inserimos os novos. Permite redo do wizard sem destruir histórico.
-  const { error: deactErr } = await supabase
+  // Estratégia de merge (evita duplicatas e preserva FK de appointments):
+  //   1. Pra cada service no payload: se já existe um com mesmo nome, UPDATE
+  //      (reativa + atualiza duração/preço). Senão, INSERT novo.
+  //   2. Services antigos que não estão no payload: tenta DELETE; se falhar
+  //      por FK (tem appointments), faz soft-disable (is_active=false).
+  const { data: existingServices } = await supabase
     .from('services')
-    .update({ is_active: false })
+    .select('id, name')
     .eq('tenant_id', tenant.id)
-  if (deactErr) return { error: `deactivate: ${deactErr.message}` }
-  const { error: insErr } = await supabase.from('services').insert(
-    parsed.data.services.map((s) => ({
-      tenant_id: tenant.id,
-      name: s.name,
-      duration_minutes: s.duration_minutes,
-      price_cents: s.price_cents,
-      is_active: true,
-    })),
-  )
-  if (insErr) return { error: `insert: ${insErr.message}` }
+
+  const existingByName = new Map((existingServices ?? []).map((s) => [s.name.trim().toLowerCase(), s]))
+  const desiredNames = new Set(parsed.data.services.map((s) => s.name.trim().toLowerCase()))
+
+  for (const s of parsed.data.services) {
+    const key = s.name.trim().toLowerCase()
+    const existing = existingByName.get(key)
+    if (existing) {
+      const { error } = await supabase
+        .from('services')
+        .update({
+          name: s.name,
+          duration_minutes: s.duration_minutes,
+          price_cents: s.price_cents,
+          is_active: true,
+        })
+        .eq('id', existing.id)
+      if (error) return { error: `update: ${error.message}` }
+    } else {
+      const { error } = await supabase.from('services').insert({
+        tenant_id: tenant.id,
+        name: s.name,
+        duration_minutes: s.duration_minutes,
+        price_cents: s.price_cents,
+        is_active: true,
+      })
+      if (error) return { error: `insert: ${error.message}` }
+    }
+  }
+
+  for (const e of existingServices ?? []) {
+    if (desiredNames.has(e.name.trim().toLowerCase())) continue
+    const { error: delError } = await supabase.from('services').delete().eq('id', e.id)
+    if (delError) {
+      // Provavelmente FK de appointments — soft-disable.
+      await supabase.from('services').update({ is_active: false }).eq('id', e.id)
+    }
+  }
   await supabase
     .from('tenants')
     .update({ onboarding_step: 'professionals' })
@@ -143,21 +172,43 @@ export async function saveProfessionalsStep(
     return { error: parsed.error.issues.map((i) => i.message).join('; ') }
   }
   const supabase = createSecretClient()
-  // Mesma lógica do services: soft-disable em vez de delete pra preservar
-  // FK de appointments antigos.
-  const { error: deactErr } = await supabase
+  // Mesma lógica do services: merge por nome, soft-disable como fallback.
+  const { data: existingPros } = await supabase
     .from('professionals')
-    .update({ is_active: false })
+    .select('id, name')
     .eq('tenant_id', tenant.id)
-  if (deactErr) return { error: `deactivate: ${deactErr.message}` }
-  const { error: insErr } = await supabase.from('professionals').insert(
-    parsed.data.professionals.map((p) => ({
-      tenant_id: tenant.id,
-      name: p.name,
-      is_active: true,
-    })),
+
+  const existingByName = new Map(
+    (existingPros ?? []).map((p) => [p.name.trim().toLowerCase(), p]),
   )
-  if (insErr) return { error: `insert: ${insErr.message}` }
+  const desiredNames = new Set(parsed.data.professionals.map((p) => p.name.trim().toLowerCase()))
+
+  for (const p of parsed.data.professionals) {
+    const key = p.name.trim().toLowerCase()
+    const existing = existingByName.get(key)
+    if (existing) {
+      const { error } = await supabase
+        .from('professionals')
+        .update({ name: p.name, is_active: true })
+        .eq('id', existing.id)
+      if (error) return { error: `update: ${error.message}` }
+    } else {
+      const { error } = await supabase.from('professionals').insert({
+        tenant_id: tenant.id,
+        name: p.name,
+        is_active: true,
+      })
+      if (error) return { error: `insert: ${error.message}` }
+    }
+  }
+
+  for (const e of existingPros ?? []) {
+    if (desiredNames.has(e.name.trim().toLowerCase())) continue
+    const { error: delError } = await supabase.from('professionals').delete().eq('id', e.id)
+    if (delError) {
+      await supabase.from('professionals').update({ is_active: false }).eq('id', e.id)
+    }
+  }
   await supabase
     .from('tenants')
     .update({ onboarding_step: 'links' })
