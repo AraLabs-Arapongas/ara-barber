@@ -3,6 +3,7 @@ import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 import { PioneerBadge } from '@/components/pioneer-badge'
 import {
   Building2,
+  Globe,
   Link2,
   Palette,
   Layout,
@@ -58,6 +59,12 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
         icon: Layout,
         label: 'Página pública',
         hint: 'Blocos, hero, depoimentos, redes',
+      },
+      {
+        href: '/admin/dashboard/dominio',
+        icon: Globe,
+        label: 'Domínio próprio',
+        hint: 'Use seu endereço (agendar.seusite.com.br)',
       },
     ],
   },

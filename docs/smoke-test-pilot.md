@@ -469,6 +469,22 @@ Marca e aparência (`/admin/dashboard/marca`):
 - [ ] User menu → "Sair" → cair em `/login`.
 - [ ] **Falha esperada:** logar com user que NÃO é PLATFORM_ADMIN → cair em `/login?error=forbidden`.
 
+## 12b. Custom domain (white-label)
+
+**Pré-condição:** env vars `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` configuradas. Tenant logado como `BUSINESS_OWNER`.
+
+- [ ] "Mais → Meu negócio → Domínio próprio" → tela carrega com input vazio.
+- [ ] Inserir domínio inválido (ex: `abc`) → submit → erro de formato.
+- [ ] Inserir `agendar.aralabs.com.br` → erro "Use um domínio próprio".
+- [ ] Inserir domínio válido (`agendar.dominioteste.com.br`) → submit → tela mostra "Aguardando DNS" + 2 instruções (CNAME + A) com botão "Copiar".
+- [ ] Configurar CNAME no provedor de DNS de teste → aguardar propagação → status muda pra "Ativo e seguro" automaticamente (polling 10s) ou via "Verificar".
+- [ ] Acessar `https://agendar.dominioteste.com.br/` → renderiza home pública do tenant correto (mesmo branding/conteúdo).
+- [ ] Logar como cliente nesse custom domain → cookie host-only setado em `agendar.dominioteste.com.br` (DevTools confirma).
+- [ ] Ir pra `tenant-a.aralabs.com.br/minha-conta` → ainda logado lá (cookie do `.aralabs.com.br` separado).
+- [ ] Em `customers`: `SELECT user_id, tenant_id FROM customers WHERE user_id = '<auth_uid>'` → 2 rows (uma pra cada tenant).
+- [ ] Voltar em "Domínio próprio" → "Remover domínio" → confirmar → DB e Vercel ficam sem o domínio.
+- [ ] **Falha esperada:** logar como `RECEPTIONIST` ou `PROFESSIONAL` → submit do form → erro "Sem permissão.".
+
 ## 13. Smoke técnico
 
 - [ ] `pnpm typecheck` limpo.

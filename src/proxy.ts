@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { parseHostToSlug, resolveTenantIdBySlug } from '@/lib/tenant/resolve'
+import {
+  isPlatformHost,
+  parseHostToSlug,
+  resolveTenantIdByCustomDomain,
+  resolveTenantIdBySlug,
+} from '@/lib/tenant/resolve'
 
 // Janela de redirect /salon/* → /admin/* pra preservar bookmarks/links externos
 // pós-rebrand (2026-04-26). Remover após 2026-05-26.
@@ -29,6 +34,15 @@ export async function proxy(req: NextRequest) {
       // Subdomínio válido em formato mas sem tenant correspondente.
       // Passa pro Next renderizar `src/app/not-found.tsx` com o design system.
       res.headers.set('x-ara-tenant-missing', '1')
+    }
+  } else if (parsed.area === 'root' && !isPlatformHost(host)) {
+    // Host externo (não é aralabs.com.br nem lvh.me) — pode ser custom
+    // domain de tenant. Tenta lookup pelo `tenants.custom_domain`.
+    const tenantId = await resolveTenantIdByCustomDomain(host)
+    if (tenantId) {
+      res.headers.set('x-ara-area', 'tenant')
+      res.headers.set('x-ara-tenant-id', tenantId)
+      // Sem slug aqui — quem precisar resolve via tenant_id.
     }
   }
 

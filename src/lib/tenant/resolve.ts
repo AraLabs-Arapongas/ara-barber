@@ -80,4 +80,60 @@ export async function resolveTenantIdBySlug(slug: string): Promise<string | null
 
 export function __resetTenantResolveCache() {
   cache.clear()
+  customDomainCache.clear()
+}
+
+/**
+ * Cache separado pra lookups por custom_domain. Mesmas regras do
+ * cache por slug: TTL 60s, só cacheia hits positivos.
+ */
+const customDomainCache = new Map<string, CacheEntry>()
+
+/**
+ * Resolve tenant_id procurando pelo `custom_domain` exato (case-insensitive).
+ * Usado pelo proxy quando o host não bate com `*.aralabs.com.br` nem
+ * `*.lvh.me` — significa que pode ser um custom domain de tenant.
+ *
+ * Retorna null se não encontrar — proxy trata como `area: 'root'`.
+ */
+export async function resolveTenantIdByCustomDomain(host: string): Promise<string | null> {
+  const clean = host.split(':')[0].toLowerCase()
+  if (!clean) return null
+
+  const now = Date.now()
+  const cached = customDomainCache.get(clean)
+  if (cached && cached.expires > now) return cached.id
+
+  const supabase = createSecretClient()
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('custom_domain', clean)
+    .maybeSingle()
+
+  if (error) {
+    console.error('resolveTenantIdByCustomDomain error', { host: clean, error })
+    return null
+  }
+
+  const id = data?.id ?? null
+  if (id) {
+    customDomainCache.set(clean, { id, expires: now + TTL_MS })
+  } else {
+    customDomainCache.delete(clean)
+  }
+  return id
+}
+
+/**
+ * Retorna true se o host pertence a uma das bases da plataforma
+ * (`aralabs.com.br` ou `lvh.me`). Usado pelo proxy pra decidir entre
+ * lookup por slug (subdomínio) ou lookup por custom_domain.
+ */
+export function isPlatformHost(host: string): boolean {
+  const clean = host.split(':')[0].toLowerCase()
+  for (const base of [APP_BASE_HOST, DEV_BASE_HOST]) {
+    if (clean === base || clean.endsWith(`.${base}`)) return true
+  }
+  return false
 }

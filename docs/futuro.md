@@ -259,25 +259,40 @@ _(Vazio — itens anteriores resolvidos no sweep de 2026-04-28; ver Decisões.)_
 - **Múltiplas unidades** (rede com tenant-pai). Mexe em RLS, queries,
   billing — alto esforço, segmento menor.
 
-- **Branding white-label completo.** Campo `tenants.custom_domain` já
-  existe no schema, falta wiring (cert SSL automático, DNS
-  validation). Apelo principalmente de vaidade do dono.
-  **Pré-requisito: SSO central** (próximo item) — sem ele, cliente
-  com conta em tenant `*.aralabs.com.br` precisa logar de novo ao
-  abrir um custom domain, e o ganho de white-label vira fricção.
+- **Custom domain (white-label) — `agendar.barber.com.br`.**
+  Campo `tenants.custom_domain` já existe no schema. **Não tem
+  pré-requisito de SSO** — cada custom domain vira cookie host-only
+  próprio, mesmo `auth.users` no Supabase identifica o cliente pelo
+  email, `ensureCustomerForTenant` provisiona row em `customers`.
+  Cliente faz 1 OTP a mais por custom domain; aceitável.
+  **Falta wirar:** UNIQUE em `custom_domain`, branch em
+  `parseHostToSlug` pra resolver host → tenant via lookup,
+  integração com Vercel API (`POST /v10/projects/{id}/domains` +
+  polling de status), UI no painel pra dono cadastrar + ver
+  instruções de DNS, gate por plano (paid feature). Esforço:
+  ~3-5 dias. **Reabrir quando:** virar prioridade comercial (paid
+  tier inclui white-label).
 
-- **Auth central tipo OAuth ("Sign in with AraLabs").**
-  Hoje (2026-05-03) implementado modelo simples: cookie de sessão
-  Supabase setado em `.aralabs.com.br` permite SSO automático entre
-  todos os subdomínios da plataforma (cliente loga em `tenant-a`,
-  abre `tenant-b` já logado, perfil `customers` é auto-provisionado).
-  **Limitação:** custom domains (`agendar.barber.com.br`) ficam fora
-  — cookie não cruza domínios diferentes. Solução real seria um
-  provider central em `auth.aralabs.com.br` que tenants consomem via
-  OAuth (authorize → code → token). Esforço: 1-2 semanas. **Reabrir
-  quando:** custom domain virar feature paga adotada (50+ tenants),
-  app mobile nativo, ou integradores externos (API pública). Antes
-  disso, modelo atual atende.
+- **SSO em custom domain (handshake D).**
+  Otimização opcional do item acima. Hoje cliente que usa
+  `*.aralabs.com.br` + `agendar.barber.com.br` faz 2 OTPs (1 por
+  domínio, persistente). Pra colapsar em 1, fazer handshake de
+  redirect 1-shot: custom domain → `auth.aralabs.com.br/handshake`
+  → token de uso único → callback no custom domain → cookie próprio
+  setado server-side. Esforço: 2-3 dias. Endpoints novos: 2
+  (`/handshake`, `/verify`). **Não constrói OAuth completo** (sem
+  scopes, sem consent, sem refresh tokens). **Reabrir apenas se:**
+  cliente reclamar de OTP repetida, ou >50 custom domains ativos.
+
+- **Auth central completa (OAuth provider em `auth.aralabs.com.br`).**
+  Hoje (2026-05-03) implementado SSO via cookie domain pra
+  `*.aralabs.com.br` (commit `3dc8880`). Provider OAuth completo
+  (`/authorize`, `/token`, `/userinfo`, `/logout`, refresh tokens,
+  consent screen) só faz sentido se aparecer: app mobile nativo,
+  API pública pra integradores ("conecte sua agenda Ara ao seu
+  CRM"), ou white-label vira premium massivo (>200 custom domains).
+  Esforço: 1-2 semanas + auditoria de segurança. **Não reabrir antes
+  de** ter caso de uso concreto além de "seria legal".
 
 ---
 
