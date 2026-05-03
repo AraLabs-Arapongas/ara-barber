@@ -26,7 +26,7 @@ export type BookingContext = {
   tenantTimezone: string
   /**
    * Granularidade do grid em minutos. Staff respeita pra UI consistente
-   * com o cliente, mas NÃO respeita `min_advance_hours` (pode bookar
+   * com o cliente, mas NÃO respeita `min_advance_minutes` (pode bookar
    * walk-in pra agora).
    */
   slotIntervalMinutes: number

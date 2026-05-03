@@ -82,9 +82,9 @@ export async function provisionTenant(
       trial_ends_at: trialEnds.toISOString(),
       trial_days_granted: trialDays,
       booking_window_days: 14,
-      min_advance_hours: 0,
+      min_advance_minutes: 0,
       slot_interval_minutes: 15,
-      cancellation_window_hours: 2,
+      cancellation_window_minutes: 120,
       customer_can_cancel: true,
     })
     .select('id')

@@ -6,7 +6,7 @@ const baseCtx = {
   now: new Date('2026-05-01T10:00:00Z'),
   startAt: new Date('2026-05-01T14:00:00Z'),
   endAt: new Date('2026-05-01T14:30:00Z'),
-  cancellationWindowHours: 2,
+  cancellationWindowMinutes: 120,
 }
 
 describe('canTransition', () => {

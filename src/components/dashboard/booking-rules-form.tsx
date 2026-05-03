@@ -9,9 +9,9 @@ import { updateBookingRules } from '@/app/admin/(authenticated)/actions/booking-
 const SLOT_INTERVALS = [5, 10, 15, 20, 30, 60] as const
 
 export type BookingRules = {
-  min_advance_hours: number
+  min_advance_minutes: number
   slot_interval_minutes: number
-  cancellation_window_hours: number
+  cancellation_window_minutes: number
   customer_can_cancel: boolean
   booking_window_days: number
   combo_buffer_minutes: number
@@ -54,11 +54,11 @@ export function BookingRulesForm({ initial }: Props) {
               min={0}
               max={168}
               step={1}
-              value={data.min_advance_hours}
+              value={data.min_advance_minutes}
               onChange={(e) =>
                 setData((d) => ({
                   ...d,
-                  min_advance_hours: clampInt(e.target.value, 0, 168),
+                  min_advance_minutes: clampInt(e.target.value, 0, 168),
                 }))
               }
               className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"
@@ -144,11 +144,11 @@ export function BookingRulesForm({ initial }: Props) {
               min={0}
               max={168}
               step={1}
-              value={data.cancellation_window_hours}
+              value={data.cancellation_window_minutes}
               onChange={(e) =>
                 setData((d) => ({
                   ...d,
-                  cancellation_window_hours: clampInt(e.target.value, 0, 168),
+                  cancellation_window_minutes: clampInt(e.target.value, 0, 168),
                 }))
               }
               className="h-10 w-32 rounded-lg border border-transparent bg-bg-subtle px-3 text-[0.9375rem] text-fg focus:border-brand-primary focus:bg-surface-raised focus:outline-none"

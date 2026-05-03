@@ -15,9 +15,9 @@ export default async function RegrasPage() {
       </header>
       <BookingRulesForm
         initial={{
-          min_advance_hours: tenant.minAdvanceHours,
+          min_advance_minutes: tenant.minAdvanceMinutes,
           slot_interval_minutes: tenant.slotIntervalMinutes,
-          cancellation_window_hours: tenant.cancellationWindowHours,
+          cancellation_window_minutes: tenant.cancellationWindowMinutes,
           customer_can_cancel: tenant.customerCanCancel,
           booking_window_days: tenant.bookingWindowDays,
           combo_buffer_minutes: tenant.comboBufferMinutes,

@@ -10,10 +10,10 @@ import { cancelCustomerAppointment } from '@/lib/appointments/server-actions'
 
 type Props = {
   appointmentId: string
-  cancellationWindowHours: number
+  cancellationWindowMinutes: number
 }
 
-export function CancelOwnAppointmentButton({ appointmentId, cancellationWindowHours }: Props) {
+export function CancelOwnAppointmentButton({ appointmentId, cancellationWindowMinutes }: Props) {
   const router = useRouter()
   const confirm = useConfirm()
   const [pending, startTransition] = useTransition()
@@ -22,7 +22,7 @@ export function CancelOwnAppointmentButton({ appointmentId, cancellationWindowHo
   async function handleCancel() {
     const ok = await confirm({
       title: 'Cancelar esta reserva?',
-      description: `Só é possível cancelar até ${cancellationWindowHours}h antes do horário. Seu horário será liberado pra outros clientes.`,
+      description: `Só é possível cancelar até ${cancellationWindowMinutes} min antes do horário. Seu horário será liberado pra outros clientes.`,
       confirmLabel: 'Cancelar reserva',
       cancelLabel: 'Voltar',
       destructive: true,

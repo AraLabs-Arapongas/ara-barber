@@ -23,7 +23,7 @@ type Props = {
 }
 
 export function MyAppointmentsList({ appointments }: Props) {
-  const { timezone: tenantTimezone, cancellationWindowHours } = useCustomerTenant()
+  const { timezone: tenantTimezone, cancellationWindowMinutes } = useCustomerTenant()
   const router = useRouter()
   const confirm = useConfirm()
   const [tab, setTab] = useState<'futuros' | 'passados'>('futuros')
@@ -141,7 +141,7 @@ export function MyAppointmentsList({ appointments }: Props) {
         <ul className="space-y-2">
           {shown.map((b) => {
             const start = bookingStart(b)
-            const cutoff = start - cancellationWindowHours * 60 * 60 * 1000
+            const cutoff = start - cancellationWindowMinutes * 60 * 1000
             const canCancel =
               tab === 'futuros' &&
               ['SCHEDULED', 'CONFIRMED'].includes(bookingStatus(b)) &&

@@ -9,7 +9,7 @@ export type TransitionContext = {
   now: Date
   startAt: Date
   endAt: Date
-  cancellationWindowHours: number
+  cancellationWindowMinutes: number
 }
 
 type Rule = (ctx: TransitionContext) => { ok: true } | { ok: false; reason: string }
@@ -31,10 +31,10 @@ const REQUIRE_PAST_END: Rule = (ctx) =>
 
 const REQUIRE_WITHIN_CANCEL_WINDOW: Rule = (ctx) => {
   if (ctx.actor === 'staff') return { ok: true }
-  const cutoff = ctx.startAt.getTime() - ctx.cancellationWindowHours * 60 * 60 * 1000
+  const cutoff = ctx.startAt.getTime() - ctx.cancellationWindowMinutes * 60 * 1000
   return ctx.now.getTime() <= cutoff
     ? { ok: true }
-    : { ok: false, reason: `Cancelamento só até ${ctx.cancellationWindowHours}h antes.` }
+    : { ok: false, reason: `Cancelamento só até ${ctx.cancellationWindowMinutes} min antes.` }
 }
 
 const TRANSITIONS: Record<AppointmentStatus, Partial<Record<AppointmentStatus, Rule[]>>> = {

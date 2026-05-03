@@ -24,7 +24,7 @@ type Props = {
   }
   tenantTimezone: string
   /** Em horas — usado pra checar se ainda dá tempo de cancelar. */
-  cancellationWindowHours: number
+  cancellationWindowMinutes: number
   /** Tenant pode desligar cancelamento self-service. Quando false, esconde o botão. */
   customerCanCancel: boolean
 }
@@ -42,7 +42,7 @@ type Props = {
 export function NextAppointmentCardHero({
   appointment,
   tenantTimezone,
-  cancellationWindowHours,
+  cancellationWindowMinutes,
   customerCanCancel,
 }: Props) {
   const router = useRouter()
@@ -55,7 +55,7 @@ export function NextAppointmentCardHero({
   const [nowMs] = useState(() => Date.now())
 
   const startMs = new Date(appointment.startAt).getTime()
-  const cutoff = startMs - cancellationWindowHours * 60 * 60 * 1000
+  const cutoff = startMs - cancellationWindowMinutes * 60 * 1000
   const eligibleStatus = appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED'
   const canCancel = customerCanCancel && eligibleStatus && nowMs <= cutoff
 

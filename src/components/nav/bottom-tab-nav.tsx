@@ -76,7 +76,7 @@ export function BottomTabNav() {
       )}
       aria-label="Navegação principal"
     >
-      <ul className="mx-auto flex max-w-2xl">
+      <ul className="mx-auto flex w-full max-w-2xl">
         {TABS.map((tab) => {
           const realActive = tab.match(pathname)
           // Quando o user toca outra tab, ativa o destino imediatamente
@@ -86,7 +86,7 @@ export function BottomTabNav() {
           const pending = optimisticActive && !realActive
           const Icon = tab.icon
           return (
-            <li key={tab.href} className="flex-1">
+            <li key={tab.href} className="min-w-0 flex-1">
               <Link
                 href={tab.href}
                 prefetch
@@ -95,13 +95,18 @@ export function BottomTabNav() {
                   if (!tab.match(pathname)) setPendingHref(tab.href)
                 }}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 py-2.5',
+                  'flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2',
                   'transition-colors',
                   active ? 'text-brand-primary' : 'text-fg-subtle hover:text-fg',
                 )}
               >
-                <Icon className={cn('h-5 w-5', pending && 'animate-pulse')} aria-hidden="true" />
-                <span className="text-[0.6875rem] font-medium tracking-wide">{tab.label}</span>
+                <Icon
+                  className={cn('h-5 w-5 shrink-0', pending && 'animate-pulse')}
+                  aria-hidden="true"
+                />
+                <span className="block w-full truncate text-center text-[0.6875rem] font-medium leading-none tracking-tight">
+                  {tab.label}
+                </span>
               </Link>
             </li>
           )

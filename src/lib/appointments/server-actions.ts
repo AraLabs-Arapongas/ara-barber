@@ -131,7 +131,7 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('cancellation_window_hours, customer_can_cancel')
+    .select('cancellation_window_minutes, customer_can_cancel')
     .eq('id', appt.tenant_id)
     .maybeSingle()
 
@@ -144,7 +144,7 @@ export async function cancelCustomerAppointment(raw: CancelByCustomerInput): Pro
     }
   }
 
-  const windowHours = tenant?.cancellation_window_hours ?? 2
+  const windowHours = tenant?.cancellation_window_minutes ?? 2
   const cutoff = new Date(appt.start_at).getTime() - windowHours * 60 * 60 * 1000
   if (Date.now() > cutoff) {
     return { ok: false, error: `Cancelamento só até ${windowHours}h antes.` }
@@ -224,7 +224,7 @@ export async function cancelCustomerGroupBooking(
 
   const { data: tenantData } = await supabase
     .from('tenants')
-    .select('cancellation_window_hours, customer_can_cancel')
+    .select('cancellation_window_minutes, customer_can_cancel')
     .eq('id', group.tenant_id)
     .maybeSingle()
 
@@ -235,7 +235,7 @@ export async function cancelCustomerGroupBooking(
     }
   }
 
-  const windowHours = tenantData?.cancellation_window_hours ?? 2
+  const windowHours = tenantData?.cancellation_window_minutes ?? 2
   const cutoff = new Date(earliest.start_at).getTime() - windowHours * 60 * 60 * 1000
   if (Date.now() > cutoff) {
     return { ok: false, error: `Cancelamento só até ${windowHours}h antes.` }

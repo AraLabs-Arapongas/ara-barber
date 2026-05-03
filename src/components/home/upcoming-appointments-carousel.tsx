@@ -18,7 +18,7 @@ type Appointment = {
 type Props = {
   appointments: Appointment[]
   tenantTimezone: string
-  cancellationWindowHours: number
+  cancellationWindowMinutes: number
   customerCanCancel: boolean
 }
 
@@ -39,7 +39,7 @@ type Props = {
 export function UpcomingAppointmentsCarousel({
   appointments,
   tenantTimezone,
-  cancellationWindowHours,
+  cancellationWindowMinutes,
   customerCanCancel,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -77,7 +77,7 @@ export function UpcomingAppointmentsCarousel({
       <NextAppointmentCardHero
         appointment={a}
         tenantTimezone={tenantTimezone}
-        cancellationWindowHours={cancellationWindowHours}
+        cancellationWindowMinutes={cancellationWindowMinutes}
         customerCanCancel={customerCanCancel}
       />
     )
@@ -101,7 +101,7 @@ export function UpcomingAppointmentsCarousel({
             <NextAppointmentCardHero
               appointment={a}
               tenantTimezone={tenantTimezone}
-              cancellationWindowHours={cancellationWindowHours}
+              cancellationWindowMinutes={cancellationWindowMinutes}
               customerCanCancel={customerCanCancel}
             />
           </div>

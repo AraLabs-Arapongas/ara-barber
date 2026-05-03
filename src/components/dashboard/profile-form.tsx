@@ -5,7 +5,9 @@ import type { ChangeEvent, FormEvent, ReactNode } from 'react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { SelectSheet } from '@/components/ui/select-sheet'
 import { updateTenantProfile } from '@/app/admin/(authenticated)/actions/tenant-profile'
+import { BR_STATES, formatBrPhone, formatCep, lookupCep } from '@/lib/format'
 
 type Initial = {
   name: string
@@ -19,10 +21,23 @@ type Initial = {
   postal_code: string
 }
 
+const STATE_OPTIONS = BR_STATES.map((s) => ({ value: s.uf, label: `${s.uf} — ${s.name}` }))
+
 export function ProfileForm({ initial }: { initial: Initial }) {
-  const [data, setData] = useState<Initial>(initial)
+  const [data, setData] = useState<Initial>({
+    ...initial,
+    contact_phone: formatBrPhone(initial.contact_phone),
+    whatsapp: formatBrPhone(initial.whatsapp),
+    postal_code: formatCep(initial.postal_code),
+    state: initial.state.toUpperCase().slice(0, 2),
+  })
   const [pending, startTransition] = useTransition()
+  const [cepLoading, setCepLoading] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+
+  function patch(partial: Partial<Initial>) {
+    setData((d) => ({ ...d, ...partial }))
+  }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -37,45 +52,127 @@ export function ProfileForm({ initial }: { initial: Initial }) {
     })
   }
 
-  function bind(key: keyof Initial) {
-    return {
-      value: data[key],
-      onChange: (e: ChangeEvent<HTMLInputElement>) =>
-        setData((d) => ({ ...d, [key]: e.target.value })),
-    }
+  // Quando user termina de digitar CEP (8 dígitos), busca ViaCEP e
+  // autopreenche endereço/cidade/UF se vier vazio. Não sobrescreve
+  // campos que o user já tenha preenchido manualmente.
+  async function handleCepChange(e: ChangeEvent<HTMLInputElement>) {
+    const formatted = formatCep(e.target.value)
+    patch({ postal_code: formatted })
+    if (formatted.replace(/\D/g, '').length !== 8) return
+    setCepLoading(true)
+    const result = await lookupCep(formatted)
+    setCepLoading(false)
+    if (!result) return
+    setData((d) => ({
+      ...d,
+      address_line1: d.address_line1 || result.street,
+      address_line2: d.address_line2 || result.neighborhood,
+      city: d.city || result.city,
+      state: d.state || result.uf,
+    }))
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <Field label="Nome do negócio">
-        <Input {...bind('name')} required />
+      <Field label="Nome do negócio" required>
+        <Input
+          value={data.name}
+          onChange={(e) => patch({ name: e.target.value })}
+          required
+          maxLength={120}
+        />
       </Field>
-      <Field label="Telefone de contato">
-        <Input type="tel" {...bind('contact_phone')} />
-      </Field>
-      <Field label="WhatsApp">
-        <Input type="tel" {...bind('whatsapp')} />
-      </Field>
-      <Field label="E-mail">
-        <Input type="email" {...bind('email')} />
-      </Field>
-      <Field label="Endereço linha 1">
-        <Input {...bind('address_line1')} />
-      </Field>
-      <Field label="Endereço linha 2">
-        <Input {...bind('address_line2')} />
-      </Field>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="Cidade">
-          <Input {...bind('city')} />
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Telefone de contato">
+          <Input
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            placeholder="(00) 00000-0000"
+            value={data.contact_phone}
+            onChange={(e) => patch({ contact_phone: formatBrPhone(e.target.value) })}
+            maxLength={16}
+          />
         </Field>
-        <Field label="UF">
-          <Input {...bind('state')} maxLength={2} />
+        <Field label="WhatsApp">
+          <Input
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            placeholder="(00) 00000-0000"
+            value={data.whatsapp}
+            onChange={(e) => patch({ whatsapp: formatBrPhone(e.target.value) })}
+            maxLength={16}
+          />
         </Field>
       </div>
-      <Field label="CEP">
-        <Input {...bind('postal_code')} />
+
+      <Field label="E-mail">
+        <Input
+          type="email"
+          autoComplete="email"
+          placeholder="contato@empresa.com"
+          value={data.email}
+          onChange={(e) => patch({ email: e.target.value })}
+          maxLength={200}
+        />
       </Field>
+
+      <Field
+        label="CEP"
+        hint={cepLoading ? 'Buscando endereço…' : 'Digite o CEP que preenchemos o resto.'}
+      >
+        <Input
+          inputMode="numeric"
+          autoComplete="postal-code"
+          placeholder="00000-000"
+          value={data.postal_code}
+          onChange={handleCepChange}
+          maxLength={9}
+        />
+      </Field>
+
+      <Field label="Endereço (rua e número)">
+        <Input
+          autoComplete="street-address"
+          placeholder="Rua, número"
+          value={data.address_line1}
+          onChange={(e) => patch({ address_line1: e.target.value })}
+          maxLength={200}
+        />
+      </Field>
+
+      <Field label="Complemento / bairro">
+        <Input
+          autoComplete="address-line2"
+          placeholder="Bairro, sala, ponto de referência"
+          value={data.address_line2}
+          onChange={(e) => patch({ address_line2: e.target.value })}
+          maxLength={200}
+        />
+      </Field>
+
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <Field label="Cidade">
+          <Input
+            autoComplete="address-level2"
+            value={data.city}
+            onChange={(e) => patch({ city: e.target.value })}
+            maxLength={100}
+          />
+        </Field>
+        <Field label="UF">
+          <SelectSheet
+            value={data.state}
+            onChange={(uf) => patch({ state: uf })}
+            options={STATE_OPTIONS}
+            placeholder="UF"
+            sheetTitle="Estado"
+            className="min-w-[7rem]"
+          />
+        </Field>
+      </div>
 
       {msg ? (
         <p
@@ -95,11 +192,25 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   )
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  required,
+  hint,
+  children,
+}: {
+  label: string
+  required?: boolean
+  hint?: ReactNode
+  children: ReactNode
+}) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-fg">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-fg">
+        {label}
+        {required ? <span className="ml-0.5 text-danger">*</span> : null}
+      </span>
       {children}
+      {hint ? <span className="mt-1 block text-[0.75rem] text-fg-subtle">{hint}</span> : null}
     </label>
   )
 }

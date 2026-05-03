@@ -44,7 +44,7 @@ export default async function MeusAgendamentosLayout({ children }: { children: R
           <CustomerTenantProvider
             value={{
               timezone: tenant.timezone,
-              cancellationWindowHours: tenant.cancellationWindowHours,
+              cancellationWindowMinutes: tenant.cancellationWindowMinutes,
             }}
           >
             {children}

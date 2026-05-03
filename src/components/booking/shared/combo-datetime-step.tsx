@@ -30,7 +30,7 @@ export function ComboDateTimeStep({
   maxDateISO,
   initialDateISO,
   stepMinutes,
-  minAdvanceHours,
+  minAdvanceMinutes,
 }: {
   context: SharedBookingContext
   /** Ordem dos services. */
@@ -46,7 +46,7 @@ export function ComboDateTimeStep({
   maxDateISO?: string
   initialDateISO?: string
   stepMinutes?: number
-  minAdvanceHours?: number
+  minAdvanceMinutes?: number
 }) {
   const todayISO = todayISOInTZ(context.tenantTimezone)
   const [date, setDate] = useState<string>(initialDateISO ?? todayISO)
@@ -83,9 +83,9 @@ export function ComboDateTimeStep({
       existingAppointments: context.existingAppointments,
       now: new Date(),
       stepMinutes,
-      minAdvanceHours,
+      minAdvanceMinutes,
     })
-  }, [services, bufferMinutes, date, context, stepMinutes, minAdvanceHours])
+  }, [services, bufferMinutes, date, context, stepMinutes, minAdvanceMinutes])
 
   const isCombo = services.length > 1
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)

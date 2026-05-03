@@ -807,7 +807,7 @@ export type Database = {
           billing_model: Database["public"]["Enums"]["billing_model"]
           billing_status: Database["public"]["Enums"]["billing_status"]
           booking_window_days: number
-          cancellation_window_hours: number
+          cancellation_window_minutes: number
           city: string | null
           combo_buffer_minutes: number
           contact_phone: string | null
@@ -831,7 +831,7 @@ export type Database = {
           is_custom_trial: boolean
           is_pioneer: boolean
           logo_url: string | null
-          min_advance_hours: number
+          min_advance_minutes: number
           monthly_price_cents: number
           name: string
           notes_internal: string | null
@@ -867,7 +867,7 @@ export type Database = {
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
           booking_window_days?: number
-          cancellation_window_hours?: number
+          cancellation_window_minutes?: number
           city?: string | null
           combo_buffer_minutes?: number
           contact_phone?: string | null
@@ -891,7 +891,7 @@ export type Database = {
           is_custom_trial?: boolean
           is_pioneer?: boolean
           logo_url?: string | null
-          min_advance_hours?: number
+          min_advance_minutes?: number
           monthly_price_cents?: number
           name: string
           notes_internal?: string | null
@@ -927,7 +927,7 @@ export type Database = {
           billing_model?: Database["public"]["Enums"]["billing_model"]
           billing_status?: Database["public"]["Enums"]["billing_status"]
           booking_window_days?: number
-          cancellation_window_hours?: number
+          cancellation_window_minutes?: number
           city?: string | null
           combo_buffer_minutes?: number
           contact_phone?: string | null
@@ -951,7 +951,7 @@ export type Database = {
           is_custom_trial?: boolean
           is_pioneer?: boolean
           logo_url?: string | null
-          min_advance_hours?: number
+          min_advance_minutes?: number
           monthly_price_cents?: number
           name?: string
           notes_internal?: string | null

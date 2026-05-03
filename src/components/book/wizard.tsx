@@ -310,7 +310,7 @@ export function CustomerBookingWizard({
           onNext={next}
           maxDateISO={context.rangeEndDate}
           stepMinutes={context.slotIntervalMinutes}
-          minAdvanceHours={context.minAdvanceHours}
+          minAdvanceMinutes={context.minAdvanceMinutes}
         />
       ) : null}
 

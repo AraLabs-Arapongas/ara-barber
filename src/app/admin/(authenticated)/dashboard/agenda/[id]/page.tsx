@@ -67,10 +67,10 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
 
   const { data: tenantRow } = await supabase
     .from('tenants')
-    .select('cancellation_window_hours')
+    .select('cancellation_window_minutes')
     .eq('id', tenant.id)
     .maybeSingle()
-  const cancellationWindowHours = tenantRow?.cancellation_window_hours ?? 2
+  const cancellationWindowMinutes = tenantRow?.cancellation_window_minutes ?? 2
 
   // Template WhatsApp pra "Enviar pelo WhatsApp" — só renderizamos o botão
   // quando o template está habilitado (staff pode ter desativado em
@@ -88,7 +88,7 @@ export default async function AppointmentDetailPage({ params, searchParams }: Pa
     now: new Date(),
     startAt: new Date(row.start_at),
     endAt: new Date(row.end_at),
-    cancellationWindowHours,
+    cancellationWindowMinutes,
   }
 
   const actions = CANDIDATE_STATUSES.filter(

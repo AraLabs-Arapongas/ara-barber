@@ -22,7 +22,7 @@ function baseInput(overrides: Partial<ComboSlotInput> = {}): ComboSlotInput {
     existingAppointments: [],
     now: new Date(`${DATE}T08:00:00-03:00`),
     stepMinutes: 30,
-    minAdvanceHours: 0,
+    minAdvanceMinutes: 0,
     ...overrides,
   }
 }

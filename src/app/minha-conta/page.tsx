@@ -98,7 +98,7 @@ export default async function MinhaContaPage() {
                   status: a.status,
                 }))}
                 tenantTimezone={tenant.timezone}
-                cancellationWindowHours={tenant.cancellationWindowHours}
+                cancellationWindowMinutes={tenant.cancellationWindowMinutes}
                 customerCanCancel={tenant.customerCanCancel}
               />
             </section>

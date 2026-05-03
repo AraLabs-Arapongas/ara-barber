@@ -46,7 +46,7 @@ export async function transitionAppointmentStatus(raw: TransitionInput): Promise
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('cancellation_window_hours')
+    .select('cancellation_window_minutes')
     .eq('id', appt.tenant_id)
     .maybeSingle()
 
@@ -55,7 +55,7 @@ export async function transitionAppointmentStatus(raw: TransitionInput): Promise
     now: new Date(),
     startAt: new Date(appt.start_at),
     endAt: new Date(appt.end_at),
-    cancellationWindowHours: tenant?.cancellation_window_hours ?? 2,
+    cancellationWindowMinutes: tenant?.cancellation_window_minutes ?? 2,
   })
   if (!check.ok) return { ok: false, error: check.reason }
 

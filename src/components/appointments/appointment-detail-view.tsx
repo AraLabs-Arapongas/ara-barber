@@ -18,7 +18,7 @@ type Props = {
 }
 
 export function AppointmentDetailView({ id }: Props) {
-  const { timezone: tenantTimezone, cancellationWindowHours } = useCustomerTenant()
+  const { timezone: tenantTimezone, cancellationWindowMinutes } = useCustomerTenant()
   const [appt, setAppt] = useState<AgendaAppointment | null>(() => {
     const cached = getCachedAppointment(id)
     return cached ?? null
@@ -44,7 +44,7 @@ export function AppointmentDetailView({ id }: Props) {
 
   const startMs = new Date(appt.startAt).getTime()
   const endMs = new Date(appt.endAt).getTime()
-  const cutoffMs = startMs - cancellationWindowHours * 60 * 60 * 1000
+  const cutoffMs = startMs - cancellationWindowMinutes * 60 * 1000
   const canCancel =
     (appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED') && nowMs <= cutoffMs
 
@@ -123,7 +123,7 @@ export function AppointmentDetailView({ id }: Props) {
       {canCancel ? (
         <CancelOwnAppointmentButton
           appointmentId={appt.id}
-          cancellationWindowHours={cancellationWindowHours}
+          cancellationWindowMinutes={cancellationWindowMinutes}
         />
       ) : null}
     </main>

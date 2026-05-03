@@ -18,16 +18,43 @@ const urlOrPath = z
     'Deve ser uma URL https://… ou caminho relativo /…',
   )
 
+// Regex permissivos: aceita formato BR (com ou sem máscara). Validação
+// rígida demais frusta usuário que cola número de outro lugar; o que
+// importa é gravar normalizado no banco.
+const PHONE_REGEX = /^(?:\(?\d{2}\)?[\s-]?\d{4,5}[\s-]?\d{4})?$/
+const CEP_REGEX = /^(?:\d{5}-?\d{3})?$/
+const UF_REGEX = /^(?:[A-Z]{2})?$/
+
 const ProfileInput = z.object({
   name: z.string().min(1, 'Nome é obrigatório.').max(120),
-  contact_phone: z.string().max(40).optional().or(z.literal('')),
-  whatsapp: z.string().max(40).optional().or(z.literal('')),
+  contact_phone: z
+    .string()
+    .max(20)
+    .regex(PHONE_REGEX, 'Telefone inválido. Use (00) 00000-0000.')
+    .optional()
+    .or(z.literal('')),
+  whatsapp: z
+    .string()
+    .max(20)
+    .regex(PHONE_REGEX, 'WhatsApp inválido. Use (00) 00000-0000.')
+    .optional()
+    .or(z.literal('')),
   email: z.string().email('E-mail inválido.').max(200).optional().or(z.literal('')),
   address_line1: z.string().max(200).optional().or(z.literal('')),
   address_line2: z.string().max(200).optional().or(z.literal('')),
   city: z.string().max(100).optional().or(z.literal('')),
-  state: z.string().max(40).optional().or(z.literal('')),
-  postal_code: z.string().max(20).optional().or(z.literal('')),
+  state: z
+    .string()
+    .max(2)
+    .regex(UF_REGEX, 'UF deve ter 2 letras maiúsculas.')
+    .optional()
+    .or(z.literal('')),
+  postal_code: z
+    .string()
+    .max(9)
+    .regex(CEP_REGEX, 'CEP inválido. Use 00000-000.')
+    .optional()
+    .or(z.literal('')),
 })
 
 export type UpdateTenantProfileInput = z.infer<typeof ProfileInput>

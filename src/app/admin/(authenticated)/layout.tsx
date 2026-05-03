@@ -6,7 +6,6 @@ import { ThemeInjector } from '@/components/branding/theme-injector'
 import { assertStaff, AuthError } from '@/lib/auth/guards'
 import { BottomTabNav } from '@/components/nav/bottom-tab-nav'
 import { GlobalFab } from '@/components/nav/global-fab'
-import { SwipeNavigator } from '@/components/dashboard/swipe-navigator'
 import { OnboardingBanner } from '@/components/dashboard/onboarding-banner'
 import { getOnboardingState } from '@/lib/onboarding/queries'
 import { createSecretClient } from '@/lib/supabase/secret'
@@ -61,12 +60,10 @@ export default async function AdminAuthenticatedLayout({
           accentColor: tenant.accentColor,
         }}
       />
-      <SwipeNavigator>
-        <div className="min-h-screen bg-bg text-fg pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
-          {!onboarding.completed ? <OnboardingBanner state={onboarding} /> : null}
-          {children}
-        </div>
-      </SwipeNavigator>
+      <div className="min-h-screen overflow-x-hidden bg-bg text-fg pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+        {!onboarding.completed ? <OnboardingBanner state={onboarding} /> : null}
+        {children}
+      </div>
       <GlobalFab />
       <BottomTabNav />
     </>

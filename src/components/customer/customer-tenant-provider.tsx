@@ -4,7 +4,7 @@ import { createContext, useContext, type ReactNode } from 'react'
 
 type CustomerTenantInfo = {
   timezone: string
-  cancellationWindowHours: number
+  cancellationWindowMinutes: number
 }
 
 const Ctx = createContext<CustomerTenantInfo | null>(null)

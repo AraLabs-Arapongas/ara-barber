@@ -11,7 +11,7 @@ import { getCurrentTenantOrNotFound } from '@/lib/tenant/context'
 const SLOT_INTERVALS = [5, 10, 15, 20, 30, 60] as const
 
 const Input = z.object({
-  min_advance_hours: z
+  min_advance_minutes: z
     .number()
     .int('Antecedência deve ser um inteiro.')
     .min(0, 'Antecedência mínima é 0h.')
@@ -22,7 +22,7 @@ const Input = z.object({
     .refine((v) => (SLOT_INTERVALS as readonly number[]).includes(v), {
       message: 'Intervalo inválido.',
     }),
-  cancellation_window_hours: z
+  cancellation_window_minutes: z
     .number()
     .int('Janela de cancelamento deve ser um inteiro.')
     .min(0, 'Janela mínima é 0h.')
@@ -52,12 +52,12 @@ export type UpdateBookingRulesResult = { ok: true } | { ok: false; error: string
  * silent denial caso a policy seja modificada no futuro.
  *
  * Runtime enforcement das regras:
- *   - `min_advance_hours` + `slot_interval_minutes`: aplicados no
+ *   - `min_advance_minutes` + `slot_interval_minutes`: aplicados no
  *     `computeSlots()` (`src/lib/booking/slots.ts`) — staff IGNORA
- *     `min_advance_hours` (pode bookar walk-in pra agora).
+ *     `min_advance_minutes` (pode bookar walk-in pra agora).
  *   - `customer_can_cancel`: validado em `cancelCustomerAppointment()`
  *     (`src/lib/appointments/server-actions.ts`).
- *   - `cancellation_window_hours`: validado em `cancelCustomerAppointment()`.
+ *   - `cancellation_window_minutes`: validado em `cancelCustomerAppointment()`.
  *   - `booking_window_days`: aplicado no `getCustomerBookingContext()`
  *     (`src/lib/booking/customer-context.ts`).
  */

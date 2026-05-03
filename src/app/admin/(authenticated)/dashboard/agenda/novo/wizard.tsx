@@ -173,7 +173,7 @@ export function ManualBookingWizard({
           onBack={back}
           onNext={next}
           stepMinutes={context.slotIntervalMinutes}
-          // Staff não respeita min_advance_hours — pode bookar walk-in.
+          // Staff não respeita min_advance_minutes — pode bookar walk-in.
         />
       ) : null}
       {step === 5 ? (

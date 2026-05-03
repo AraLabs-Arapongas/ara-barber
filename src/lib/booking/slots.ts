@@ -21,10 +21,10 @@ export type SlotInput = {
   stepMinutes?: number
   /**
    * Antecedência mínima pra agendar (em horas). Slots cujo `startAt` é
-   * anterior a `now + minAdvanceHours` são omitidos. Vem de
-   * `tenants.min_advance_hours`. Default 0.
+   * anterior a `now + minAdvanceMinutes` são omitidos. Vem de
+   * `tenants.min_advance_minutes`. Default 0.
    */
-  minAdvanceHours?: number
+  minAdvanceMinutes?: number
 }
 
 export type Slot = {
@@ -126,7 +126,7 @@ export function weekdayInTenantTZ(dateISO: string, tenantTimezone: string): numb
  */
 export function computeSlots(input: SlotInput): Slot[] {
   const step = input.stepMinutes ?? 30
-  const minAdvanceMs = (input.minAdvanceHours ?? 0) * 60 * 60_000
+  const minAdvanceMs = (input.minAdvanceMinutes ?? 0) * 60 * 60_000
   const earliestAllowed = input.now.getTime() + minAdvanceMs
   const weekday = weekdayInTenantTZ(input.dateISO, input.tenantTimezone)
 
@@ -225,7 +225,7 @@ export type ComboSlotInput = {
   existingAppointments: Array<{ professionalId: string; startAt: string; endAt: string }>
   now: Date
   stepMinutes?: number
-  minAdvanceHours?: number
+  minAdvanceMinutes?: number
 }
 
 export type ComboSegment = {
@@ -267,7 +267,7 @@ export function computeComboSlots(input: ComboSlotInput): ComboSlot[] {
   if (input.services.length === 0) return []
 
   const step = input.stepMinutes ?? 30
-  const minAdvanceMs = (input.minAdvanceHours ?? 0) * 60 * 60_000
+  const minAdvanceMs = (input.minAdvanceMinutes ?? 0) * 60 * 60_000
   const earliestAllowed = input.now.getTime() + minAdvanceMs
   const weekday = weekdayInTenantTZ(input.dateISO, input.tenantTimezone)
 
