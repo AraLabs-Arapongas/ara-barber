@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition, type FormEvent } from 'react'
+import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -627,6 +627,14 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
   const [editing, setEditing] = useState<TestimonialState | null>(null)
   const [pending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLDivElement>(null)
+  // Quando começa a editar, traz o form pra viewport.
+  useEffect(() => {
+    if (editing && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [editing])
 
   function startNew() {
     setEditing({ id: '', author_name: '', body: '', rating: 5, position: list.length })
@@ -653,6 +661,9 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
         }
         setEditing(null)
         setMsg({ kind: 'success', text: 'Salvo!' })
+        // Scroll de volta pro topo da seção pra mostrar o item editado
+        // no contexto da lista (evita ficar perdido lá embaixo).
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       } else {
         setMsg({ kind: 'error', text: res.error })
       }
@@ -675,6 +686,7 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
 
   return (
     <EditorSection title="Depoimentos" hint="Adicione comentários reais de clientes.">
+      <div ref={sectionRef} aria-hidden="true" />
       {list.length > 0 ? (
         <ul className="space-y-2">
           {list.map((t) => (
@@ -715,7 +727,10 @@ function TestimonialsEditor({ initial }: { initial: TestimonialState[] }) {
       )}
 
       {editing ? (
-        <div className="space-y-3 rounded-xl border border-brand-primary/40 bg-surface p-4">
+        <div
+          ref={formRef}
+          className="space-y-3 rounded-xl border border-brand-primary/40 bg-surface p-4 scroll-mt-4"
+        >
           <Input
             value={editing.author_name}
             onChange={(e) => setEditing({ ...editing, author_name: e.target.value })}
