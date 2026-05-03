@@ -18,6 +18,37 @@ import {
   QuotaConfirmModal,
   type QuotaConfirmation,
 } from './professional-quota'
+import { ProfessionalPhotoUploader } from './professional-photo-uploader'
+
+function initialsOf(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+function PhotoSection({ pro }: { pro: DetailPro }) {
+  const display = pro.displayName ?? pro.name
+  return (
+    <section>
+      <SectionTitle>Foto</SectionTitle>
+      <Card className="shadow-xs">
+        <CardContent className="py-4">
+          <ProfessionalPhotoUploader
+            professionalId={pro.id}
+            initials={initialsOf(display)}
+            currentUrl={pro.photoUrl}
+          />
+          <p className="mt-3 text-[0.75rem] text-fg-muted">
+            PNG, JPG ou WebP. Até 5 MB. Aparece no seu link público de agendamento.
+          </p>
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
 import { toggleProfessionalService } from '@/app/admin/(authenticated)/actions/professional-services'
 import { saveWeeklyAvailability } from '@/app/admin/(authenticated)/actions/availability'
 
@@ -29,6 +60,7 @@ export type DetailPro = {
   displayName: string | null
   phone: string | null
   isActive: boolean
+  photoUrl: string | null
 }
 
 export type DetailService = { id: string; name: string; isActive: boolean }
@@ -84,6 +116,7 @@ export function ProfessionalDetail({
       </header>
 
       <div className="space-y-8">
+        <PhotoSection pro={pro} />
         <InfoSection pro={pro} />
         <ServicesSection proId={pro.id} services={services} linkedServiceIds={linkedServiceIds} />
         <JourneySection proId={pro.id} entries={availability} />

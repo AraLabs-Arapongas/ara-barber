@@ -20,7 +20,7 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
 
   const { data: proRow } = await supabase
     .from('professionals')
-    .select('id, name, display_name, phone, is_active')
+    .select('id, name, display_name, phone, is_active, photo_url')
     .eq('tenant_id', tenant.id)
     .eq('id', id)
     .maybeSingle()
@@ -59,6 +59,7 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
     displayName: proRow.display_name,
     phone: proRow.phone,
     isActive: proRow.is_active,
+    photoUrl: proRow.photo_url,
   }
   const services: DetailService[] = (svcData ?? []).map((s) => ({
     id: s.id,
