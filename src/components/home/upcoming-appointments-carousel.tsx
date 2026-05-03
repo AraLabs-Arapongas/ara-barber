@@ -12,6 +12,7 @@ type Appointment = {
   professionalId: string
   professionalName: string | null
   startAt: string
+  endAt: string
   status: AppointmentStatus
 }
 

@@ -95,6 +95,7 @@ export default async function MinhaContaPage() {
                   professionalId: a.professionalId,
                   professionalName: a.professionalName,
                   startAt: a.startAt,
+                  endAt: a.endAt,
                   status: a.status,
                 }))}
                 tenantTimezone={tenant.timezone}

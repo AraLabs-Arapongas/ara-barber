@@ -20,6 +20,7 @@ type Props = {
     professionalId: string
     professionalName: string | null
     startAt: string
+    endAt: string
     status: AppointmentStatus
   }
   tenantTimezone: string
@@ -100,6 +101,15 @@ export function NextAppointmentCardHero({
               <span className="font-semibold text-brand-primary">{dateLabel}</span>
               <span className="text-fg-muted"> · </span>
               <span className="font-semibold text-fg">{timeLabel}</span>
+              <span className="text-fg-muted"> · </span>
+              <span className="text-fg-muted">
+                {Math.round(
+                  (new Date(appointment.endAt).getTime() -
+                    new Date(appointment.startAt).getTime()) /
+                    60000,
+                )}{' '}
+                min
+              </span>
             </p>
             {appointment.professionalName ? (
               <p className="mt-1 text-[0.8125rem] text-fg-muted">
