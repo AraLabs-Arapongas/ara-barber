@@ -63,9 +63,12 @@ export function StaffPushBanner() {
         <div className="min-w-0 flex-1">
           <p className="text-[0.9375rem] font-medium text-fg">Avisos bloqueados</p>
           <p className="truncate text-[0.8125rem] text-fg-muted">
-            Libere notificação nas configs do navegador.
+            Desbloqueie no navegador e tente de novo.
           </p>
         </div>
+        <Button size="sm" variant="secondary" onClick={enable} loading={pending}>
+          Tentar
+        </Button>
       </div>
     )
   }
