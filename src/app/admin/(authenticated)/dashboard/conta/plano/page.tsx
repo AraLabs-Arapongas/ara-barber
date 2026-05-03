@@ -10,7 +10,9 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELED: 'Cancelado',
 }
 
-const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '5543999999999'
+// WhatsApp do suporte AraLabs (formato internacional sem +).
+// Env var permite override por ambiente, mas o default já é o número real.
+const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '5543988445445'
 const SUPPORT_MESSAGE = 'Olá, preciso de ajuda com plano e cobrança da AraLabs.'
 
 function daysUntil(iso: string | null): number | null {
