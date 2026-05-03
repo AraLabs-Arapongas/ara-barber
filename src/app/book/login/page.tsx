@@ -41,7 +41,7 @@ export default async function BookLoginPage({ searchParams }: PageProps) {
         Entrar
       </h1>
       <p className="mt-1 mb-5 text-[0.9375rem] text-fg-muted">
-        Use seu e-mail. Vamos enviar um código de 8 dígitos.
+        Use seu e-mail. Vamos enviar um código de 6 dígitos.
       </p>
 
       <Card>

@@ -349,9 +349,13 @@ export function CustomerBookingWizard({
             <Card>
               <CardContent className="space-y-3 py-5">
                 <p className="text-[0.875rem] text-fg-muted">
-                  Entre com seu e-mail. Vamos enviar um código de 8 dígitos.
+                  Entre com seu e-mail. Vamos enviar um código de 6 dígitos.
                 </p>
-                <CustomerLoginForm autoFocusEmail onOtpSuccess={() => router.refresh()} />
+                <CustomerLoginForm
+                  autoFocusEmail
+                  googleRedirectToCurrent
+                  onOtpSuccess={() => router.refresh()}
+                />
                 <Button type="button" variant="secondary" fullWidth onClick={back}>
                   Voltar
                 </Button>

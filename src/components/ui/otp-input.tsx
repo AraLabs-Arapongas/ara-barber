@@ -90,6 +90,13 @@ export function OtpInput({
       aria-label={ariaLabel}
       className="relative flex items-center justify-between gap-2"
     >
+      {/*
+        Input fica POR CIMA das boxes (z-10) com opacity 0. Necessário pra que
+        long-press em mobile dispare o menu nativo de "Colar" — sem isso, o
+        long-press cai numa div presentacional e o browser não oferece paste.
+        Boxes ganham `pointer-events-none` pra deixar o input receber clique
+        nativamente. Caret position é determinada pelo browser via clique.
+      */}
       <input
         ref={inputRef}
         type="text"
@@ -108,9 +115,19 @@ export function OtpInput({
         onBlur={() => setFocused(false)}
         onSelect={handleSelect}
         onKeyUp={handleSelect}
+        onPaste={(e) => {
+          // Garantia extra: limpa não-dígitos do conteúdo colado e respeita
+          // length. Browser já dispara onChange depois, mas em alguns mobiles
+          // o conteúdo colado pode incluir espaços/quebras invisíveis.
+          const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length)
+          if (text) {
+            e.preventDefault()
+            onChange(text)
+          }
+        }}
         name={name}
         aria-label={ariaLabel}
-        className="absolute inset-0 -z-10 h-full w-full cursor-text bg-transparent text-transparent caret-transparent opacity-0 outline-none"
+        className="absolute inset-0 z-10 h-full w-full cursor-text bg-transparent text-transparent caret-transparent opacity-0 outline-none"
       />
       {digits.map((digit, i) => (
         <div
@@ -118,11 +135,11 @@ export function OtpInput({
           role="presentation"
           onMouseDown={(e) => handleBoxMouseDown(e, i)}
           className={cn(
-            'relative flex aspect-square w-full min-w-0 max-w-14 flex-1 cursor-text items-center justify-center',
+            'pointer-events-none relative flex aspect-square w-full min-w-0 max-w-14 flex-1 items-center justify-center',
             'rounded-lg border bg-surface-raised',
             'transition-[border-color] duration-200 ease-out',
             isError ? 'border-error' : activeIndex === i ? 'border-brand-primary' : 'border-border',
-            disabled && 'cursor-not-allowed opacity-60',
+            disabled && 'opacity-60',
           )}
         >
           {digit ? (

@@ -46,6 +46,14 @@ export interface CustomerLoginFormProps {
   /** Pra onde o cliente vai após autenticar. Default: /meus-agendamentos */
   redirectTo?: string
   /**
+   * Quando true, o redirect do Google OAuth volta pra URL ATUAL (pathname +
+   * search) em vez de `redirectTo` — preserva state que vive na URL (ex:
+   * wizard de booking com serviceIds/profIds/step). Calculado no click pra
+   * pegar a URL viva (wizard atualiza search params via replaceState).
+   * Login por OTP usa `onOtpSuccess` em vez disso (não tem round-trip).
+   */
+  googleRedirectToCurrent?: boolean
+  /**
    * Callback chamado após autenticação por OTP bem-sucedida. Quando definido,
    * substitui o redirect — útil pra login inline no meio de um flow (ex:
    * wizard de booking que precisa continuar na mesma página).
@@ -59,12 +67,13 @@ export interface CustomerLoginFormProps {
 
 type Stage = 'email' | 'code'
 
-// Comprimento do OTP enviado pelo Supabase. Supabase Cloud envia 8 dígitos por
-// padrão no template de magic link / email OTP. Mantém em sync com o template.
-const OTP_LENGTH = 8
+// Comprimento do OTP enviado pelo Supabase. Configurado em supabase/config.toml
+// como `otp_length = 6` em [auth.email]. Mantém em sync com o template.
+const OTP_LENGTH = 6
 
 export function CustomerLoginForm({
   redirectTo = '/meus-agendamentos',
+  googleRedirectToCurrent = false,
   onOtpSuccess,
   autoFocusEmail = false,
   className,
@@ -120,8 +129,15 @@ export function CustomerLoginForm({
 
   async function handleGoogle() {
     setPendingGoogle(true)
+    // Se o consumidor quer voltar pra URL atual (caso do wizard de booking),
+    // captura agora antes do round-trip OAuth — depois do callback a URL é
+    // perdida. Search params ficam no path (wizard sincroniza via replaceState).
+    const target =
+      googleRedirectToCurrent && typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : redirectTo
     try {
-      const { error: googleError } = await signInCustomerGoogle(redirectTo)
+      const { error: googleError } = await signInCustomerGoogle(target)
       if (googleError) {
         setError(googleError)
         setPendingGoogle(false)
