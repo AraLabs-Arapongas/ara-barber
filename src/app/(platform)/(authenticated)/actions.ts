@@ -282,31 +282,13 @@ export async function sendMagicLinkAction(
   if (!parsed.success) return { error: 'Input inválido' }
   const supabase = createSecretClient()
 
-  // Resolve a URL de callback: staff de tenant volta pro próprio
-  // subdomínio (cookie da sessão fica isolado); platform admin volta
-  // pro apex admin. `next` aponta pro destino pós-login (dashboard
-  // do tenant ou do platform).
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('tenant_id, tenants(subdomain)')
-    .eq('user_id', parsed.data.userId)
-    .maybeSingle()
-  const tenants = profile?.tenants as
-    | { subdomain: string | null }
-    | { subdomain: string | null }[]
-    | null
-    | undefined
-  const subdomain = Array.isArray(tenants)
-    ? (tenants[0]?.subdomain ?? null)
-    : (tenants?.subdomain ?? null)
-  const callbackUrl = subdomain
-    ? `https://${subdomain}.aralabs.com.br/auth/callback?next=/admin/dashboard`
-    : `https://admin.aralabs.com.br/auth/callback?next=/dashboard`
-
+  // OTP code-only — owner cola o código de 6 dígitos no /admin/login
+  // do próprio subdomínio. Sem `emailRedirectTo` porque não usamos
+  // magic link. Multi-tenant per user é OK: o owner sabe em qual
+  // tenant quer entrar e digita o slug certo no browser.
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
-      emailRedirectTo: callbackUrl,
       shouldCreateUser: false,
     },
   })

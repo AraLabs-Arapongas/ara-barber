@@ -29,10 +29,13 @@ export async function ensureCustomerForTenant(tenantId: string): Promise<Ensured
   } = await supabase.auth.getUser()
   if (!user) return null
 
+  // Multi-tenant: user pode ser staff em A e customer em B. Filtra
+  // pelo tenant atual pra não tratar errado.
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
+    .eq('tenant_id', tenantId)
     .maybeSingle()
   if (profile && STAFF_ROLES.has(profile.role)) return null
 
