@@ -346,6 +346,209 @@ _Brainstorm dump. Move pra Backlog quando virar concreto, ou pra "Não vamos faz
 
 ---
 
+## Features de produto (brainstorm 2026-05-03)
+
+_Sessão de brainstorm grande — 16 ideias. Top picks pra Q1: PIX
+(item 3) + Lista de espera (6) + Caixa completo (11). Marketplace (1)
+e AI agente (2) são os "vira-jogo" pra Q2-Q3._
+
+### Disruptivas
+
+- **Marketplace AraLabs (descoberta).** App/site `/buscar` onde
+  cliente final pesquisa por bairro/serviço/preço, vê todos tenants
+  ativos, marca direto. Plataforma cobra take rate só nas reservas
+  geradas pelo marketplace. Vira plataforma de 2 lados (network
+  effects). Reabrir com 200+ tenants ativos.
+- **AI agente de agendamento por WhatsApp.** Cliente manda "quero
+  corte com Diogo sexta de manhã" → bot LLM consulta agenda real,
+  sugere slots, confirma. Combina com WhatsApp Business API
+  oficial. Esforço 3-4 semanas, é o "wow".
+- **Pagamento online + sinal antecipado (PIX).** Já listado em
+  Tier 2. Mata no-show + revenue stream via fee transacional
+  (1.5-2.5%). Schema já preparado.
+- **Pacotes / assinatura recorrente.** "Pack 4 cortes/mês — R$ 200
+  PIX automático". Cliente fica preso, dono prevê receita,
+  plataforma fica com fee de cada cobrança.
+
+### Receita direta
+
+- **WhatsApp Business API oficial** (envio automático real). Hoje
+  é manual via wa.me. Z-API ou Meta direto. Tier premium (R$ 30-50/
+  mês). Mata 80% do "esqueci de avisar".
+- **Lista de espera automática.** Cliente vê horário cheio → entra
+  na waitlist → se cancela, push automático com 2min pra confirmar.
+  Taxa de ocupação real do profissional sobe 10-15%. Diferencial
+  raro no mercado SMB BR.
+- **Vertical packs.** Add-ons R$ 20-40/mês:
+  - Beleza: foto antes/depois, ficha técnica de coloração
+  - Clínica: prontuário simples, anamnese, anexar exames
+  - Oficina: checklist do veículo, peças usadas, garantia
+  Justifica preço maior em verticais não-beleza.
+
+### Retenção / engajamento
+
+- **Programa de fidelidade gamificado.** Selos a cada N
+  atendimentos → desconto/brinde. Schema parcial existe (flag
+  `loyalty-stamps`). Push "faltam 2 cortes pro desconto". Retenção
+  +20-30%, viraliza.
+- **Reativação automática + campanhas segmentadas.** Cliente sumiu
+  60d → mensagem automática. Aniversário → cupom. Campanhas tipo
+  "clientes de coloração últimos 90d". UI "criar campanha" com
+  preview.
+- **Reviews públicos pós-atendimento.** Após atendimento → push
+  "como foi?" → 1-5 estrelas + comentário curto → exibe na home
+  pública + score por profissional. Credibilidade na vitrine.
+
+### Operação profunda
+
+- **Caixa/financeiro completo + comissão automática.** Hoje
+  Financeiro mostra previsto/realizado. Faltam: lançamento manual de
+  saídas, comissão por profissional (split %), fechamento diário
+  com extrato. Substitui caderninho/Excel — mata objeção #1 de
+  adoção.
+- **Multi-unidade (rede).** Já listado em Tier 3, mas reforçar:
+  abre segmento médio (redes 3-10 unidades), ticket maior, contrato
+  anual. Mexe em RLS.
+- **Sincronização Google/Apple Calendar do staff.** Já em "Ideias
+  em aberto" — manter. Tira atrito enorme do staff que vive no
+  Google Calendar.
+- **Loja virtual de produtos.** Tenant cadastra produtos (xampu,
+  cera). Cliente compra junto do serviço. Estoque controlado.
+  Ticket médio +20-40% pra beleza/oficina.
+
+### Cliente-facing diferenciador
+
+- **Carteira de créditos / cashback in-app.** Cliente carrega
+  R$ 100 → ganha 10% cashback (R$ 110). Float financeiro pro
+  tenant + amarra cliente. Reduz churn.
+- **Painel TV pra sala de espera.** Tela mostra próximos
+  atendimentos, "agora chamando: João", QR pra baixar PWA. URL
+  `tela.aralabs.com.br/<slug>`. Brand visibility no
+  estabelecimento.
+
+---
+
+## Arquitetura — débito técnico e escala (brainstorm 2026-05-03)
+
+_Sessão de auditoria arquitetural. Itens organizados por horizonte.
+Curto prazo: defensivo (vai doer logo). Médio: fundação. Longo: só
+quando dor for real, evitar prematuro._
+
+### Curto prazo — gaps que vão doer logo
+
+- **Cache distribuído (Edge Config / Redis).** [src/lib/tenant/
+  resolve.ts](src/lib/tenant/resolve.ts) cacheia em `Map` em
+  memória. Em serverless cada lambda tem sua memória → hit rate
+  baixo. Mover pra Vercel Edge Config (free, leitura <15ms global)
+  ou Upstash. Resolver tenant no Edge Middleware (proxy.ts) antes
+  de chegar no Lambda. **Esforço:** 1-2 dias. **Reabrir quando:**
+  qualquer escala — quanto mais cedo, melhor.
+- **Rate limiting** (endpoints públicos + OTP). Zero throttling
+  hoje. `/api/manifest/[slug]` e server actions de OTP abertos.
+  Atacante esgota quota Supabase Auth global da conta. Solução:
+  Upstash Ratelimit no proxy.ts. Por IP + por tenant. **Esforço:**
+  1 dia. Crítico antes de qualquer growth marketing.
+- **Schema decomposition — `tenants` god-table.** Tabela tem 60+
+  colunas misturando billing/branding/hero/contato/onboarding.
+  UPDATE escreve row inteira, RLS aplica pro conjunto, types ficam
+  enormes. Quebrar em `tenants` (core), `tenant_branding`,
+  `tenant_settings`, `tenant_contact`, `tenant_onboarding`.
+  Migration com views compatíveis pra rollout sem big-bang.
+  **Esforço:** ~1 sprint.
+- **Feature flags no DB** (não em código). Hoje hardcoded. Toda
+  mudança = deploy. Tabela `feature_flags` com targeting (% rollout,
+  tenant allowlist). GrowthBook self-hosted ou Vercel Edge Config
+  flags. Habilita canary releases, kill switches sem deploy.
+- **Observability básica** (Sentry + analytics). Hoje só
+  console.error e Vercel logs. Sentry free tier (5k errors/mês),
+  Vercel Observability incluso, PostHog pra métricas custom (book
+  completion, abandonment, time-to-confirm). **Esforço:** 3 dias.
+  Não dá pra otimizar o que não mede.
+
+### Médio prazo — fundação pra escalar
+
+- **Event-driven outbox pattern.** Hoje appointment INSERT dispara
+  edge function via trigger HTTP — acoplado, sem retry estruturado,
+  difícil adicionar novos consumers. Tabela `events` (outbox) com
+  tipo+payload. Background worker consome, distribui pra subscribers
+  (notifications, audit, analytics, integrações externas).
+  Idempotente via `event_id`. Pré-requisito pra item abaixo.
+- **Background jobs proper** (Inngest ou Vercel Queues). Edge
+  functions + pg_cron servem hoje, mas faltam priority, dead-letter,
+  retry exponencial, observability visual. Vercel Queues (beta,
+  native, Fluid Compute) OU Inngest (free 50k events/mês, melhor
+  DX). Casos: WhatsApp dispatch, lembretes, image processing,
+  exports, reativação automática.
+- **Multi-region / Supabase São Paulo.** Projeto atual em
+  us-east-1 (provável). Cliente em SP tem RTT ~120ms só pra DB.
+  Migrar pra `sa-east-1`. **Esforço:** ~1 semana (cutover). -100ms
+  em todas as queries server-side.
+- **Storage com CDN próprio.** Supabase Storage tem 5GB free de
+  egress. Em escala (hero images + photos × 200 tenants) = TB de
+  bandwidth. Mover assets pra Cloudflare R2 (zero egress) ou
+  Vercel Blob. Image optimization via Cloudflare Images.
+- **PWA offline-first** (Workbox + IndexedDB). Hoje PWA é
+  instalável mas sem offline real. Profissional em campo (sem net)
+  não vê agenda. Service Worker cacheia agenda do dia, IndexedDB
+  pra mutations enfileiradas. Conflict resolution é onde mora a
+  complexidade. **Esforço:** 2 semanas. Diferencial competitivo
+  real.
+
+### Longo prazo — só quando justificar
+
+- **Monorepo + apps separados** (admin / customer / marketplace).
+  Hoje 1 Next.js cobre tudo. Bundle do cliente carrega código de
+  admin que ele nunca vê. **Quando justifica:** bundle inicial
+  >300KB OR equipe >3 devs OR features divergem (marketplace).
+  pnpm workspaces, packages compartilhados. **Esforço:** 2-3
+  semanas. Não fazer prematuramente.
+- **API pública + webhooks** (B2B / integradores). Quando começar
+  pedido "integra com meu CRM". REST com keys, webhooks pra eventos
+  (booking.created, etc). Combina com event-driven outbox. ~1 mês.
+- **Workflow engine** (low-code futuro). Quando regras complexas
+  (auto-confirm, reativação, lembretes condicionais) ficarem
+  unmanageable, mover pra DAG visual. Tenant configura "se cliente
+  sumir 60d → mandar X" sem dev. Esforço alto, só com 1000+
+  tenants.
+- **Database partitioning + read replicas.** Quando `appointments`
+  passar 500k rows. Postgres declarative partitioning por
+  `tenant_id` ou `start_at` (mensal). Read replicas pra analytics.
+  Hoje desnecessário, planejar pra ano 2.
+- **Auth abstrato** (provider pluggable). Hoje Supabase Auth
+  direto. Quando aparecer pedido enterprise (SSO SAML, AD), wrap
+  Supabase em interface `AuthProvider` agora. **Esforço preventivo:
+  ** 2-3 dias vs semanas reativo.
+
+### Auditorias rápidas (gaps menores mas reais)
+
+- **`createSecretClient` espalhado** ([src/lib/onboarding/queries.
+  ts](src/lib/onboarding/queries.ts) e outros). Bypassa RLS em N
+  pontos. Concentração de trust. Auditar cada uso, reduzir pro
+  mínimo.
+- **Validação Zod duplicada** client+server. Avaliar tRPC ou
+  Server Functions com schema único compartilhado.
+- **Tests E2E desativados** (Épico 10). Smoke crítico depende de
+  doc manual. Volta com Playwright contra preview deploys.
+- **Migrations sem branching.** Supabase tem feature de DB
+  temporário por PR (Branching). Não usado. Liga isso pra testar
+  migrations sem afetar prod.
+- **Indexes audit em `appointments`.** Queries por
+  `(tenant_id, professional_id, start_at)` frequentes. Provável
+  faltar composites. EXPLAIN ANALYZE em queries quentes.
+
+### Recomendação tática (3-6m)
+
+1. Cache distribuído + Rate limiting (1 sprint defensivo).
+2. Observability (3 dias) — pré-requisito pra otimizar qualquer
+   coisa.
+3. Schema decomposition (1-2 sprints) — investe agora pra colher
+   6m+.
+4. Event-driven outbox + jobs proper virão naturalmente quando
+   features que dependem deles forem construídas (reativação
+   automática, AI agente).
+
+---
+
 ## Não vamos fazer (com razão)
 
 - **Mobile nativo** (decisão 2026-04-28). Custo > benefício; PWA cobre.
@@ -362,3 +565,4 @@ _Brainstorm dump. Move pra Backlog quando virar concreto, ou pra "Não vamos faz
 _Links pra discussões importantes em PRs, issues, ou notas em sessões anteriores._
 
 - 2026-04-27 — análise de WhatsApp dispatch (3 vias, Z-API recomendado) e premium tiers (sessão Claude).
+- 2026-05-03 — brainstorm de 16 features de produto + auditoria arquitetural (sessão Claude). Resultados consolidados nas seções "Features de produto" e "Arquitetura" acima.
