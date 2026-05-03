@@ -835,6 +835,8 @@ export type Database = {
           monthly_price_cents: number
           name: string
           notes_internal: string | null
+          onboarding_completed_at: string | null
+          onboarding_step: string | null
           operation_mode_pin_hash: string | null
           pioneer_since: string | null
           postal_code: string | null
@@ -893,6 +895,8 @@ export type Database = {
           monthly_price_cents?: number
           name: string
           notes_internal?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_step?: string | null
           operation_mode_pin_hash?: string | null
           pioneer_since?: string | null
           postal_code?: string | null
@@ -951,6 +955,8 @@ export type Database = {
           monthly_price_cents?: number
           name?: string
           notes_internal?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_step?: string | null
           operation_mode_pin_hash?: string | null
           pioneer_since?: string | null
           postal_code?: string | null

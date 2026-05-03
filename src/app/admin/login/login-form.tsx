@@ -2,11 +2,14 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, ArrowRight, KeyRound } from 'lucide-react'
+import { Mail, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert } from '@/components/ui/alert'
+import { OtpInput } from '@/components/ui/otp-input'
 import { createClient } from '@/lib/supabase/browser'
+
+const OTP_LENGTH = 6
 
 const STORAGE_KEY = 'ara-agenda:admin-login:last-email'
 const LEGACY_STORAGE_KEY = 'ara-barber:salon-login:last-email'
@@ -77,9 +80,8 @@ export function AdminLoginForm() {
 
   async function handleVerify(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const cleanCode = code.replace(/\D/g, '')
-    if (cleanCode.length !== 6) {
-      setErrorMsg('O código tem 6 dígitos.')
+    if (code.length !== OTP_LENGTH) {
+      setErrorMsg(`O código tem ${OTP_LENGTH} dígitos.`)
       return
     }
     setStatus('verifying')
@@ -88,7 +90,7 @@ export function AdminLoginForm() {
     const supabase = createClient()
     const { error } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
-      token: cleanCode,
+      token: code,
       type: 'email',
     })
 
@@ -112,26 +114,17 @@ export function AdminLoginForm() {
         </p>
 
         <form onSubmit={handleVerify} className="space-y-3">
-          <Input
-            aria-label="Código de 6 dígitos"
+          <OtpInput
+            ariaLabel={`Código de ${OTP_LENGTH} dígitos`}
             name="code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
+            length={OTP_LENGTH}
             autoFocus
-            maxLength={7} // permite "123 456" com espaço
-            placeholder="000000"
+            error={Boolean(errorMsg)}
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            leftIcon={<KeyRound className="h-4 w-4" />}
-            className="text-center text-[1.25rem] font-mono tracking-[0.4em]"
+            onChange={setCode}
           />
 
-          {errorMsg ? (
-            <Alert variant="error" title="Erro">
-              {errorMsg}
-            </Alert>
-          ) : null}
+          {errorMsg ? <Alert variant="error">{errorMsg}</Alert> : null}
 
           <Button
             type="submit"

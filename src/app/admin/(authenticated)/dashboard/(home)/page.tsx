@@ -19,6 +19,9 @@ import {
 import { NotificationSound } from '@/components/dashboard/notification-sound'
 import { hasNoSchedule } from '@/lib/admin/derivations'
 import { WeekDayStrip } from '@/components/home/week-day-strip'
+import { getOnboardingState, markOnboardingCompleted } from '@/lib/onboarding/state'
+import { OnboardingWelcome } from '@/components/dashboard/onboarding-welcome'
+import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist'
 
 function todayISO(tenantTimezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -77,7 +80,7 @@ export default async function DashboardHome({ searchParams }: PageProps) {
   const dateISO = isValidISODate(rawDate) ? rawDate : dateToday
   const nowISO = new Date().toISOString()
 
-  const [today, pending, profsRes, availRes] = await Promise.all([
+  const [today, pending, profsRes, availRes, onboarding] = await Promise.all([
     getAgendaForDay(tenant.id, dateISO, tenant.timezone),
     getPendingConfirmations(tenant.id, nowISO),
     supabase
@@ -89,7 +92,21 @@ export default async function DashboardHome({ searchParams }: PageProps) {
       .from('professional_availability')
       .select('professional_id, weekday, start_time, end_time')
       .eq('tenant_id', tenant.id),
+    getOnboardingState(tenant.id),
   ])
+
+  // Auto-complete: se todos os items estão prontos e ainda não tinha
+  // sido marcado como concluído, persiste agora pra sumir o checklist.
+  // Cobre tanto "owner completou tudo" quanto "tenant legacy importado
+  // que já vinha cheio" — em ambos casos, dispensa o welcome.
+  if (onboarding.allDone && !onboarding.completedAt) {
+    await markOnboardingCompleted(tenant.id)
+  }
+  const isCompleted = onboarding.completedAt !== null || onboarding.allDone
+  const showChecklist = !isCompleted
+  // Welcome só pra tenants vazios que ainda não escolheram caminho.
+  // `!allDone` evita modal em legacy que já vem com dados.
+  const showWelcome = onboarding.step === null && !isCompleted
 
   const active = today.filter((a) => a.status !== 'CANCELED' && a.status !== 'NO_SHOW')
 
@@ -153,6 +170,15 @@ export default async function DashboardHome({ searchParams }: PageProps) {
           />
         </div>
       </header>
+
+      {showWelcome ? <OnboardingWelcome show /> : null}
+      {showChecklist ? (
+        <OnboardingChecklist
+          items={onboarding.items}
+          doneCount={onboarding.doneCount}
+          totalCount={onboarding.totalCount}
+        />
+      ) : null}
 
       <WeekDayStrip
         weekDateISOs={weekDateISOs}
