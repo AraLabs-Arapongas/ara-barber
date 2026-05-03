@@ -4,23 +4,23 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sparkles, Compass } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
-import { Button } from '@/components/ui/button'
-import { setOnboardingStep } from '@/app/admin/(authenticated)/actions/onboarding'
+import { setOnboardingStep } from '@/app/admin/(authenticated)/actions/onboarding-step'
 
 type Props = {
-  /** Quando true, abre o modal automaticamente. Server controla via
-   *  `onboardingStep === null` (nunca viu) e renderiza condicionalmente. */
+  /** Server controla a renderização; client só mantém estado de open. */
   show: boolean
 }
 
 /**
- * Modal de boas-vindas do owner novo. Aparece UMA vez (na primeira
- * visita à home) e oferece 2 caminhos:
- * - **Guiar em 5 minutos:** marca `onboarding_step = 'tour'` e leva pra
- *   primeira tela (Horários). Banner sticky vai guiando pelas próximas.
- * - **Explorar sozinho:** marca `onboarding_step = 'skipped'`. Modal não
- *   aparece de novo, mas o checklist no topo da home segue mostrando o
- *   progresso até completar.
+ * Modal de boas-vindas do owner. Aparece UMA vez (na home, quando
+ * `onboarding_step IS NULL`) e oferece dois caminhos:
+ *
+ * - **Me guie em 5 minutos:** marca `step='tour'`, leva pra
+ *   `/admin/setup` (wizard de 4 etapas: horários, serviços,
+ *   profissionais, vínculos).
+ * - **Vou explorar sozinho:** marca `step='skipped'` + cookie de
+ *   bypass. Modal não aparece de novo. Banner persistente continua
+ *   mostrando "X de 4 etapas" até completar.
  */
 export function OnboardingWelcome({ show }: Props) {
   const router = useRouter()
@@ -32,7 +32,7 @@ export function OnboardingWelcome({ show }: Props) {
       await setOnboardingStep({ step })
       setOpen(false)
       if (step === 'tour') {
-        router.push('/admin/dashboard/mais') // Passo 1: horários estão em Mais
+        router.push('/admin/setup')
       } else {
         router.refresh()
       }
@@ -59,7 +59,7 @@ export function OnboardingWelcome({ show }: Props) {
           <div className="min-w-0 flex-1">
             <p className="font-medium text-fg">Me guie em 5 minutos</p>
             <p className="mt-0.5 text-[0.8125rem] text-fg-muted">
-              Configure horários, serviços, profissionais e vínculos passo a passo.
+              Wizard guiado: horários → serviços → profissionais → vínculos.
             </p>
           </div>
         </button>
@@ -76,7 +76,7 @@ export function OnboardingWelcome({ show }: Props) {
           <div className="min-w-0 flex-1">
             <p className="font-medium text-fg">Vou explorar sozinho</p>
             <p className="mt-0.5 text-[0.8125rem] text-fg-muted">
-              O checklist na home mostra o que ainda falta — sem pressão.
+              Banner no topo mostra o progresso — sem pressão.
             </p>
           </div>
         </button>
