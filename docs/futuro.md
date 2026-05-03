@@ -262,6 +262,22 @@ _(Vazio — itens anteriores resolvidos no sweep de 2026-04-28; ver Decisões.)_
 - **Branding white-label completo.** Campo `tenants.custom_domain` já
   existe no schema, falta wiring (cert SSL automático, DNS
   validation). Apelo principalmente de vaidade do dono.
+  **Pré-requisito: SSO central** (próximo item) — sem ele, cliente
+  com conta em tenant `*.aralabs.com.br` precisa logar de novo ao
+  abrir um custom domain, e o ganho de white-label vira fricção.
+
+- **Auth central tipo OAuth ("Sign in with AraLabs").**
+  Hoje (2026-05-03) implementado modelo simples: cookie de sessão
+  Supabase setado em `.aralabs.com.br` permite SSO automático entre
+  todos os subdomínios da plataforma (cliente loga em `tenant-a`,
+  abre `tenant-b` já logado, perfil `customers` é auto-provisionado).
+  **Limitação:** custom domains (`agendar.barber.com.br`) ficam fora
+  — cookie não cruza domínios diferentes. Solução real seria um
+  provider central em `auth.aralabs.com.br` que tenants consomem via
+  OAuth (authorize → code → token). Esforço: 1-2 semanas. **Reabrir
+  quando:** custom domain virar feature paga adotada (50+ tenants),
+  app mobile nativo, ou integradores externos (API pública). Antes
+  disso, modelo atual atende.
 
 ---
 

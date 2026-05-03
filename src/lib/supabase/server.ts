@@ -1,5 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+
+import { resolveCookieDomain } from '@/lib/auth/cookie-domain'
 
 type CreateClientOptions = {
   /**
@@ -12,6 +14,11 @@ type CreateClientOptions = {
 
 export async function createClient(opts?: CreateClientOptions) {
   const cookieStore = await cookies()
+  const headerStore = await headers()
+  // SSO entre subdomínios da plataforma: força `domain=.aralabs.com.br`
+  // (ou `.lvh.me` em dev) nos cookies sb-* pra que sessão seja compartilhada
+  // entre `tenant-a.*` e `tenant-b.*`. Custom domain → undefined → host-only.
+  const cookieDomain = resolveCookieDomain(headerStore.get('host'))
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,9 +31,11 @@ export async function createClient(opts?: CreateClientOptions) {
         setAll(cookiesToSet) {
           try {
             for (const { name, value, options } of cookiesToSet) {
-              const finalOptions = opts?.sessionOnly
-                ? { ...options, maxAge: undefined, expires: undefined }
-                : options
+              const finalOptions = {
+                ...options,
+                ...(opts?.sessionOnly ? { maxAge: undefined, expires: undefined } : {}),
+                ...(cookieDomain ? { domain: cookieDomain } : {}),
+              }
               cookieStore.set(name, value, finalOptions)
             }
           } catch {

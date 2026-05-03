@@ -12,7 +12,7 @@ import { LoyaltyStamps } from '@/components/home/loyalty-stamps'
 import { UpcomingAppointmentsCarousel } from '@/components/home/upcoming-appointments-carousel'
 import { RealtimeAppointmentsRefresh } from '@/components/appointments/realtime-refresh'
 import { createClient } from '@/lib/supabase/server'
-import { getCustomerForTenant } from '@/lib/customers/ensure'
+import { ensureCustomerForTenant } from '@/lib/customers/ensure'
 import { getMyCustomerAppointments } from '@/lib/appointments/queries'
 
 /**
@@ -31,7 +31,11 @@ export default async function MinhaContaPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/admin/login')
 
-  const customer = await getCustomerForTenant(tenant.id)
+  // ensureCustomerForTenant auto-provisiona a row em `customers` se for a
+  // primeira visita do user nesse tenant — necessário pra SSO entre
+  // subdomínios funcionar (cliente loga em A, abre B, perfil é criado).
+  // Retorna null se for staff (vai pro próprio dashboard) ou erro de insert.
+  const customer = await ensureCustomerForTenant(tenant.id)
   if (!customer) redirect('/')
 
   const appointments = await getMyCustomerAppointments(tenant.id)
